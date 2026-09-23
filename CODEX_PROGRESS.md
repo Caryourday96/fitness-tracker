@@ -48,4 +48,10 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Added an `uploads` metadata table keyed to the account and day. No public image URLs are issued.
 - Production still requires a persistent private volume or private object storage and backup/restore testing; Azure deployment is not yet performed.
 - Cost decision: use Azure App Service Free F1 only as a disposable technical preview; do not store real health data or private images there. Production needs durable storage and a paid/appropriate tier.
+
+## Azure plan upgrade — 23 September 2026
+
+- User approved upgrading the shared `Kayode_IGO` App Service Plan `adeticket`.
+- Azure CLI verified the plan is now Canada Central, Premium v3 `P0v3`, one worker.
+- This affects all apps on that plan and increases billing. The fitness app itself is not yet healthy on the existing Windows runtime; the next step is either a Windows-compatible entry point or a separate Linux plan.
 - Verification still needed: authenticated integration tests for cross-user access denial, malformed signatures, size limits, deletion, and browser upload UI.
