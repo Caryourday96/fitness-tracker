@@ -31,3 +31,12 @@
 ## Exact next action
 
 Add CSRF protection and login rate limiting, then add integration tests proving unauthenticated access is denied and state-changing cross-site requests are rejected. Do not deploy until the P0 backlog is addressed and reviewed.
+
+## Daily food, sleep, activity and cardio tracking — 23 September 2026
+
+- Added durable `food_logs`, `sleep_logs`, and `activity_logs` tables and protected API routes.
+- Added daily food/snack, sleep-hours/quality, activity duration, steps, and treadmill-specific duration/distance/incline fields to the Today flow.
+- Treadmill plans now show conservative speaking-pace settings rather than weight/reps. Strength fields remain load/reps based.
+- The app explicitly explains that manual wearable/Apple Health entry is available now; private screenshot upload/OCR remains deferred until storage validation.
+- Existing deterministic safety tests remain passing; a full browser integration check is still needed after this UI extension.
+- Next: add history-based, user-confirmed load suggestions and weekly charts after the P0 auth/storage work.
