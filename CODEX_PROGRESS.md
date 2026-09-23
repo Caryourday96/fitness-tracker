@@ -47,4 +47,5 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Files are stored under `data/uploads` outside `public/`, with randomized names, 0600 file mode, 5 MB maximum, declared-type checks, PNG/JPEG magic-byte checks, private no-store responses, and user ownership checks.
 - Added an `uploads` metadata table keyed to the account and day. No public image URLs are issued.
 - Production still requires a persistent private volume or private object storage and backup/restore testing; Azure deployment is not yet performed.
+- Cost decision: use Azure App Service Free F1 only as a disposable technical preview; do not store real health data or private images there. Production needs durable storage and a paid/appropriate tier.
 - Verification still needed: authenticated integration tests for cross-user access denial, malformed signatures, size limits, deletion, and browser upload UI.
