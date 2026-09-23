@@ -54,4 +54,11 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - User approved upgrading the shared `Kayode_IGO` App Service Plan `adeticket`.
 - Azure CLI verified the plan is now Canada Central, Premium v3 `P0v3`, one worker.
 - This affects all apps on that plan and increases billing. The fitness app itself is not yet healthy on the existing Windows runtime; the next step is either a Windows-compatible entry point or a separate Linux plan.
+
+## Linux preview deployed — 23 September 2026
+
+- Broken Windows fitness Web App was removed and recreated as `fitness-tracker-ca` on separate Linux B1 plan `fitness-linux-b1` in Canada Central.
+- Current live verification passed: `https://fitness-tracker-ca.azurewebsites.net/` returned HTTP 200 and the app hero; `/api/status` returned `{"authenticated":false,"hasUser":false}`.
+- Friends Showdown remains on the shared Windows B1 plan `adeticket`.
+- No custom domain or real health data has been connected. Before personal use, configure backups, persistent storage expectations, and the GitHub OIDC workflow.
 - Verification still needed: authenticated integration tests for cross-user access denial, malformed signatures, size limits, deletion, and browser upload UI.
