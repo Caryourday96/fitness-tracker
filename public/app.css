@@ -13,3 +13,5 @@ input,select,textarea{min-width:0;width:100%;font-size:16px}.setrow{grid-templat
 #finishPreview li{padding:10px 0;border-top:1px solid var(--line)}#finishPreview li button{margin-left:8px;min-height:44px}#finishPreview .actions button{min-height:48px}@media(max-width:599px){#finishPreview li button{display:block;width:100%;margin:8px 0 0}}
 
 .equipment-profile{padding:14px 0;border-top:1px solid var(--line)}.equipment-choice{padding:12px;margin:12px 0;border:1px solid var(--line);border-radius:12px;background:#f7faf7}.equipment-choice [data-profile-history] button{margin-top:8px;min-height:44px}.equipment-choice p{margin:8px 0}
+
+.unplanned-card{padding:16px 0;border-top:1px solid var(--line)}.unplanned-card li{padding:8px 0}.unplanned-card li button{min-height:44px;margin-left:6px}.unplanned-card form{padding:12px;border:1px solid var(--line);border-radius:12px}@media(max-width:599px){.unplanned-card li button{margin:8px 6px 0 0}}

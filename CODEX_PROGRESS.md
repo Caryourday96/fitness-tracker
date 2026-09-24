@@ -232,3 +232,8 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Workout recap commit `722d333` passed GitHub Actions run `36014053130`; public health and recap assets returned 200. Backlog/checkpoints reconciled.
 - Began next Sol item: additive private `exercise_profiles` table and authenticated create/note-update API, Settings management UI, selection during active workout, saved per-set profile IDs, exact-exercise ownership validation, private setup/load labels, and comparable-history suggestions only for matching profile IDs. Added integration assertions for ownership and note persistence for CI.
 - No local tests run at owner request. Exact next action: push scoped changes, use required GitHub CI, fix failures, verify public health/assets, then update backlog/checkpoints. Existing unlabeled sets remain valid but receive no equipment-specific load suggestion.
+
+## Unplanned activity implementation — 24 September 2026
+- Equipment profiles deployed as `0aca563` via successful GitHub Actions run `36014941989`; public health/JS returned 200. Backlog/checkpoints reconciled.
+- Implemented next Sol item: add actual unplanned strength or cardio separately from the confirmed plan, save/edit/remove its sets or duration, and include recorded extras in recap, History and existing CSV set rows. Server validation keeps unplanned entries separate and applies existing safety/version gates. Added focused CI assertions for plan preservation and recap counting.
+- No local tests run at owner request. Exact next action: push scoped changes, wait for required GitHub CI, fix failures, verify public health/assets, then update backlog/checkpoints. Authenticated iPhone flow remains unverified.

@@ -149,6 +149,8 @@ async function route(req,res) {
     const plan=db.prepare('SELECT data,status FROM plans WHERE user_id=? AND day=?').get(uid,day);
     const check=db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day);
     if(!check||!plan||plan.status!=='confirmed') return send(res,409,{error:'Confirm today’s plan first'});
+    if(b.data.exercises.some(exercise=>exercise.unplanned&&(exercise.slot!=null||!['strength','cardio'].includes(exercise.pattern)||!exercise.name.trim()||exercise.name.length>120)))return send(res,400,{error:'Unplanned activity must stay separate from the confirmed plan'});
+    let sawUnplanned=false;for(const exercise of b.data.exercises){if(exercise.unplanned)sawUnplanned=true;else if(sawUnplanned)return send(res,400,{error:'Keep unplanned activity after planned exercises'})}
     if(planFor(JSON.parse(check.data),p,day).kind==='safety-stop') return send(res,403,{error:'Exercise is paused by your current safety check-in. History remains available.'});
     const existing=db.prepare('SELECT * FROM workouts WHERE user_id=? AND day=?').get(uid,day);
     if(existing && existing.updated_at!==b.version) return send(res,409,{error:'A newer workout is saved. Reload before editing; your input is still on screen.'});

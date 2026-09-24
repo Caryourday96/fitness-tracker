@@ -6,11 +6,18 @@ test('recap separates complete, partial, skipped and cardio work',()=>{
   const plan={exercises:[{name:'Row',pattern:'strength',sets:2},{name:'Press',pattern:'strength',sets:3},{name:'Treadmill',pattern:'cardio'}]};
   const workout={startedAt:'2026-09-24T12:00:00.000Z',exercises:[{name:'Row',sets:[{reps:10},{reps:10}]},{name:'Press',sets:[{reps:8}]},{name:'Treadmill',sets:[{duration:12}] }]};
   const recap=summarizeWorkout(plan,workout,'2026-09-24T12:45:00.000Z');
-  assert.deepEqual(recap.counts,{completed:2,partial:1,skipped:0});
+  assert.deepEqual(recap.counts,{completed:2,partial:1,skipped:0,unplanned:0});
   assert.equal(recap.cardioMinutes,12);
   assert.equal(recap.durationMinutes,45);
   assert.equal(recap.entries[1].status,'partial');
   assert.equal(workout.recap,undefined);
+});
+
+test('unplanned activity is counted separately from the confirmed plan',()=>{
+  const recap=summarizeWorkout({exercises:[{name:'Row',pattern:'strength',sets:2}]},{exercises:[{name:'Row',sets:[]},{name:'Walk',pattern:'cardio',unplanned:true,sets:[{duration:15}]}]});
+  assert.equal(recap.counts.skipped,1);
+  assert.equal(recap.counts.unplanned,1);
+  assert.equal(recap.cardioMinutes,15);
 });
 
 test('missing sets stay skipped and missing start time is not invented',()=>{

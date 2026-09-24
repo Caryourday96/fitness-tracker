@@ -37,6 +37,8 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  const withOneMore=structuredClone(current.workout);withOneMore.exercises[0].sets.push({duration:2,distance:0.1});assert.equal((await request('/api/workout',{data:withOneMore,version:current.workout.version,status:'active'})).status,200);
  current=await (await request('/api/me',undefined,'GET')).json();const undone=structuredClone(current.workout);undone.exercises[0].sets.pop();assert.equal((await request('/api/workout',{data:undone,version:current.workout.version,status:'active'})).status,200);
  current=await (await request('/api/me',undefined,'GET')).json();assert.equal(current.workout.exercises[0].sets.length,1);assert.equal(current.workout.exercises[0].sets[0].duration,12);
+ const plannedNames=current.plan.exercises.map(exercise=>exercise.name),extra=structuredClone(current.workout);extra.exercises.push({name:'Cable curl',pattern:'strength',unplanned:true,sets:[{weight:10,reps:12}]});assert.equal((await request('/api/workout',{data:extra,version:current.workout.version,status:'active'})).status,200);
+ current=await (await request('/api/me',undefined,'GET')).json();assert.deepEqual(current.plan.exercises.map(exercise=>exercise.name),plannedNames);assert.equal(current.workout.exercises.at(-1).unplanned,true);
  const pixel='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
  const uploaded=await request('/api/uploads',{data:'data:image/png;base64,'+pixel,day:'2026-09-23',caption:'Private test'});assert.equal(uploaded.status,201);const image=await uploaded.json();
  assert.equal((await request('/api/uploads/'+image.id,undefined,'GET')).status,200);
