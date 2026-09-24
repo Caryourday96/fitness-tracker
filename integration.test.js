@@ -65,6 +65,12 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.equal((await request('/api/food-log',{day:'2026-09-25',meal:'snack',item:'Future'})).status,400);
  assert.equal((await request('/api/foods',{name:'Oats',category:'Carbohydrates'})).status,200);let foods=(await (await request('/api/me',undefined,'GET')).json()).foods;const oats=foods.find(x=>x.name==='Oats');assert.equal(oats.available,1);
  assert.equal((await request('/api/foods/'+oats.id,{name:'Steel-cut oats',category:'Carbohydrates',preference:'limited',notes:'Plain',available:false},'PUT')).status,200);foods=(await (await request('/api/me',undefined,'GET')).json()).foods;assert.equal(foods.find(x=>x.id===oats.id).available,0);assert.equal(foods.find(x=>x.id===oats.id).preference,'limited');
+ assert.equal((await request('/api/foods',{name:'Banana',category:'Fruit'})).status,200);const banana=(await (await request('/api/me',undefined,'GET')).json()).foods.find(x=>x.name==='Banana');
+ const favourite=await request('/api/meal-favourites',{name:'Quick snack',meal:'snack',foodIds:[banana.id],portion:'One banana'});assert.equal(favourite.status,201);const favouriteId=(await favourite.json()).id;
+ assert.deepEqual((await (await request('/api/me',undefined,'GET')).json()).mealFavourites[0].foodIds,[banana.id]);
+ assert.equal((await request('/api/foods/'+banana.id,{name:'Banana',category:'Fruit',preference:'preferred',notes:'',available:false},'PUT')).status,200);
+ assert.equal((await request('/api/meal-favourites/'+favouriteId,{name:'Quick snack',meal:'snack',foodIds:[banana.id],portion:'One banana'},'PUT')).status,400);
+ assert.equal((await request('/api/meal-favourites/'+favouriteId,undefined,'DELETE')).status,200);
  const csv=await (await request('/api/export.csv',undefined,'GET')).text();assert.match(csv,/"'=HYPERLINK/);assert.match(csv,/"set"/);
  const printable=await request('/api/print-summary',undefined,'GET');assert.equal(printable.status,200);assert.match(await printable.text(),/Steady progress summary/);
  assert.equal((await request('/api/logout',{})).status,200);

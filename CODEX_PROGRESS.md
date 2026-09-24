@@ -237,3 +237,8 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Equipment profiles deployed as `0aca563` via successful GitHub Actions run `36014941989`; public health/JS returned 200. Backlog/checkpoints reconciled.
 - Implemented next Sol item: add actual unplanned strength or cardio separately from the confirmed plan, save/edit/remove its sets or duration, and include recorded extras in recap, History and existing CSV set rows. Server validation keeps unplanned entries separate and applies existing safety/version gates. Added focused CI assertions for plan preservation and recap counting.
 - No local tests run at owner request. Exact next action: push scoped changes, wait for required GitHub CI, fix failures, verify public health/assets, then update backlog/checkpoints. Authenticated iPhone flow remains unverified.
+
+## Saved meals implementation — 24 September 2026
+- Unplanned activity deployed as `8ac5775` via successful GitHub Actions run `36015984471`; public health and JS returned 200. Backlog/checkpoints reconciled.
+- Implemented next Sol item: private user-created meal/snack combinations linked to inventory IDs, editable names/meal/portions, removal, and a Today Use favourite action that fills the food log without recording a meal. Automatic reuse is withheld if any food is unavailable/limited/avoided or allergy/restriction text is disclosed. CSV includes saved-meal records. Added focused CI integration assertions for create/ownership-by-session/unavailable-food rejection.
+- No local tests run at owner request. Exact next action: push scoped changes, wait for required GitHub CI, fix failures, verify public health/assets, then update backlog/checkpoints. Authenticated iPhone flow remains unverified.
