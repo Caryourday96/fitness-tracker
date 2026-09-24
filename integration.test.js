@@ -26,10 +26,14 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.equal((await request('/api/profile',{timezone:'UTC',onboardingComplete:true} ,'PUT')).status,200);
  assert.equal((await request('/api/checkin',{symptoms:'none',energy:'medium'})).status,200);
  assert.equal((await request('/api/plan/confirm',{})).status,200);
- const data={exercises:[{name:'Treadmill',sets:[{duration:12,distance:0.8,incline:1}]}]};
+ const equipment=await request('/api/exercise-profiles',{exerciseName:'Treadmill',equipmentName:'Movati treadmill',loadMeaning:'total',setupNote:'Comfortable incline'});assert.equal(equipment.status,201);const equipmentId=(await equipment.json()).id;
+ assert.equal((await request('/api/exercise-profiles/'+equipmentId,{setupNote:'Use handrails only for balance'},'PUT')).status,200);
+ const data={exercises:[{name:'Treadmill',sets:[{duration:12,distance:0.8,incline:1,equipmentProfileId:equipmentId}]}]};
+ assert.equal((await request('/api/workout',{data:{exercises:[{name:'Different exercise',sets:[{duration:12,equipmentProfileId:equipmentId}]}]},status:'active'})).status,400);
  const saved=await request('/api/workout',{data,status:'active'});assert.equal(saved.status,200);
  assert.equal((await request('/api/workout',{data,status:'active'})).status,409);
  let current=await (await request('/api/me',undefined,'GET')).json();assert.equal(current.workoutHistory[0].status,'active');
+ assert.equal(current.exerciseProfiles[0].setupNote,'Use handrails only for balance');
  const withOneMore=structuredClone(current.workout);withOneMore.exercises[0].sets.push({duration:2,distance:0.1});assert.equal((await request('/api/workout',{data:withOneMore,version:current.workout.version,status:'active'})).status,200);
  current=await (await request('/api/me',undefined,'GET')).json();const undone=structuredClone(current.workout);undone.exercises[0].sets.pop();assert.equal((await request('/api/workout',{data:undone,version:current.workout.version,status:'active'})).status,200);
  current=await (await request('/api/me',undefined,'GET')).json();assert.equal(current.workout.exercises[0].sets.length,1);assert.equal(current.workout.exercises[0].sets[0].duration,12);

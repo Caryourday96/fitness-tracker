@@ -227,3 +227,8 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Today hierarchy release `d78a166` passed GitHub Actions run `36013130305`; public health and static JS returned 200. Backlog/checkpoints reconciled.
 - Implemented next Sol backlog item in isolated release branch: a review step before finishing with completed/partial/skipped exercise counts, cardio and elapsed minutes, correction links to saved sets, and explicit Finish. The server recomputes and stores the dated recap from the confirmed plan and saved workout; History and CSV show it. Added a focused pure recap test for CI. Old workouts without a recap remain readable.
 - No local tests were run, per owner request. Exact next action: run GitHub CI via push, resolve any failure, verify live public health/assets, mark backlog item after evidence. No private production records inspected.
+
+## Equipment profiles implementation — 24 September 2026
+- Workout recap commit `722d333` passed GitHub Actions run `36014053130`; public health and recap assets returned 200. Backlog/checkpoints reconciled.
+- Began next Sol item: additive private `exercise_profiles` table and authenticated create/note-update API, Settings management UI, selection during active workout, saved per-set profile IDs, exact-exercise ownership validation, private setup/load labels, and comparable-history suggestions only for matching profile IDs. Added integration assertions for ownership and note persistence for CI.
+- No local tests run at owner request. Exact next action: push scoped changes, use required GitHub CI, fix failures, verify public health/assets, then update backlog/checkpoints. Existing unlabeled sets remain valid but receive no equipment-specific load suggestion.
