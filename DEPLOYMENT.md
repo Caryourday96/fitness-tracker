@@ -35,3 +35,7 @@ Before schema changes: stop the app, copy the complete DATA_DIR to a timestamped
 Restore: stop the app; preserve the current data directory; choose a verified complete backup; copy it to a fresh /home restore directory; run PRAGMA integrity_check; set DATA_DIR to that directory; restart; verify account and workout access. Do not overwrite the only backup. These local backups protect deployment/migration mistakes, not deletion of the App Service storage. Off-service backup remains outstanding.
 
 The deployment artifact includes the server, backup helper, package manifests, public client, and production dependencies. The redundant deployment workflow is manual-only. Do not re-enable two concurrent production deployments.
+
+## Optional accountability link
+
+The owner can create an unlisted, read-only link from the app's Share tab. Anyone who receives it can view up to 60 completed workouts (date, exercise names, logged sets and cardio). It excludes measurements, blood pressure, food, sleep, notes, screenshots and editing. The link uses a random 256-bit token; only its hash is stored. The token is in the URL fragment and the viewer sends no owner session cookie. The owner can replace or revoke it. Revocation prevents future loads, but cannot erase information a viewer already saw or saved. Do not post the link publicly; access is based on possession, not verified identity.

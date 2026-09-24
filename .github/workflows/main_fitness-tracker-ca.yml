@@ -40,6 +40,7 @@ jobs:
           name: node-app
           path: |
             server.js
+            partner-sharing.js
             meal-guidance.js
             weekly-review.js
             backups.js

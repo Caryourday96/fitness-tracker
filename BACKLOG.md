@@ -25,6 +25,8 @@ Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 359922532
 
 ## Later / intentionally deferred
 
+- **P1 accountability partner — locally implemented, not deployed:** optional public link with no partner sign-in. Anyone who obtains the link can view up to 60 completed workouts; owner can rotate/revoke. Random token hash is stored; token travels in the fragment and viewer sends no owner cookies. Only dates, exercise names, logged sets and cardio are included. No measurements, food, sleep, notes, images or edits. Required before release: code review and CI; disclose that revocation cannot remove already copied data.
+
 - Preferred training weekdays plus genuinely distinct 3-day/4-day split templates (the current planner uses a rolling session budget and repeatable full-body templates).
 - OCR from screenshots, always requiring explicit review before saving.
 - Installable PWA/offline queue after private-cache/logout design and tests.

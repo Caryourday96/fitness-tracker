@@ -1,5 +1,14 @@
 # Fitness tracker checkpoint — 23 September 2026
 
+## Starter food inventory and public accountability link — local implementation checkpoint — 24 September 2026
+- Added idempotent starter-food seeding for existing and new accounts: lean ground beef, chicken, chicken breast, egg whites, yogurt, oats, sweet potatoes, bananas, other fruit, Costco vegetable mix and Costco root vegetable mix. No nutrition values or allergens are invented. Seeding runs once per account and fills only missing names.
+- Added an owner Share tab to create/copy, rotate and revoke a no-sign-in link. It uses a random 256-bit token; only its hash is stored. The token is in a URL fragment and the viewer submits it in a same-origin POST without the owner cookie. A separate page/API return only up to 60 completed workouts and allowlisted exercise/set/cardio fields. Profile, measurements, food, sleep, notes, screenshots and edit routes are excluded.
+- Anyone with the link can view these limited records until revocation; revocation cannot retract data already copied. Link is unlisted, not identity-verified.
+- Added partner page assets, restrictive response headers, and included `partner-sharing.js` in the Azure artifact. No new package dependency.
+- Work is isolated at `.deploy/accountability-link` on `feature/accountability-link`, based on `origin/main` commit `d6f6004`. No merge, push or production deployment occurred. Existing stale/dirty worktrees remain untouched.
+- Local tests and browser checks were skipped per owner preference. `node --check` passed for the server and all edited JavaScript modules; `git diff --check` passed. Runtime/browser flow and GitHub Actions remain unverified. Foods will appear in production only after this branch is deployed and the app starts.
+- Current visible usage: five-hour 95% used (5% remaining), weekly 46% used. No reset credit redeemed. Exact next action: review the isolated diff and run permitted CI/review, correct any defects, then ask before pushing to `main` because it triggers production deployment.
+
 ## Findings and decision
 
 - Existing workspace contains the Friends Showdown, scraper, and personal-site projects; no fitness app existed.
