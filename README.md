@@ -6,7 +6,9 @@ Open `https://fit.adeticket.com` in Safari, tap **Share**, then **Add to Home Sc
 
 ## Workout catalog decision
 
-Workout plans remain generated locally from deterministic movement templates and safety/recovery rules. A third-party exercise catalog may later provide more descriptions or movement alternatives, but it must not generate personalized weight-loss or medical advice. Any imported item needs a reviewed movement-pattern/equipment mapping and clear source attribution; do not send account, health, workout-history, or screenshot data to the catalog provider. The user can still track workouts without an external API.
+Workout plans remain generated locally from deterministic movement templates and safety/recovery rules. A small ExerciseAPI snapshot adds optional, same-pattern exercise alternatives for commercial-gym plans; it does not create weight-loss or medical advice. Each choice keeps its movement pattern, names its equipment, and saves as a separate exercise history. Home plans do not assume access to gym equipment. The plan and app still work without an API connection.
+
+The imported catalog snapshot is in `exercise-catalog.json`, retrieved from [ExerciseAPI](https://exercise-api.com) and licensed CC BY 4.0. The plan shows the required attribution when these alternatives are present. To refresh the allowlisted snapshot, run `npm run catalog:sync`; the import verifies the license and each reviewed movement-pattern mapping before writing. This is a development-time request only: production workouts do not send account, health, workout-history, or screenshot data to the provider.
 
 Private single-user fitness and weight-loss tracker at `https://fit.adeticket.com`. It is intentionally isolated from the existing Friends Showdown and portfolio sites. Use the custom subdomain for normal access; the Azure Web App hostname is infrastructure-only.
 

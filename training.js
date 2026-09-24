@@ -1,3 +1,5 @@
+import { catalogAlternatives, exerciseCatalogAttribution, exerciseCatalogSourceUrl } from './exercise-catalog.js';
+
 const movement=(name,pattern,muscles,cue,alternatives,substitutions=[])=>({name,pattern,muscles,cue,alternatives,substitutions,sets:3,reps:'8–12',rest:'90 sec'});
 
 const moves={
@@ -57,8 +59,13 @@ export function trainingTemplate(profile={},context={},sets=3){
   }
   const selected=templates[schedule][index];
   const home=String(profile.equipment||'').toLowerCase().includes('home');
-  const exercises=selected.keys.filter(key=>!(home&&key.startsWith('pull'))).map(key=>({...moves[key],substitutions:moves[key].substitutions.filter(option=>!home||option.equipment==='bodyweight').map(({equipment,...option})=>option),sets}));
-  return{template:{schedule,index},title:selected.title,exercises};
+  const exercises=selected.keys.filter(key=>!(home&&key.startsWith('pull'))).map(key=>{
+    const base=moves[key].substitutions.filter(option=>!home||option.equipment==='bodyweight').map(({equipment,...option})=>option);
+    const external=catalogAlternatives(moves[key].pattern,{home});
+    const unique=[...base,...external].filter((option,index,list)=>list.findIndex(candidate=>candidate.name.toLowerCase()===option.name.toLowerCase())===index);
+    return{...moves[key],substitutions:unique,sets};
+  });
+  return{template:{schedule,index},title:selected.title,exercises,catalogAttribution:exercises.some(exercise=>exercise.substitutions.some(option=>option.source==='ExerciseAPI'))?{text:exerciseCatalogAttribution,url:exerciseCatalogSourceUrl}:null};
 }
 
 export function trainingContext(rows=[],day,check={}){

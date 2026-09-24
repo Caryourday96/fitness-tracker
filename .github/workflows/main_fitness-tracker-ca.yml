@@ -45,6 +45,8 @@ jobs:
             meal-guidance.js
             weekly-review.js
             training.js
+            exercise-catalog.js
+            exercise-catalog.json
             backups.js
             security.js
             progress.js

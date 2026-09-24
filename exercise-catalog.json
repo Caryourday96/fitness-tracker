@@ -1,0 +1,227 @@
+{
+  "source": "ExerciseAPI",
+  "sourceUrl": "https://exercise-api.com",
+  "apiVersion": "v1",
+  "datasetVersion": "1.1.0",
+  "license": "CC-BY-4.0",
+  "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0.",
+  "retrievedAt": "2026-09-24",
+  "note": "Exercise catalog metadata only. Local programming, movement mappings, equipment filtering, and safety rules remain authoritative.",
+  "exercises": [
+    {
+      "id": "goblet_squat",
+      "name": "Dumbbell Goblet Squat",
+      "externalPattern": "squat",
+      "primaryMuscle": "quads",
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "equipment": [
+        "dumbbells"
+      ],
+      "cue": "Hold dumbbell at chest, sit deep between knees, drive up tall.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "leg_press",
+      "name": "Leg Press",
+      "externalPattern": "squat",
+      "primaryMuscle": "quads",
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "equipment": [
+        "leg_press"
+      ],
+      "cue": "Feet mid-platform, lower until knees near chest, don't lock out hard.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "hack_squat",
+      "name": "Hack Squat Machine",
+      "externalPattern": "squat",
+      "primaryMuscle": "quads",
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "equipment": [
+        "hack_squat_machine"
+      ],
+      "cue": "Feet lower on platform for quad bias, descend deep, drive through whole foot.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "cable_pull_through",
+      "name": "Cable Pull-Through",
+      "externalPattern": "hip_hinge",
+      "primaryMuscle": "glutes",
+      "secondaryMuscles": [
+        "hamstrings",
+        "lower_back"
+      ],
+      "equipment": [
+        "cable_stack"
+      ],
+      "cue": "Face away from low pulley, rope between legs, hinge back then snap hips forward, squeeze.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "dumbbell_rdl",
+      "name": "Dumbbell Romanian Deadlift",
+      "externalPattern": "hip_hinge",
+      "primaryMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "glutes",
+        "lower_back"
+      ],
+      "equipment": [
+        "dumbbells"
+      ],
+      "cue": "Hinge at hips, dumbbells close to legs, stretch hamstrings, drive hips through.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "band_rdl",
+      "name": "Band Romanian Deadlift",
+      "externalPattern": "hip_hinge",
+      "primaryMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "glutes",
+        "lower_back"
+      ],
+      "equipment": [
+        "resistance_bands"
+      ],
+      "cue": "Stand on band, hinge at hips, push hips back, feel hamstring tension.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "chest_press_machine",
+      "name": "Chest Press Machine",
+      "externalPattern": "horizontal_press",
+      "primaryMuscle": "chest",
+      "secondaryMuscles": [
+        "front_delts",
+        "triceps"
+      ],
+      "equipment": [
+        "chest_press_machine"
+      ],
+      "cue": "Set seat so handles align with mid-chest, press without locking out hard.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "dumbbell_bench_press",
+      "name": "Dumbbell Bench Press",
+      "externalPattern": "horizontal_press",
+      "primaryMuscle": "chest",
+      "secondaryMuscles": [
+        "front_delts",
+        "triceps"
+      ],
+      "equipment": [
+        "dumbbells",
+        "adjustable_bench"
+      ],
+      "cue": "Lower dumbbells to chest level for a deep stretch, press up and slightly together.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "incline_pushup",
+      "name": "Incline Push-up (Hands Elevated)",
+      "externalPattern": "horizontal_press",
+      "primaryMuscle": "chest",
+      "secondaryMuscles": [
+        "front_delts",
+        "triceps"
+      ],
+      "equipment": [
+        "bench_or_box"
+      ],
+      "cue": "Hands on a box/wall, rigid plank, lower chest to the surface; easiest push-up angle.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "chest_supported_dumbbell_row",
+      "name": "Chest-Supported Dumbbell Row",
+      "externalPattern": "horizontal_pull",
+      "primaryMuscle": "upper_back",
+      "secondaryMuscles": [
+        "lats",
+        "rear_delts",
+        "biceps"
+      ],
+      "equipment": [
+        "dumbbells",
+        "adjustable_bench"
+      ],
+      "cue": "Chest on incline bench, row dumbbells to hips, squeeze at top.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "single_arm_dumbbell_row",
+      "name": "Single-Arm Dumbbell Row",
+      "externalPattern": "horizontal_pull",
+      "primaryMuscle": "upper_back",
+      "secondaryMuscles": [
+        "lats",
+        "rear_delts",
+        "biceps"
+      ],
+      "equipment": [
+        "dumbbells",
+        "flat_bench"
+      ],
+      "cue": "Knee and hand on bench, flat back, row dumbbell to hip, control the stretch.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "band_seated_row",
+      "name": "Band Seated Row",
+      "externalPattern": "horizontal_pull",
+      "primaryMuscle": "upper_back",
+      "secondaryMuscles": [
+        "lats",
+        "rear_delts",
+        "biceps"
+      ],
+      "equipment": [
+        "resistance_bands"
+      ],
+      "cue": "Anchor band at foot level, sit tall, pull to navel, squeeze blades.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    },
+    {
+      "id": "seated_cable_row",
+      "name": "Seated Cable Row",
+      "externalPattern": "horizontal_pull",
+      "primaryMuscle": "upper_back",
+      "secondaryMuscles": [
+        "lats",
+        "rear_delts",
+        "biceps"
+      ],
+      "equipment": [
+        "seated_row_machine"
+      ],
+      "cue": "Tall chest, pull handle to navel, retract shoulder blades, control stretch.",
+      "license": "CC-BY-4.0",
+      "attribution": "Exercise data by ExerciseAPI (https://exercise-api.com), licensed under CC BY 4.0."
+    }
+  ]
+}

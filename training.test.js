@@ -59,7 +59,12 @@ test('workout mix alternatives preserve the movement pattern and home plans avoi
   const gym=[0,1,2].map(index=>trainingTemplate({schedule:3,equipment:'commercial gym'},{lastTemplate:{schedule:3,index:(index+2)%3}},3));
   for(const plan of gym)for(const exercise of plan.exercises)for(const option of exercise.substitutions)assert.equal(option.pattern,exercise.pattern);
   assert.ok(gym.some(plan=>plan.exercises.some(exercise=>exercise.substitutions.some(option=>option.name==='Dumbbell Romanian deadlift'))));
+  assert.ok(gym.some(plan=>plan.exercises.some(exercise=>exercise.substitutions.some(option=>option.source==='ExerciseAPI'&&option.equipment))));
+  for(const pattern of ['squat','hinge','push','pull'])assert.ok(gym.some(plan=>plan.exercises.some(exercise=>exercise.pattern===pattern&&exercise.substitutions.filter(option=>option.source==='ExerciseAPI').length>=2)));
+  assert.ok(gym.every(plan=>plan.catalogAttribution?.text.includes('CC BY 4.0')));
   const home=trainingTemplate({schedule:3,equipment:'home / walking'},{},3);
   assert.ok(home.exercises.every(exercise=>exercise.pattern!=='pull'));
+  assert.ok(home.exercises.every(exercise=>exercise.substitutions.every(option=>option.source!=='ExerciseAPI')));
   assert.ok(home.exercises.every(exercise=>exercise.substitutions.every(option=>!['Machine chest press','Leg press','Dumbbell Romanian deadlift'].includes(option.name))));
+  assert.equal(home.catalogAttribution,null);
 });

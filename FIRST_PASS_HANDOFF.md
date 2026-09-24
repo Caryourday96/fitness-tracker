@@ -26,17 +26,17 @@ Updated 24 September 2026. Feature batch `d628326` and its public static-path co
 - The physical iPhone checklist needs the owner's device.
 - Reliable timezone-aware background reminders need an explicit notification delivery design and scheduler/push infrastructure.
 - Authenticated partner invitations remain deferred by the owner's existing choice to use a public revocable link. Do not change that access model.
-- No external exercise API is called. The workout plan remains local and deterministic. Optional catalog-only API enrichment is proposed in the backlog; review movement mappings, licensing and attribution, and send no profile/health/history/image data to providers.
+- The ExerciseAPI snapshot adds 13 optional, same-pattern alternatives across squat, hinge, horizontal push, and horizontal pull. `npm run catalog:sync` is a development-time import of public endpoints; normal workout planning makes no external API call. Attribution, license, source cues and local equipment filters/mappings are included. The provider does not make individualized weight-loss plans or medically validate exercises; no profile, health, workout-history or image data is sent.
 
 ## Next actions
 
-1. **Sol, current run:** reconcile and publish the final backlog/checkpoint entry for `f2774a0` and run `36065292733`. No application code remains to deploy from this pass.
+1. **Sol, current run:** review, commit and push the exercise-catalog changes; monitor GitHub Actions and validate the deployed app and attribution. The existing workout split/cardio/safety logic remains authoritative.
 2. **Owner:** use `IOS-OWNER-CHECKLIST.md` on the iPhone after deployment; record actual Safari/iOS outcomes. Desktop checks do not substitute for this.
-3. **Sol, backlog follow-up:** if exercise API enrichment is requested, import/cache exercise catalog fields and map alternatives through reviewed local movement/equipment rules. Keep planning deterministic and offline-capable; no personal or health data leaves the app.
+3. **Sol, future backlog:** consider richer reviewed movement variations only if the owner wants more than user-selectable alternatives; do not treat catalog data as weight-loss programming.
 4. **Astra, only if needed:** independently review planner safety and template precedence. Do not rewrite the completed planner without a reproducible defect.
 5. **Astra, only after an owner decision change:** design authenticated partner grants. Current public sharing stays unchanged.
 6. **Sol, after delivery infrastructure is chosen:** implement opt-in timezone-aware reminders with pause/disable controls and no health details in notification text.
 
 ## Exact next step
 
-Record the verified `f2774a0` release and stop. The owner can use `IOS-OWNER-CHECKLIST.md` on the physical iPhone; catalog-only API enrichment remains a separate backlog item.
+The catalog work is awaiting release verification. After Actions and live checks, record the release and stop. The owner can use `IOS-OWNER-CHECKLIST.md` on the physical iPhone; that device check remains human-run.

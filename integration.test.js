@@ -37,6 +37,9 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.deepEqual((await (await request('/api/me',undefined,'GET')).json()).profile.preferredDays,preferredDays);
  assert.equal((await request('/api/checkin',{symptoms:'none',energy:'medium'})).status,200);
  assert.equal((await request('/api/plan/confirm',{})).status,200);
+ const confirmedPlan=await (await request('/api/me',undefined,'GET')).json();
+ assert.equal(confirmedPlan.plan.catalogAttribution.url,'https://exercise-api.com');
+ assert.ok(confirmedPlan.plan.exercises.some(exercise=>exercise.substitutions?.some(option=>option.source==='ExerciseAPI'&&option.equipment)));
  const equipment=await request('/api/exercise-profiles',{exerciseName:'Treadmill',equipmentName:'Movati treadmill',loadMeaning:'total',setupNote:'Comfortable incline'});assert.equal(equipment.status,201);const equipmentId=(await equipment.json()).id;
  assert.equal((await request('/api/exercise-profiles/'+equipmentId,{setupNote:'Use handrails only for balance'},'PUT')).status,200);
  const data={exercises:[{name:'Treadmill',sets:[{duration:12,distance:0.8,incline:1,equipmentProfileId:equipmentId}]}]};
