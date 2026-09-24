@@ -1,3 +1,65 @@
-# Fitness tracker worktree backlog redirect
+# Fitness tracker backlog — canonical
 
-The canonical backlog is the repository-root [`BACKLOG.md`](../../BACKLOG.md). Read and update that file; do not maintain a separate task list in this worktree.
+This is the **single source of truth** for fitness-tracker priorities and handoffs in this workspace. Release worktrees must reconcile and carry this same root `BACKLOG.md` before push; do not maintain conflicting task lists.
+
+## Current release and decisions
+
+- Latest deployed feature commit: `c3e7110` (Fitdays year counter, motion polish, rest-day choices and cardio progression); GitHub Actions run `36057228505` passed build/tests and Azure deployment. HTTPS checks returned 200 for Fitdays page/API and main app/share assets.
+- Production uses the existing single-instance Linux B1 App Service and SQLite on persistent App Service storage. Do not scale out or migrate the database until an approved design exists.
+- `fitdays.adeticket.com` DNS, App Service hostname and Azure managed TLS binding are configured. On 24 September 2026 Azure reported `SniEnabled`, direct HTTPS requests without certificate bypass returned 200 for `/` and `/api/public-workout-days`, and the in-app browser loaded the calendar totals. This serves the existing deployed workout-days page.
+- Private off-site backup integration was deployed earlier. The owner reports manually creating and verifying a backup. Azure blob contents were not independently inspected in this workspace.
+- Owner explicitly removed post-restart backup verification, separate-target restore rehearsal, and populated-database release regression checks from the required backlog. Their removal is a scope decision, not evidence those tests were run.
+- Do not create paid Azure resources, alter production DNS/authentication, or deploy code without the relevant explicit authorization. No secret belongs in this file.
+- Medical guidance remains conservative; a clinician, not a model, must review personal restrictions and clearance.
+- Public accountability link is the current owner-approved mode: no partner sign-in for now, limited read-only workout fields, and owner rotation/revocation. Authenticated invitation sharing is deferred unless the owner asks to change this decision.
+
+## Current release state — deployed vs. local
+
+- **Motion and quick-glance polish — deployed in `c3e7110`.** Main Today, public workout-share and Fitdays pages use restrained CSS animation with reduced-motion support; Fitdays has a top-right current-calendar-year workout count and retains its rolling 7/30/365 totals. No external GIF library. Local 390px preview had no overflow; live HTTPS page/assets returned 200.
+- **Rest-day choices, cardio progression, and weight-loss-supportive strength framing — deployed in `c3e7110`.** Eligible high-energy recovery days can choose the usual plan or easy walk; server safety gates and active/completed-workout protection remain enforced. Exact-exercise treadmill history suggests a five-minute increase only after two target-reaching sessions, capped by session duration and paused for lower readiness. Re-entry and lighter fourth sessions omit cardio. Strength copy describes muscle maintenance, not guaranteed weight loss or spot reduction. GitHub Actions run `36057228505` passed all 26 tests and deployment.
+- **Latest production release remains `c3e7110`**; this first-pass batch is local in `.deploy/accountability-link` and not yet pushed. It includes preferred-day templates, improved legacy workout sequencing, progress charts, rest timer persistence, private dated screenshots/progress-photo timeline, and a narrowly cached PWA shell.
+- The selected model for this continuation is Sol. The user approved completing the ordered first pass and pushing the latest version; push only after focused checks and scoped review. User requested stop/finalize when five-hour usage reaches 45% used.
+- Screenshot OCR stays explicitly paused at the user's request. No OCR package or screenshot-reading feature was added. The physical iPhone Safari checklist remains owner-run.
+- Keep the current public accountability-link product decision. Authenticated invite sharing remains deferred until the owner requests a change. Reminders are not implemented because dependable iOS background delivery needs push/scheduler setup and explicit opt-in; do not simulate background delivery with a foreground-only timer.
+
+## Recommended implementation order
+
+Model assignments are recommendations for which model should own the next task; they do not switch models, run automatically, reduce usage guarantees, or authorize deployment/provisioning. Use medium effort by default; choose high effort only for an actual cross-cutting safety/security/design problem. Work one item at a time, verify against current code/Git state, and update this backlog plus `CODEX_PROGRESS.md` and workspace `PROJECT_STATUS.md` with evidence.
+
+Model assignments are guidance for future ownership, not automatic routing. This active first pass is being completed by Sol as explicitly selected by the owner; handoff and stop conditions are recorded below.
+
+| Order | Priority | Item and status | Best model | Acceptance criteria, gates, and main files |
+| --- | --- | --- | --- | --- |
+| 1 | P1 | Rest-day choices, cardio progression and weight-loss-supportive strength framing — deployed | Sol · medium; Astra · medium for future safety review | Deployed in `c3e7110`, Actions `36057228505` passed. Live checks returned 200. `server.js`, `public/app.js`, `PRODUCT.md`, `rest-day.test.js`. |
+| 2 | P1 | Preferred weekdays and distinct 3-/4-day templates — implemented locally; regression for legacy repeats added; release pending | Astra · medium for independent safety/design review; Sol · medium implementation | Selected days save/edit; deterministic templates differ; sequence is based on saved template or prior movement patterns; reported training yesterday yields recovery unless the safe, explicit high-energy override is chosen; active/completed plans are not regenerated; no catch-up volume. `training.js`, `server.js`, `public/app.js`, `PRODUCT.md`, `training.test.js`. |
+| 3 | P1 | Screenshot-to-log OCR proposals — paused by owner, not started | Astra · medium design; Sol · medium implementation if resumed | If resumed: privately propose sleep/workout fields from PNG/JPEG; owner reviews/corrects every value and explicitly saves; identify duplicates; never auto-save or transmit private images to an AI without separate consent. `server.js`, `public/app.js`, upload and record tests, `PRODUCT.md`. |
+| 4 | P1 | Advanced progress charts and coverage labels — implemented locally; release pending | Sol · medium | Mobile 30-day weight/rolling average, waist, steps, recorded workout days and comparable strength charts; units/date spans/coverage; gaps remain missing; sparse states are explicit. `progress.js`, `public/progress-charts.js`, `public/app.js`, `public/app.css`, tests. |
+| 5 | P1 | Owner iPhone Safari verification — human action | Sol · low to prepare; owner executes | Use `IOS-OWNER-CHECKLIST.md` at `https://fit.adeticket.com`; record device/browser and actual outcomes. Desktop and CI are not evidence of iOS behavior. |
+| 6 | P2 | Rest timer that survives app switching — implemented locally; release pending | Sol · low | Absolute deadline; restored elapsed time; pause/resume/skip; accessible status; no claim of background/iOS notification. `public/app.js`, `public/rest-timer.js`, `public/app.css`, tests. |
+| 7 | P2 | Private progress-photo timeline — implemented locally; release pending | Sol · medium | Dated/captioned owner-only PNG/JPEGs can be viewed, reclassified, edited, replaced and deleted; no public URL/body-composition estimate. Authenticated retrieval and backup inclusion retained. `server.js`, `public/app.js`, `backups.js`, tests. |
+| 8 | P2 | Add-to-Home-Screen/PWA experience — implemented locally; release pending | Astra · medium for future review; Sol · medium implementation | Standalone metadata; worker caches only explicit public shell paths, network-first, never `/api/`, `/.auth/`, or private images; clear cache on logout; offline capabilities are accurately described. `public/index.html`, `public/app.js`, `public/sw.js`, manifest/icon, tests. |
+| 9 | P2 | Gentle reminders — deferred; no reliable background delivery configured | Sol · medium | Before implementation, choose a delivery model and secure scheduler/push setup. Must be opt-in, timezone-aware, pauseable, and contain no health details. Do not present foreground timers as background reminders. `server.js`, `public/app.js`, manifest/service worker if needed. |
+| 10 | P2 | Replace public partner link with invited authenticated sharing — intentionally deferred | Astra · high only after owner changes decision | Do not start until owner requests the change. If requested, enforce matching partner identity, immediate revocation, strict read-only allowlist excluding measurements/BP/food/sleep/notes/screenshots. Current public link stays as-is. `server.js`, `public/app.js`, `security.js`, tests, privacy docs. |
+| 11 | P2 | Enrich exercise alternatives from a reputable catalog API — proposed; no integration yet | Sol · medium | Prefer import/cache of catalog fields and reviewed movement/equipment mappings. Do not let external data generate individualized weight-loss or medical plans; no health/profile/history/screenshot data leaves the app. Preserve deterministic offline planning, attribution/licensing, and an API-free fallback. `training.js`, `PRODUCT.md`, catalog/cache tests. |
+
+## Completed and deployed
+
+- Base security/session controls: same-origin write validation, request throttles, bounded JSON parsing, secure cookies, hashed opaque sessions, logout/sign-out-everywhere, and Google sign-in bridge.
+- First-day setup/settings, daily check-ins, deterministic adaptive workout generation, resume and workout logging; cardio has duration/distance/incline fields; set edit/undo, conflict checks, rest timer, alternatives and equipment-specific history suggestions.
+- End-of-day/history edits, steps/activity/sleep/food logging, weight/waist trends, 7-day averages and sparse-data labels, inventory-based meal guidance and favorites, formula-safe CSV and printable summary.
+- Private PNG/JPEG image upload/list/preview/caption/date/replace/delete with server validation and authenticated retrieval.
+- Private off-site backup integration; owner reports manual backup and verification succeeded. See current deployment evidence above; no extra restore rehearsal is required by owner decision.
+- Suggested meals/editable meal and snack times `4397ab9` (Actions `36011790168`); one-handed workout UI `e5239d0` (Actions `36012412766`); Today hierarchy/form feedback `d78a166` (Actions `36013130305`); completion recap `722d333` (Actions `36014053130`); equipment profiles `0aca563` (Actions `36014941989`); unplanned activity logging `8ac5775` (Actions `36015984471`); saved meals `4835ab6` (Actions `36016719416`); weekly review `d6f6004` (Actions `36017579996`). All listed Actions passed build/tests and deployment as recorded in the originating release notes; owner’s authenticated iPhone review remains outstanding.
+- Starter foods, public workout accountability link and its cardio/unit rendering correction were deployed; link is bearer-accessible until rotated/revoked and can expose copied information. No partner login is required per owner choice.
+- Public date-only workout tracker deployed in `24503c4` (Actions `36039028731`); `fitdays.adeticket.com` now serves it over verified HTTPS as noted above.
+
+## Intentionally out of scope / deferred decisions
+
+- Apple Health direct integration/import/export.
+- Saving screenshot-derived sleep or workout values without owner confirmation, or sending private screenshots to an external AI without explicit consent. OCR-assisted prefill of the sleep/workout forms followed by owner review and confirmation is in scope under backlog item 3.
+- Paid database/storage changes without an owner-approved cost and architecture choice.
+- Post-restart backup verification, separate-target restore rehearsal, and populated-database release regression check (removed by owner request).
+
+## Model handoff prompt
+
+> Read available project instructions, `PROJECT_STATUS.md`, `CODEX_PROGRESS.md`, and the canonical `fitness-tracker/BACKLOG.md`. Work only on the highest-priority uncompleted item assigned to your selected model. Verify it against the current code and Git status; make the smallest safe change; run the focused checks allowed by the owner; update this backlog and both checkpoints with evidence, deployment status, blockers and exact next action. Do not deploy or provision paid resources without explicit authorization. Do not re-add backlog items the owner removed.

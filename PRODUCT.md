@@ -25,9 +25,9 @@ Login/setup → Today/check-in → proposed plan → live workout → history/ex
 5. Cardio progression only after comparable completed sessions meet their saved duration targets; pace and incline remain comfort-led and are never auto-increased.
 6. Strength progression only after actual logged sets; load changes remain manual suggestions and are never silently increased.
 
-The planner counts completed or actively logged sessions in the preceding seven days: it recommends recovery once the selected 3/4-session preference is met, and makes a fourth session lighter after three logged sessions. It does not yet assign preferred weekdays or create distinct upper/lower templates.
+The planner can optionally schedule around exactly the selected number of preferred weekdays, or leave days unspecified and use activity history. Three-day programs cycle through three distinct full-body templates; four-day programs cycle upper/lower templates. The server preserves the plan template in each workout so the next unstarted plan can continue the sequence. Safety stops, recovery after yesterday's work, readiness limits, rolling session caps and missed-session re-entry take precedence over weekday preferences; missed days never stack. Changing settings does not rewrite an active or completed plan.
 
-The repeatable full-body strength template is intended to support sustainable weight management by training major movement patterns and helping maintain muscle while weight is lost; it is not a promise of weight loss or spot reduction. Cardio uses the exact-exercise treadmill history when available: after two completed logged treadmill sessions meet their saved duration targets, the next suitable plan suggests a single five-minute increase, capped according to selected session time. Lower readiness pauses the increase. The app leaves speed and incline adjustable at a comfortable speaking effort and asks the user to log actual duration rather than pre-filling a completed value.
+The repeatable resistance templates are intended to support sustainable weight management by training major movement patterns and helping maintain muscle while weight is lost; they are not a promise of weight loss or spot reduction. Cardio uses the exact-exercise treadmill history when available: after two completed logged treadmill sessions meet their saved duration targets, the next suitable plan suggests a single five-minute increase, capped according to selected session time. Lower readiness pauses the increase. The app leaves speed and incline adjustable at a comfortable speaking effort and asks the user to log actual duration rather than pre-filling a completed value.
 
 ## Safety sources reviewed
 
@@ -39,3 +39,13 @@ The repeatable full-body strength template is intended to support sustainable we
 - NIDDK, “Tips to Keep Moving”: https://www.niddk.nih.gov/health-information/weight-management/tips-get-active/tips-keep-moving (reviewed 2026-09-24). Activity duration and strength work should progress gradually.
 
 The app uses conservative symptom and pressure gating and general moderate-effort guidance. It does not diagnose, prescribe medication changes, or set medication-dependent heart-rate targets.
+
+## Exercise library and external API review
+
+The current workout generator uses a local, deterministic catalog with 3-day full-body A/B/C and 4-day upper/lower A/B templates. Each substitution is mapped to its movement pattern; changing templates does not change safety precedence, recent-training limits, or history-based cardio behavior. An external exercise catalog is not needed to generate the plan and must not be treated as a weight-loss prescription.
+
+Reviewed 2026-09-24: [wger REST API docs](https://github.com/wger-project/docs/blob/master/docs/api/api.rst) describe public exercise-list endpoints, while user-owned routines require authentication. [ExerciseAPI docs](https://exercise-api.com/docs) describe a public exercise catalog, 100 anonymous requests/day, and CC BY 4.0 attribution requirements. These are catalog sources, not individualized coaching or medical validation. No API calls, user profile data, or health data are currently sent to either provider. If the library is expanded, prefer a build-time or explicitly cached catalog with reviewed movement/equipment mappings and visible attribution; preserve a no-network plan fallback.
+
+## Installable app shell
+
+On iPhone, open the site in Safari and choose Share → Add to Home Screen. The PWA shell caches only the public app shell and named public assets. Authentication, private data, records, and private images remain network-only. This does not provide offline workout logging or background notifications.

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { googleIdentity } from './security.js';
 test('Google header requires Azure hosting and Google identity',()=>{
  const headers={'x-ms-client-principal':Buffer.from(JSON.stringify({auth_typ:'google',claims:[{typ:'sub',val:'test-subject'},{typ:'email',val:'test@example.com'}]})).toString('base64')};
@@ -11,19 +12,29 @@ test('Google header requires Azure hosting and Google identity',()=>{
 });
 test('private session, workout conflicts and reconnect recovery',async()=>{
  process.env.DATA_DIR=fs.mkdtempSync(path.join(os.tmpdir(),'steady-test-'));
+ const priorDb=new DatabaseSync(path.join(process.env.DATA_DIR,'fitness.sqlite'));
+ priorDb.exec("CREATE TABLE uploads(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, day TEXT NOT NULL, filename TEXT NOT NULL, mime TEXT NOT NULL, bytes INTEGER NOT NULL, caption TEXT DEFAULT '', created_at TEXT NOT NULL)");priorDb.close();
  const {server}=await import('./server.js');
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  let base='http://127.0.0.1:'+server.address().port,cookie='';
  async function request(route,body,method='POST',extra={}){return fetch(base+route,{method,headers:{Origin:base,'X-Requested-With':'Steady','Content-Type':'application/json',Cookie:cookie,...extra},body:body===undefined?undefined:JSON.stringify(body)})}
  try {
-  assert.equal((await request('/api/me',undefined,'GET')).status,401);
+ const appPage=await fetch(base+'/');assert.equal(appPage.status,200);assert.match(await appPage.text(),/manifest\.webmanifest/);
+ const manifestResponse=await fetch(base+'/manifest.webmanifest');assert.equal(manifestResponse.status,200);assert.match(manifestResponse.headers.get('content-type'),/application\/manifest\+json/);
+ const workerResponse=await fetch(base+'/sw.js');assert.equal(workerResponse.status,200);assert.equal(workerResponse.headers.get('service-worker-allowed'),'/');assert.match(await workerResponse.text(),/steady-public-shell/);
+ const iconResponse=await fetch(base+'/static/steady-icon.svg');assert.equal(iconResponse.status,200);assert.match(iconResponse.headers.get('content-type'),/image\/svg\+xml/);
+ assert.notEqual((await fetch(base+'/static/%2e%2e/server.js')).status,200);
+ assert.equal((await request('/api/me',undefined,'GET')).status,401);
   const googleLanding=await fetch(base+'/api/auth/google',{headers:{Origin:base},redirect:'manual'});assert.equal(googleLanding.status,302);
  assert.equal((await request('/api/setup',{email:'bad@example.com',password:'long enough password' },'POST',{Origin:'https://attacker.example'})).status,403);
  assert.equal((await request('/api/setup',{email:'bad@example.com',password:'long enough password' },'POST',{'X-Requested-With':'','Origin':base})).status,403);
 
  const setups=await Promise.all([request('/api/setup',{email:'test@example.com',password:'long test password here'}),request('/api/setup',{email:'test@example.com',password:'long test password here'})]);assert.deepEqual(setups.map(x=>x.status).sort(),[200,409]);const setup=setups.find(x=>x.status===200);cookie=setup.headers.get('set-cookie').split(';')[0];
  assert.equal(setup.headers.get('set-cookie').includes('HttpOnly'),true);
- assert.equal((await request('/api/profile',{timezone:'UTC',onboardingComplete:true} ,'PUT')).status,200);
+ const trainingDay=new Date(new Date().toISOString().slice(0,10)+'T12:00:00Z').getUTCDay(),preferredDays=[trainingDay,(trainingDay+2)%7,(trainingDay+4)%7];
+ assert.equal((await request('/api/profile',{timezone:'UTC',schedule:3,preferredDays:[1,3],onboardingComplete:true},'PUT')).status,400);
+ assert.equal((await request('/api/profile',{timezone:'UTC',schedule:3,preferredDays,onboardingComplete:true},'PUT')).status,200);
+ assert.deepEqual((await (await request('/api/me',undefined,'GET')).json()).profile.preferredDays,preferredDays);
  assert.equal((await request('/api/checkin',{symptoms:'none',energy:'medium'})).status,200);
  assert.equal((await request('/api/plan/confirm',{})).status,200);
  const equipment=await request('/api/exercise-profiles',{exerciseName:'Treadmill',equipmentName:'Movati treadmill',loadMeaning:'total',setupNote:'Comfortable incline'});assert.equal(equipment.status,201);const equipmentId=(await equipment.json()).id;
@@ -32,7 +43,7 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.equal((await request('/api/workout',{data:{exercises:[{name:'Different exercise',sets:[{duration:12,equipmentProfileId:equipmentId}]}]},status:'active'})).status,400);
  const saved=await request('/api/workout',{data,status:'active'});assert.equal(saved.status,200);
  assert.equal((await request('/api/workout',{data,status:'active'})).status,409);
- let current=await (await request('/api/me',undefined,'GET')).json();assert.equal(current.workoutHistory[0].status,'active');
+ let current=await (await request('/api/me',undefined,'GET')).json();assert.equal(current.workoutHistory[0].status,'active');assert.deepEqual(current.workout.planSnapshot.template,{schedule:3,index:0});
  assert.equal(current.exerciseProfiles[0].setupNote,'Use handrails only for balance');
  const withOneMore=structuredClone(current.workout);withOneMore.exercises[0].sets.push({duration:2,distance:0.1});assert.equal((await request('/api/workout',{data:withOneMore,version:current.workout.version,status:'active'})).status,200);
  current=await (await request('/api/me',undefined,'GET')).json();const undone=structuredClone(current.workout);undone.exercises[0].sets.pop();assert.equal((await request('/api/workout',{data:undone,version:current.workout.version,status:'active'})).status,200);
@@ -40,15 +51,17 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  const plannedNames=current.plan.exercises.map(exercise=>exercise.name),extra=structuredClone(current.workout);extra.exercises.push({name:'Cable curl',pattern:'strength',unplanned:true,sets:[{weight:10,reps:12}]});assert.equal((await request('/api/workout',{data:extra,version:current.workout.version,status:'active'})).status,200);
  current=await (await request('/api/me',undefined,'GET')).json();assert.deepEqual(current.plan.exercises.map(exercise=>exercise.name),plannedNames);assert.equal(current.workout.exercises.at(-1).unplanned,true);
  const pixel='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+ assert.equal((await request('/api/uploads',{data:'data:image/png;base64,'+pixel,day:'2026-09-23',kind:'public'})).status,400);
  const uploaded=await request('/api/uploads',{data:'data:image/png;base64,'+pixel,day:'2026-09-23',caption:'Private test'});assert.equal(uploaded.status,201);const image=await uploaded.json();
  assert.equal((await request('/api/uploads/'+image.id,undefined,'GET')).status,200);
- assert.equal((await request('/api/uploads/'+image.id,{caption:'Updated caption'},'PUT')).status,200);
- assert.equal((await (await request('/api/uploads',undefined,'GET')).json()).uploads[0].caption,'Updated caption');
+ assert.equal((await request('/api/uploads/'+image.id,{caption:'Updated caption',day:'2026-09-22',kind:'progress-photo'},'PUT')).status,200);
+ const uploadedList=(await (await request('/api/uploads',undefined,'GET')).json()).uploads[0];assert.equal(uploadedList.caption,'Updated caption');assert.equal(uploadedList.kind,'progress-photo');assert.equal(uploadedList.day,'2026-09-22');
+ assert.equal((await request('/api/uploads/'+image.id,{caption:'Invalid type',day:'2026-09-22',kind:'public'},'PUT')).status,400);
  assert.equal((await request('/api/uploads',{data:'data:image/png;base64,AAAA',day:'2026-09-23'})).status,400);
  assert.equal((await request('/api/uploads/'+image.id,undefined,'DELETE')).status,200);
  assert.equal((await request('/api/plan/confirm',{})).status,409);
  await new Promise(resolve=>server.close(resolve));await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));base='http://127.0.0.1:'+server.address().port;
- const me=await (await request('/api/me',undefined,'GET')).json();assert.equal(me.workout.exercises[0].sets[0].duration,12);
+ const me=await (await request('/api/me',undefined,'GET')).json();assert.equal(me.workout.exercises[0].sets[0].duration,12);assert.deepEqual(me.workout.planSnapshot.template,{schedule:3,index:0});
  const review={day:'2026-09-23',workout:'planned rest',cardio:'not planned',food:'partly',energy:'medium',soreness:'none',steps:'',weight:'100',weightUnit:'kg',waist:'42',waistUnit:'in',systolic:'',diastolic:'',notes:'=HYPERLINK("https://example.com")'};
  assert.equal((await request('/api/day-review',review,'PUT')).status,200);
  assert.equal((await request('/api/day-review',review,'PUT')).status,409);

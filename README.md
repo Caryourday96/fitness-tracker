@@ -1,5 +1,13 @@
 # Fitness Tracker
 
+## Install on iPhone
+
+Open `https://fit.adeticket.com` in Safari, sign in, tap **Share**, then **Add to Home Screen**. Launching from the new icon opens the app in a standalone window on supported iOS versions. The service worker may keep the public app shell available, but it never caches account APIs, login responses, workout records, or private images; logging in and saving data still require a network connection. Sign out before lending the device to someone else.
+
+## Workout catalog decision
+
+Workout plans remain generated locally from deterministic movement templates and safety/recovery rules. A third-party exercise catalog may later provide more descriptions or movement alternatives, but it must not generate personalized weight-loss or medical advice. Any imported item needs a reviewed movement-pattern/equipment mapping and clear source attribution; do not send account, health, workout-history, or screenshot data to the catalog provider. The user can still track workouts without an external API.
+
 Private single-user fitness and weight-loss tracker at `https://fit.adeticket.com`. It is intentionally isolated from the existing Friends Showdown and portfolio sites. Use the custom subdomain for normal access; the Azure Web App hostname is infrastructure-only.
 
 ## Architecture

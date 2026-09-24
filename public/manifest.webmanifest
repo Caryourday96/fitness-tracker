@@ -1,0 +1,14 @@
+{
+  "id": "/",
+  "name": "Steady Fitness Tracker",
+  "short_name": "Steady",
+  "description": "Private workout and progress tracking",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f2ea",
+  "theme_color": "#123b35",
+  "icons": [
+    { "src": "/static/steady-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -44,6 +44,7 @@ jobs:
             workout-days.js
             meal-guidance.js
             weekly-review.js
+            training.js
             backups.js
             security.js
             progress.js
