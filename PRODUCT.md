@@ -22,9 +22,12 @@ Login/setup → Today/check-in → proposed plan → live workout → history/ex
 2. Pain/soreness and recovery readiness.
 3. Available minutes and equipment.
 4. Repeatable training sequence.
-5. Performance progression only after actual logged sets; no automatic load increase is implemented in this MVP.
+5. Cardio progression only after comparable completed sessions meet their saved duration targets; pace and incline remain comfort-led and are never auto-increased.
+6. Strength progression only after actual logged sets; load changes remain manual suggestions and are never silently increased.
 
 The planner counts completed or actively logged sessions in the preceding seven days: it recommends recovery once the selected 3/4-session preference is met, and makes a fourth session lighter after three logged sessions. It does not yet assign preferred weekdays or create distinct upper/lower templates.
+
+The repeatable full-body strength template is intended to support sustainable weight management by training major movement patterns and helping maintain muscle while weight is lost; it is not a promise of weight loss or spot reduction. Cardio uses the exact-exercise treadmill history when available: after two completed logged treadmill sessions meet their saved duration targets, the next suitable plan suggests a single five-minute increase, capped according to selected session time. Lower readiness pauses the increase. The app leaves speed and incline adjustable at a comfortable speaking effort and asks the user to log actual duration rather than pre-filling a completed value.
 
 ## Safety sources reviewed
 
@@ -32,5 +35,7 @@ The planner counts completed or actively logged sessions in the preceding seven 
 - American Heart Association, “Blood Pressure Explained”: https://www.heart.org/en/health-topics/high-blood-pressure/blood-pressure-explained (reviewed 2026-09-24). Above 180 systolic or 120 diastolic, repeat after at least one minute; if still high, contact a health professional without symptoms and call emergency services when concerning symptoms occur.
 - American Heart Association, “Getting active to control high blood pressure”: https://www.heart.org/en/healthy-living/fitness/fitness-basics/getting-active-to-control-high-blood-pressure (reviewed 2026-09-23).
 - CDC, “Measuring Physical Activity Intensity”: https://www.cdc.gov/physical-activity-basics/measuring/index.html (reviewed 2026-09-23).
+- NIDDK, “Health Tips for Adults”: https://www.niddk.nih.gov/health-information/weight-management/healthy-eating-physical-activity-for-life/health-tips-for-adults (reviewed 2026-09-24). Resistance activity may help maintain muscle during weight loss; the app does not imply that strength exercise alone causes weight loss.
+- NIDDK, “Tips to Keep Moving”: https://www.niddk.nih.gov/health-information/weight-management/tips-get-active/tips-keep-moving (reviewed 2026-09-24). Activity duration and strength work should progress gradually.
 
 The app uses conservative symptom and pressure gating and general moderate-effort guidance. It does not diagnose, prescribe medication changes, or set medication-dependent heart-rate targets.

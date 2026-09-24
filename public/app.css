@@ -19,3 +19,16 @@ input,select,textarea{min-width:0;width:100%;font-size:16px}.setrow{grid-templat
 .saved-meal{padding:14px 0;border-top:1px solid var(--line)}#favouriteForm fieldset{border:1px solid var(--line);border-radius:12px;padding:12px}#favouriteForm .check{display:flex;align-items:center;gap:10px;margin:8px 0}#favouriteForm input[type=checkbox]{width:22px;height:22px;min-width:22px}
 
 #weeklyReview li{padding:8px 0}#weekResults{overflow-wrap:anywhere}#weekResults p{margin:10px 0}#weekChoice button{min-height:44px}
+
+@keyframes app-arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.auth{animation:app-arrive .38s ease-out both}
+#dashboard:not([hidden]){animation:app-arrive .32s ease-out both}
+.view-enter{animation:app-arrive .24s ease-out both}
+button:not(:disabled){transition:transform .12s ease,filter .12s ease}
+button:not(:disabled):active{transform:scale(.985)}
+@media(prefers-reduced-motion:reduce){.auth,#dashboard:not([hidden]),.view-enter{animation:none!important}button:not(:disabled){transition:none}button:not(:disabled):active{transform:none}}
+
+@keyframes anime-spark{0%{opacity:0;transform:scale(.15) rotate(-35deg)}45%{opacity:1;transform:scale(1.2) rotate(12deg)}100%{opacity:0;transform:scale(.72) rotate(35deg)}}
+.metric.workout-done{position:relative;overflow:hidden}
+.metric.workout-done::after{content:"";position:absolute;top:10px;right:12px;width:15px;height:15px;background:var(--accent);clip-path:polygon(50% 0,61% 36%,100% 50%,61% 62%,50% 100%,39% 62%,0 50%,39% 36%);animation:anime-spark .72s ease-out both}
+@media(prefers-reduced-motion:reduce){.metric.workout-done::after{animation:none!important}}
