@@ -14,9 +14,9 @@ Updated 24 September 2026. Feature batch `d628326` and its public static-path co
 
 ## Verified
 
-- The initial worker-cleanup commit `aeb889a` is deployed; GitHub Actions run `36064833990` passed build/test and Azure deployment. Live smoke verified app and manifest are 200 and unauthenticated upload routes remain 401.
-- Live smoke also found Azure retained the deleted static worker file from the previous package and still served `/static/sw.js`. A follow-up now explicitly denies that one URL; its focused regression test is part of the current release candidate.
-- Latest local checks after the explicit denial: `npm test` passed 38/38; syntax checks passed for server and app; `git diff --check` passed.
+- Final worker-cleanup commit `f2774a0` is deployed; GitHub Actions run `36065292733` passed build/test and Azure deployment. The app explicitly returns 404 for `/static/sw.js`, and the client removes only the app's prior worker registration and named cache.
+- Live smoke after restarting the app verified `/` and `/static/manifest.webmanifest` return 200; `/static/sw.js` returns 404; unauthenticated upload list/image routes return 401. Fitdays page and date-only API also return 200 after restart.
+- Final local checks: `npm test` passed 38/38; syntax checks passed for server, app, progress charts and rest timer; `git diff --check` passed.
 - Earlier local disposable-account preview at 390×844 showed onboarding, Today and History without horizontal overflow. No personal/production records were used. Physical iPhone Safari is unverified.
 - Live checks after `aeb889a`: `/static/manifest.webmanifest` and app assets returned 200; private upload APIs returned 401; Azure still served stale `/static/sw.js` after package removal. The next release must make that route return 404 and confirm the public manifest and private-route gate remain correct.
 
@@ -30,7 +30,7 @@ Updated 24 September 2026. Feature batch `d628326` and its public static-path co
 
 ## Next actions
 
-1. **Sol, current run:** commit and push the narrow explicit 404 for `/static/sw.js` (tests pass locally), monitor Actions, then verify the old worker route is 404, the manifest/app are 200, and private routes remain 401. Confirm deployed JS includes the old-worker cleanup.
+1. **Sol, current run:** reconcile and publish the final backlog/checkpoint entry for `f2774a0` and run `36065292733`. No application code remains to deploy from this pass.
 2. **Owner:** use `IOS-OWNER-CHECKLIST.md` on the iPhone after deployment; record actual Safari/iOS outcomes. Desktop checks do not substitute for this.
 3. **Sol, backlog follow-up:** if exercise API enrichment is requested, import/cache exercise catalog fields and map alternatives through reviewed local movement/equipment rules. Keep planning deterministic and offline-capable; no personal or health data leaves the app.
 4. **Astra, only if needed:** independently review planner safety and template precedence. Do not rewrite the completed planner without a reproducible defect.
@@ -39,4 +39,4 @@ Updated 24 September 2026. Feature batch `d628326` and its public static-path co
 
 ## Exact next step
 
-Push the explicit old-worker URL denial to `main`, wait for successful build/test and deployment, then verify `/static/sw.js` returns 404 while the manifest remains 200 and private upload routes stay 401. The iPhone checklist remains the owner's action.
+Record the verified `f2774a0` release and stop. The owner can use `IOS-OWNER-CHECKLIST.md` on the physical iPhone; catalog-only API enrichment remains a separate backlog item.
