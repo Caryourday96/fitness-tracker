@@ -14,7 +14,7 @@ import { createPrivateBackup, verifyLatestPrivateBackup } from './backups.js';
 import { suggestMeals, validMealSettings } from './meal-guidance.js';
 import { summarizeWorkout } from './public/workout-recap.js';
 import { weeklyReview, weekBounds } from './weekly-review.js';
-import { trainingTemplate, trainingContext, validSchedule, withCatalogOptions } from './training.js';
+import { alternateWorkoutPlan, trainingTemplate, trainingContext, validSchedule, withCatalogOptions } from './training.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3030);
@@ -195,6 +195,21 @@ async function route(req,res) {
   }
   if(method==='POST' && u.pathname==='/api/checkin') { const b=await json(req), p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data), day=b.day||dayFor(p.timezone); db.prepare('INSERT INTO checkins(user_id,day,data) VALUES(?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data').run(uid,day,JSON.stringify(b)); let existing=db.prepare('SELECT status FROM plans WHERE user_id=? AND day=?').get(uid,day); if(!existing||existing.status==='unstarted') db.prepare('INSERT INTO plans(user_id,day,data,status) VALUES(?,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data,status=excluded.status').run(uid,day,JSON.stringify(planFor(b,p,day,planningContext(uid,day,b))),'unstarted'); return send(res,200,{ok:true,day}); }
   if(method==='POST' && u.pathname==='/api/plan/confirm') { const p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data), day=dayFor(p.timezone), c=db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day); if(!c) return send(res,400,{error:'Complete today’s check-in first'}); if(db.prepare('SELECT 1 FROM workouts WHERE user_id=? AND day=?').get(uid,day)) return send(res,409,{error:'Resume your saved workout instead of regenerating it.'}); const check=JSON.parse(c.data),plan=planFor(check,p,day,planningContext(uid,day,check)); db.prepare('INSERT INTO plans(user_id,day,data,status) VALUES(?,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data,status=excluded.status').run(uid,day,JSON.stringify(plan),'confirmed'); return send(res,200,{ok:true,plan:{...plan,status:'confirmed'}}); }
+  if(method==='POST' && u.pathname==='/api/plan/alternative') {
+    const p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data),day=dayFor(p.timezone);
+    if(db.prepare('SELECT 1 FROM workouts WHERE user_id=? AND day=?').get(uid,day))return send(res,409,{error:'Resume your saved workout; an active or completed workout cannot be replaced.'});
+    const checkRow=db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day),row=db.prepare('SELECT data,status FROM plans WHERE user_id=? AND day=?').get(uid,day);
+    if(!checkRow||!row||row.status!=='confirmed')return send(res,409,{error:'Confirm today’s check-in and plan first.'});
+    const check=JSON.parse(checkRow.data),current=JSON.parse(row.data),context=planningContext(uid,day,check);
+    const safe=planFor(check,p,day,context);
+    if(safe.kind==='safety-stop'||check.pain==='movement-pain'||check.soreness==='high'||(check.energy==='low'&&current.kind!=='recovery-strength'))return send(res,409,{error:'Workout alternatives are unavailable with today’s safety or recovery check-in. Reconfirm the plan if your check-in changed.'});
+    if(current.kind==='recovery'||(safe.kind==='recovery'&&current.kind!=='rest-day-override')||!current.exercises?.some(exercise=>exercise.pattern!=='cardio'))return send(res,409,{error:'Keep today’s recovery guidance or choose an eligible rest-day option first.'});
+    if(current.kind==='rest-day-override'&&check.energy!=='high')return send(res,409,{error:'A regular workout override requires high energy on today’s check-in.'});
+    const plan=alternateWorkoutPlan(current,p,check,context.lastExerciseNames||[]);
+    if(!plan)return send(res,409,{error:'No other suitable exercise mix is available with today’s equipment.'});
+    db.prepare('UPDATE plans SET data=? WHERE user_id=? AND day=? AND status=?').run(JSON.stringify(plan),uid,day,'confirmed');
+    return send(res,200,{ok:true,plan:{...withCatalogOptions(plan,p,check),status:'confirmed'}});
+  }
   if(method==='POST' && u.pathname==='/api/plan/rest-day-override') {
     const body=await json(req),mode=body.mode==='regular'?'regular':body.mode==='light'?'light':null;
     if(!mode)return send(res,400,{error:'Choose either a regular workout or an easy walk.'});

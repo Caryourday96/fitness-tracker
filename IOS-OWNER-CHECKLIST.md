@@ -3,7 +3,7 @@
 Run these checks on the iPhone you use for the tracker at `https://fit.adeticket.com`. They are not verified by desktop or CI checks.
 
 1. Sign in with Google, refresh once, and confirm the dashboard remains signed in. Sign out and sign in again.
-2. Open an active workout, record one strength set and one treadmill entry with your actual units, leave the page, return, and confirm **Resume workout** restores the entries.
+2. On a Ready workout, confirm eligible exercises show choices before **Start workout**. Select an alternative, start the workout, and confirm the chosen exercise name appears in the log. Then record one strength set and one treadmill entry with your actual units, leave the page, return, and confirm **Resume workout** restores the entries.
 3. On a workout set, start a rest timer, switch to another app for at least 10 seconds, then return. Confirm the remaining time reflects the elapsed time. Pause, resume, skip, and refresh once to verify the saved timer state.
 4. Open History. Confirm charts fit the screen, gaps stay empty, units are clear, and the “days recorded” coverage matches your entries.
 5. Upload a non-sensitive test PNG/JPEG, preview it, edit caption/date/category, replace it, and delete it. Confirm the preview is visible only while signed in.

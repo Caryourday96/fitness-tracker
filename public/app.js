@@ -3,6 +3,13 @@ import { renderShareSettings } from './share.js';
 import { progressChartData } from './progress-charts.js';
 import { restSeconds } from './rest-timer.js';
 const $=s=>document.querySelector(s), app=$('#app'); let mode='login', state=null;
+if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!window.navigator.standalone&&!window.matchMedia('(display-mode: standalone)').matches){
+  for(const host of [$('#auth'),$('#dashboard')]){
+    const guide=document.createElement('details');guide.className='install-guide';
+    guide.innerHTML='<summary>Add Steady to your Home Screen</summary><p>In Safari, tap Share (or Page Menu, then Share), choose Add to Home Screen, turn on Open as Web App if offered, then tap Add. If the option is missing, scroll down to Edit Actions.</p>';
+    if(host.id==='dashboard')host.querySelector('.nav')?.after(guide);else host.append(guide);
+  }
+}
 if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.getRegistrations().then(registrations=>Promise.all(registrations.filter(registration=>[registration.active,registration.waiting,registration.installing].some(worker=>worker?.scriptURL===new URL('/static/sw.js',location.origin).href)).map(registration=>registration.unregister()))).catch(()=>{});if('caches' in window)caches.keys().then(keys=>Promise.all(keys.filter(key=>key==='steady-public-shell-v1').map(key=>caches.delete(key)))).catch(()=>{})}
 async function api(url,opt={}){const r=await fetch(url,{...opt,headers:{'Content-Type':'application/json','X-Requested-With':'Steady',...(opt.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const err=Error(d.error||'Request failed');err.status=r.status;throw err}return d}
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -363,9 +370,22 @@ const renderTodayWithExerciseCatalog=renderToday;
 renderToday=()=>{
   renderTodayWithExerciseCatalog();
   const attribution=state.plan?.catalogAttribution,host=$('#view-today');
-  if(!attribution||!host)return;
+  if(!host)return;
   const panel=host.querySelector('#startWorkout')?.closest('.panel')||host.querySelector('#confirmPlan')?.closest('.panel');
-  if(panel&&!panel.querySelector('#exerciseCatalogCredit')){
+  if(!state.workout&&state.plan?.status==='confirmed'&&panel&&state.plan.exercises?.some(exercise=>exercise.pattern!=='cardio'&&exercise.substitutions?.some(option=>option.name!==exercise.name&&option.pattern===exercise.pattern))){
+    const actions=panel.querySelector('.actions');
+    if(actions&&!panel.querySelector('#anotherWorkout')){
+      const button=document.createElement('button');button.type='button';button.id='anotherWorkout';button.className='ghost';button.textContent='Show another workout';
+      button.onclick=()=>saveAction(()=>api('/api/plan/alternative',{method:'POST',body:'{}'}));
+      actions.before(button);
+      const previous=(state.workoutHistory||[]).find(workout=>workout.day<state.day&&(workout.status==='completed'||workout.data?.exercises?.some(exercise=>exercise.sets?.length)));
+      const names=new Set((previous?.data?.exercises||[]).map(exercise=>exercise.name));
+      if(state.plan.exercises.some(exercise=>names.has(exercise.name))){
+        const note=document.createElement('p');note.className='muted';note.textContent='Some exercises match your last workout. Tap Show another workout for a different suitable mix before starting.';button.before(note);
+      }
+    }
+  }
+  if(attribution&&panel&&!panel.querySelector('#exerciseCatalogCredit')){
     const note=document.createElement('p');note.id='exerciseCatalogCredit';note.className='muted';
     note.append('Optional exercise alternatives use catalog data from ');
     const link=document.createElement('a');link.href=attribution.url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='ExerciseAPI';note.append(link);

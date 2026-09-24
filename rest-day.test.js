@@ -62,6 +62,7 @@ test('rest-day override requires a safe check-in and cannot replace a started wo
     ]) {
       assert.equal((await request('/api/checkin', { ...check, trainedYesterday: 'yes', ...blocked })).status, 200);
       assert.equal((await request('/api/plan/rest-day-override', { mode: 'regular' })).status, 409);
+      assert.equal((await request('/api/plan/alternative', {})).status, 409);
     }
     assert.equal((await request('/api/checkin', { ...check, trainedYesterday: 'yes', energy: 'medium' })).status, 200);
     assert.equal((await request('/api/plan/rest-day-override', { mode: 'regular' })).status, 409);
@@ -71,8 +72,17 @@ test('rest-day override requires a safe check-in and cannot replace a started wo
     const body = await regular.json();
     assert.equal(body.plan.kind, 'rest-day-override');
     assert.ok(body.plan.exercises.some(exercise => exercise.pattern === 'cardio'));
+    const alternative = await request('/api/plan/alternative', {});
+    assert.equal(alternative.status, 200);
+    const changed = (await alternative.json()).plan;
+    assert.equal(changed.kind, 'rest-day-override');
+    assert.equal(changed.exercises.at(-1).name, body.plan.exercises.at(-1).name);
+    assert.equal(changed.exercises.at(-1).targetMinutes, body.plan.exercises.at(-1).targetMinutes);
+    assert.ok(changed.exercises.slice(0,-1).some((exercise,index)=>exercise.name!==body.plan.exercises[index].name));
+    assert.deepEqual(changed.exercises.map(exercise=>exercise.sets),body.plan.exercises.map(exercise=>exercise.sets));
     assert.equal((await request('/api/plan/rest-day-override', { mode: 'light' })).status, 409);
     assert.equal((await request('/api/workout', { data: { exercises: [{ name: 'Treadmill walk', sets: [{ duration: 10 }] }] }, status: 'active' })).status, 200);
+    assert.equal((await request('/api/plan/alternative', {})).status, 409);
     assert.equal((await request('/api/plan/rest-day-override', { mode: 'regular' })).status, 409);
 
     // Restore only this disposable test account's recovery state to exercise the other choice.

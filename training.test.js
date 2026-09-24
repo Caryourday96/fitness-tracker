@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { planFor } from './server.js';
-import { trainingContext, trainingTemplate, validSchedule, withCatalogOptions } from './training.js';
+import { alternateWorkoutPlan, trainingContext, trainingTemplate, validSchedule, withCatalogOptions } from './training.js';
 
 test('preferred weekdays must be empty or match the distinct selected schedule',()=>{
   assert.equal(validSchedule({schedule:3,preferredDays:[]}),true);
@@ -80,4 +80,26 @@ test('older confirmed plans gain catalog choices without rewriting their saved w
   assert.equal(saved.exercises[0].substitutions,undefined);
   const home=withCatalogOptions(saved,{equipment:'home / walking'},{gym:'no'});
   assert.equal(home.catalogAttribution,null);
+});
+
+test('a fresh plan avoids yesterday’s exact exercises and whole-workout alternatives keep the prescription',()=>{
+  const yesterday=trainingTemplate({schedule:3,equipment:'commercial gym'},{},3);
+  const actual=yesterday.exercises.map(exercise=>({name:exercise.name,pattern:exercise.pattern,sets:[{reps:10}]}));
+  const context=trainingContext([{day:'2026-09-23',status:'completed',data:{exercises:actual,planSnapshot:{template:yesterday.template,exercises:yesterday.exercises}}}],'2026-09-24',{trainedYesterday:'no'});
+  const next=trainingTemplate({schedule:3,equipment:'commercial gym'},context,3);
+  assert.equal(next.title,'Full-body B');
+  assert.ok(next.exercises.every(exercise=>!context.lastExerciseNames.includes(exercise.name.toLowerCase())));
+  const saved={kind:'rest-day-override',title:'Regular workout — rest-day override',reason:'Safe regular session.',safety:'Stop for symptoms.',exercises:[...yesterday.exercises,{name:'Treadmill walk',pattern:'cardio',sets:1,reps:'15 min'}]};
+  const different=alternateWorkoutPlan(saved,{equipment:'commercial gym'},{gym:'yes'},context.lastExerciseNames);
+  assert.ok(different);
+  assert.deepEqual(different.exercises.map(exercise=>exercise.pattern),saved.exercises.map(exercise=>exercise.pattern));
+  assert.deepEqual(different.exercises.map(exercise=>exercise.sets),saved.exercises.map(exercise=>exercise.sets));
+  assert.equal(different.exercises.at(-1).name,'Treadmill walk');
+  assert.ok(different.exercises.slice(0,-1).every(exercise=>!context.lastExerciseNames.includes(exercise.name.toLowerCase())));
+  assert.deepEqual(saved.exercises.map(exercise=>exercise.name),yesterday.exercises.map(exercise=>exercise.name).concat('Treadmill walk'));
+  const homeSaved={...saved,exercises:[{name:'Leg press or sit-to-stand',pattern:'squat',sets:3,reps:'8–12',substitutions:yesterday.exercises[0].substitutions},{name:'Treadmill walk',pattern:'cardio',sets:1,reps:'15 min'}]};
+  const atHome=alternateWorkoutPlan(homeSaved,{equipment:'home / walking'},{gym:'no'},[]);
+  assert.ok(atHome);
+  assert.equal(atHome.exercises[0].equipment,'bodyweight');
+  assert.equal(alternateWorkoutPlan(saved,{equipment:'home / walking'},{gym:'no'},[]),null);
 });

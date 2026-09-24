@@ -2,13 +2,13 @@
 
 ## Install on iPhone
 
-Open `https://fit.adeticket.com` in Safari, tap **Share**, then **Add to Home Screen**. Launching from the new icon opens the app in a standalone window on supported iOS versions. The current release does not cache app pages or data offline; sign-in, workout tracking and saved records require a network connection. Sign out before lending the device to someone else.
+Open `https://fit.adeticket.com` in Safari. Tap **Share** (or **Page Menu**, then **Share**), scroll to **Add to Home Screen**, turn on **Open as Web App** if shown, then tap **Add**. If Add to Home Screen is missing, scroll to **Edit Actions** and add it there. The sign-in and Today screens also have an expandable guide. The current release requires a network connection for sign-in and saved records. Sign out before lending the device to someone else.
 
 ## Workout catalog decision
 
 Workout plans remain generated locally from deterministic movement templates and safety/recovery rules. A small ExerciseAPI snapshot adds optional, same-pattern exercise alternatives for commercial-gym plans; it does not create weight-loss or medical advice. Each choice keeps its movement pattern, names its equipment, and saves as a separate exercise history. Home plans do not assume access to gym equipment. The plan and app still work without an API connection.
 
-On Today, complete the check-in and confirm the plan. On the **Ready** screen, use **Choose an exercise** under a strength movement to preview its equipment and cue. Tap **Start workout** to save that choice. Existing saved plans also show the optional choices without changing their prescribed sets or cardio. You can still change an exercise during the active workout with **Use alternative**.
+On Today, complete the check-in and confirm the plan. On the **Ready** screen, tap **Show another workout** to cycle through suitable exercise mixes before starting. New plans avoid yesterday’s exact exercise names when same-pattern choices are available. You can also use **Choose an exercise** under a strength movement to preview its equipment and cue. Tap **Start workout** to save your choices. Existing saved plans can use the button without changing their prescribed sets or cardio. Once a workout has started, its plan cannot be replaced; **Use alternative** can still change an unfinished exercise.
 
 The imported catalog snapshot is in `exercise-catalog.json`, retrieved from [ExerciseAPI](https://exercise-api.com) and licensed CC BY 4.0. The plan shows the required attribution when these alternatives are present. To refresh the allowlisted snapshot, run `npm run catalog:sync`; the import verifies the license and each reviewed movement-pattern mapping before writing. This is a development-time request only: production workouts do not send account, health, workout-history, or screenshot data to the provider.
 
