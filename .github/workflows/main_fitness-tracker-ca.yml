@@ -40,6 +40,7 @@ jobs:
           name: node-app
           path: |
             server.js
+            meal-guidance.js
             backups.js
             security.js
             progress.js
