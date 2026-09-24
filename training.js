@@ -68,6 +68,20 @@ export function trainingTemplate(profile={},context={},sets=3){
   return{template:{schedule,index},title:selected.title,exercises,catalogAttribution:exercises.some(exercise=>exercise.substitutions.some(option=>option.source==='ExerciseAPI'))?{text:exerciseCatalogAttribution,url:exerciseCatalogSourceUrl}:null};
 }
 
+// Older saved plans may predate the optional catalog. Decorate only the response;
+// never regenerate a confirmed plan or rewrite its prescribed work.
+export function withCatalogOptions(plan,profile={},check={}){
+  if(!plan||!Array.isArray(plan.exercises))return plan;
+  const home=check.gym==='no'||String(profile.equipment||'').toLowerCase().includes('home');
+  const exercises=plan.exercises.map(exercise=>{
+    const existing=(exercise.substitutions||[]).filter(option=>!home||option.source!=='ExerciseAPI');
+    const options=[...existing,...catalogAlternatives(exercise.pattern,{home})];
+    return{...exercise,substitutions:options.filter((option,index)=>options.findIndex(other=>other.name.toLowerCase()===option.name.toLowerCase())===index)};
+  });
+  const sourced=exercises.some(exercise=>exercise.substitutions.some(option=>option.source==='ExerciseAPI'));
+  return{...plan,exercises,catalogAttribution:sourced?{text:exerciseCatalogAttribution,url:exerciseCatalogSourceUrl}:null};
+}
+
 export function trainingContext(rows=[],day,check={}){
   const logged=rows.filter(row=>row.day<day&&(row.status==='completed'||row.data?.exercises?.some(exercise=>exercise.sets?.length)));
   const current=Date.parse(`${day}T12:00:00Z`);

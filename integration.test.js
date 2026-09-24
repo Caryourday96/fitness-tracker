@@ -37,9 +37,15 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.deepEqual((await (await request('/api/me',undefined,'GET')).json()).profile.preferredDays,preferredDays);
  assert.equal((await request('/api/checkin',{symptoms:'none',energy:'medium'})).status,200);
  assert.equal((await request('/api/plan/confirm',{})).status,200);
+ const legacyDb=new DatabaseSync(path.join(process.env.DATA_DIR,'fitness.sqlite'));
+ const savedPlan=JSON.parse(legacyDb.prepare('SELECT data FROM plans LIMIT 1').get().data);
+ delete savedPlan.catalogAttribution;
+ savedPlan.exercises.forEach(exercise=>delete exercise.substitutions);
+ legacyDb.prepare('UPDATE plans SET data=?').run(JSON.stringify(savedPlan));legacyDb.close();
  const confirmedPlan=await (await request('/api/me',undefined,'GET')).json();
  assert.equal(confirmedPlan.plan.catalogAttribution.url,'https://exercise-api.com');
  assert.ok(confirmedPlan.plan.exercises.some(exercise=>exercise.substitutions?.some(option=>option.source==='ExerciseAPI'&&option.equipment)));
+ assert.equal(confirmedPlan.plan.exercises[0].sets,savedPlan.exercises[0].sets);
  const equipment=await request('/api/exercise-profiles',{exerciseName:'Treadmill',equipmentName:'Movati treadmill',loadMeaning:'total',setupNote:'Comfortable incline'});assert.equal(equipment.status,201);const equipmentId=(await equipment.json()).id;
  assert.equal((await request('/api/exercise-profiles/'+equipmentId,{setupNote:'Use handrails only for balance'},'PUT')).status,200);
  const data={exercises:[{name:'Treadmill',sets:[{duration:12,distance:0.8,incline:1,equipmentProfileId:equipmentId}]}]};

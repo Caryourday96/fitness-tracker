@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { planFor } from './server.js';
-import { trainingContext, trainingTemplate, validSchedule } from './training.js';
+import { trainingContext, trainingTemplate, validSchedule, withCatalogOptions } from './training.js';
 
 test('preferred weekdays must be empty or match the distinct selected schedule',()=>{
   assert.equal(validSchedule({schedule:3,preferredDays:[]}),true);
@@ -66,5 +66,18 @@ test('workout mix alternatives preserve the movement pattern and home plans avoi
   assert.ok(home.exercises.every(exercise=>exercise.pattern!=='pull'));
   assert.ok(home.exercises.every(exercise=>exercise.substitutions.every(option=>option.source!=='ExerciseAPI')));
   assert.ok(home.exercises.every(exercise=>exercise.substitutions.every(option=>!['Machine chest press','Leg press','Dumbbell Romanian deadlift'].includes(option.name))));
+  assert.equal(home.catalogAttribution,null);
+});
+
+test('older confirmed plans gain catalog choices without rewriting their saved work',()=>{
+  const saved={kind:'rest-day-override',title:'Regular workout — rest-day override',exercises:[{name:'Leg press or sit-to-stand',pattern:'squat',sets:3,reps:'8–12'},{name:'Treadmill walk',pattern:'cardio',sets:1,reps:'15 min'}]};
+  const result=withCatalogOptions(saved,{equipment:'commercial gym'},{gym:'yes'});
+  assert.equal(result.exercises[0].sets,3);
+  assert.equal(result.exercises[0].reps,'8–12');
+  assert.ok(result.exercises[0].substitutions.some(option=>option.source==='ExerciseAPI'));
+  assert.equal(result.exercises[1].substitutions.length,0);
+  assert.match(result.catalogAttribution.text,/CC BY 4\.0/);
+  assert.equal(saved.exercises[0].substitutions,undefined);
+  const home=withCatalogOptions(saved,{equipment:'home / walking'},{gym:'no'});
   assert.equal(home.catalogAttribution,null);
 });

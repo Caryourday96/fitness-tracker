@@ -371,6 +371,28 @@ renderToday=()=>{
     const link=document.createElement('a');link.href=attribution.url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='ExerciseAPI';note.append(link);
     note.append(' under CC BY 4.0. The app keeps workout programming, equipment filtering, and safety rules local.');panel.append(note);
   }
+  if(!state.workout&&state.plan?.status==='confirmed'&&panel){
+    const selectors=new Map();
+    panel.querySelectorAll('.exercise').forEach((card,slot)=>{
+      const exercise=state.plan.exercises[slot],options=exercise?.substitutions||[];
+      if(!options.length)return;
+      const label=document.createElement('label');label.className='catalog-choice';
+      label.textContent=`Choose an exercise for ${exercise.name}`;
+      const select=document.createElement('select');select.setAttribute('aria-label',`Exercise choice for ${exercise.name}`);
+      const planned=document.createElement('option');planned.value='';planned.textContent=`Keep planned: ${exercise.name}`;select.append(planned);
+      for(const option of options){if(option.name===exercise.name)continue;const item=document.createElement('option');item.value=option.name;item.textContent=option.equipment?`${option.name} · ${option.equipment}`:option.name;select.append(item)}
+      const preview=document.createElement('p');preview.className='muted';preview.textContent='Choose an option before starting. Your choice is saved when you tap Start workout.';
+      select.onchange=()=>{const option=options.find(item=>item.name===select.value);preview.textContent=option?`${option.name}${option.equipment?` · ${option.equipment}`:''}${option.cue?` · ${option.cue}`:''}`:'The planned exercise will be used.'};
+      label.append(select);card.append(label,preview);selectors.set(slot,select);
+    });
+    const start=panel.querySelector('#startWorkout');
+    if(start&&selectors.size)start.onclick=()=>saveAction(()=>api('/api/workout',{method:'POST',body:JSON.stringify({
+      data:{exercises:state.plan.exercises.map((exercise,slot)=>{
+        const choice=(exercise.substitutions||[]).find(option=>option.name===selectors.get(slot)?.value);
+        return choice?{name:choice.name,pattern:exercise.pattern,muscles:choice.muscles,equipment:choice.equipment,cue:choice.cue,source:choice.source,sourceId:choice.sourceId,license:choice.license,slot,substitutedFrom:exercise.name,sets:[]}:{name:exercise.name,pattern:exercise.pattern,slot,sets:[]};
+      }),startedAt:new Date().toISOString()},status:'active'
+    })}));
+  }
   if(!state.workout)return;
   host.querySelectorAll('.exercise[data-exercise-slot]').forEach(card=>{
     const slot=Number(card.dataset.exerciseSlot),index=activeWorkoutIndex(state.workout,slot),exercise=state.workout.exercises[index];
