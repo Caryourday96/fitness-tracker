@@ -1,6 +1,6 @@
 # Fitness tracker backlog
 
-Local status for `fix/persistent-data` release candidate. Implemented items below are tested locally but **not yet deployed**. Production release is gated on a fresh verified data backup. This list distinguishes code complete from owner or infrastructure work.
+Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 35992253218 (success). The production app remains single-instance SQLite and uploads on persistent App Service storage; this is not managed database/object storage or off-site backup. The deployment did not include a verified fresh backup. This list distinguishes deployed code from owner or infrastructure work.
 
 ## Completed in this release candidate
 
@@ -21,7 +21,7 @@ Local status for `fix/persistent-data` release candidate. Implemented items belo
 - **P0 managed storage/off-site backup and restore:** production is single-instance SQLite and uploads on its mounted App Service volume. Restart/deployment persistence is verified, but this is not scale-safe, managed database/object storage, off-site backup or disaster recovery. Do not provision paid resources without price/choice approval. Next: regain authenticated Azure access, inspect existing storage and pricing, choose an approved low-cost destination, then run a restore test.
 - **P0 clinician review:** owner’s clinician needs to review the blood-pressure and exercise guidance and personal restrictions before this is medically cleared. The app retains conservative safety stops meanwhile.
 - **P1 password recovery:** no self-service reset exists. Google account recovery is the available alternate sign-in path; add password reset only after an owner-approved secure recovery channel is chosen.
-- **Release verification:** owner-device Google sign-in, saved workouts (including yesterday), upload/replace/delete, print and export remain to be checked in iPhone Safari once this release is deployed. No private production records were inspected by this agent.
+- **Owner-device verification:** Google sign-in, saved workouts (including yesterday), upload/replace/delete, print and export remain to be checked in iPhone Safari after this release. No private production records were inspected by this agent.
 
 ## Later / intentionally deferred
 
@@ -32,6 +32,6 @@ Local status for `fix/persistent-data` release candidate. Implemented items belo
 - More advanced charts and optional AI copy; deterministic safety logic must remain authoritative.
 - Apple Health direct integration is intentionally out of scope; manual logging and screenshot attachment are supported.
 
-## Release gate and exact next action
+## Release status and exact next action
 
-Azure CLI in the current environment reports that it is not logged in. Before deployment, authenticate to the existing subscription, make a fresh complete backup of the live data directory and uploaded files (including SQLite WAL state), verify hashes and SQLite integrity, then release only this isolated worktree. After Actions succeeds, verify live status and let the owner test on iPhone. Never deploy from the broader dirty root checkout.
+The isolated release is deployed; GitHub Actions build and deploy jobs both succeeded. https://fit.adeticket.com/ and /api/status returned HTTP 200; status reports hasUser=true. A fresh backup was not verified before deployment, and this agent did not inspect private health records. Next: the owner should test Google sign-in, yesterday's saved workout, image upload/replace/delete, export and print on iPhone Safari. Then set up and test an off-site backup/restore path before future schema-changing releases. Never deploy from the broader dirty root checkout.

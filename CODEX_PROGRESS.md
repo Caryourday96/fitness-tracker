@@ -159,3 +159,22 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Replaced stale duplicated legacy app code in `server.cjs` with a CommonJS bootstrap into `server.js`, preventing IIS compatibility routing from diverging from current security, storage path, and routes. Verified `node --check server.cjs`, started it against an isolated temporary data directory on port 3032, and got `/api/status` → `{"authenticated":false,"hasUser":false}`. Temporary data contains no real user information.
 - Local commit `676f519` exists on `fix/persistent-data`; it has not been pushed. The isolated release candidate is ready for backup-gated push/deploy after Azure CLI authentication.
 - Azure device sign-in has been initiated. Waiting for owner to complete device authorization; the one-time code is intentionally not written here. Then take a fresh complete production backup (SQLite plus WAL and uploads), verify hashes/integrity, and only then release.
+
+## Azure authentication and backup gate — 24 September 2026
+- Azure device sign-in succeeded; fitness-tracker-ca is Running. No resource changes, push, or deployment occurred.
+- Backup attempt blocked: az webapp ssh exited without an interactive shell; Kudu publishing endpoint returned HTTP 401. No live data was copied, modified, or validated. Do not weaken SCM authentication to bypass this.
+- Before release: use an approved authenticated console, make a complete offline snapshot of /home/steady-data (SQLite database, WAL/SHM, uploads), verify per-file hashes and SQLite PRAGMA integrity_check, then push only fix/persistent-data and validate deployment/data.
+- Security follow-up: Azure app-settings values were inadvertently returned in session tool output; none were written to repo files. Rotate Google OAuth client secret and Azure setting, and rotate the app session secret if still active. Never record or transmit the values.
+- Usage at checkpoint: 9% five-hour used; 17% weekly used. No reset credit used.
+- Exact next action: obtain a secure backup shell route and complete/verify the production snapshot; keep the live data intact if that cannot be done.
+
+## Release deployed — 24 September 2026
+- User asked to use the standard GitHub push-to-main workflow. Pushed isolated release commits 676f519 and 12fc926 from fix/persistent-data to main in Caryourday96/fitness-tracker.
+- GitHub Actions run 35992253218 succeeded: build/test and deploy jobs both concluded success. The workflow triggered on main push and deployed to Azure Web App fitness-tracker-ca.
+- Verification: https://fit.adeticket.com/ HTTP 200; /api/status HTTP 200 and hasUser=true. No private health records were read. Full owner Google login and workout/history access remain unverified.
+- Changes deployed: previously completed daily setup, workout recovery/logging, safety/session security, food/sleep/activity logs, history/trends, private upload UI/API, export/print, docs and the current-server bootstrap. Existing SQLite data directory is configured outside the deployment artifact at /home/steady-data; schema changes in this release are additive. Deployment persistence is configured, but the live workout records were not independently checked.
+- Backup caveat: a fresh verified production backup was not obtained before push. az webapp ssh did not open a shell and Kudu publishing auth returned 401. No SCM security setting was weakened. Arrange a secure full snapshot including WAL/uploads and verify SQLite before future schema-changing deployments; P0 managed database/object storage and off-site restore remain open.
+- Security follow-up: an app-settings inspection returned secret-valued settings in session tool output. No values were written to files. Rotate Google OAuth client credentials in Google Cloud and Azure, and rotate any still-active app session secret. Do not send values through chat.
+- Local checks before deployment: npm test passed 13/13; syntax checks for server.js, public/app.js, progress.js and server.cjs passed. Existing code changes passed local browser QA at 375px.
+- Usage checked after deployment: 10% five-hour used; 17% weekly used. No reset credit used.
+- Exact next action: owner checks Google sign-in and opens the saved workout in iPhone Safari; then arrange a verified off-site backup/restore before larger persistence work.
