@@ -5,7 +5,7 @@
 - As the private account owner, I can sign in and keep progress in durable server storage.
 - As the user, I complete a daily check-in before a plan is confirmed, and the same inputs produce the same plan.
 - As the user, I can resume a saved workout, log sets, and complete it without duplicate records.
-- As the user, I can edit settings, inventory, measurements, and export check-ins as CSV.
+- As the user, I can edit profile settings and food inventory (category, preference, notes, availability), log meals/snacks, sleep and activity, and export saved records as CSV or a printable summary.
 - As the user, urgent symptoms or an urgent blood-pressure reading stop plan generation while history remains accessible.
 
 ## Screens and flows
@@ -14,7 +14,7 @@ Login/setup → Today/check-in → proposed plan → live workout → history/ex
 
 ## Schema
 
-`users`, `profiles`, `sessions`, `checkins`, `plans`, `workouts`, `measurements`, and `foods` are SQLite tables. Every record except the account is keyed by `user_id`; protected API routes resolve that ID from an opaque, hashed session cookie.
+`users`, `profiles`, `sessions`, `checkins`, `plans`, `workouts`, `measurements`, `foods`, `food_logs`, `sleep_logs`, `activity_logs`, `day_reviews`, and `uploads` are SQLite tables. Every record except the account is keyed by `user_id`; protected API routes resolve that ID from an opaque, hashed session cookie. Uploaded image files are kept separately under the private data directory and served only through authenticated routes.
 
 ## Adaptation precedence
 
@@ -24,9 +24,12 @@ Login/setup → Today/check-in → proposed plan → live workout → history/ex
 4. Repeatable training sequence.
 5. Performance progression only after actual logged sets; no automatic load increase is implemented in this MVP.
 
+The planner counts completed or actively logged sessions in the preceding seven days: it recommends recovery once the selected 3/4-session preference is met, and makes a fourth session lighter after three logged sessions. It does not yet assign preferred weekdays or create distinct upper/lower templates.
+
 ## Safety sources reviewed
 
 - American Heart Association, “When to call 911 for high blood pressure”: https://www.heart.org/en/health-topics/high-blood-pressure/when-to-call-911-about-high-blood-pressure (reviewed 2026-09-23).
+- American Heart Association, “Blood Pressure Explained”: https://www.heart.org/en/health-topics/high-blood-pressure/blood-pressure-explained (reviewed 2026-09-24). Above 180 systolic or 120 diastolic, repeat after at least one minute; if still high, contact a health professional without symptoms and call emergency services when concerning symptoms occur.
 - American Heart Association, “Getting active to control high blood pressure”: https://www.heart.org/en/healthy-living/fitness/fitness-basics/getting-active-to-control-high-blood-pressure (reviewed 2026-09-23).
 - CDC, “Measuring Physical Activity Intensity”: https://www.cdc.gov/physical-activity-basics/measuring/index.html (reviewed 2026-09-23).
 

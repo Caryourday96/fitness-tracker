@@ -7,7 +7,6 @@ const { fileURLToPath } = require('node:url');
 
 const ROOT = path.dirname(__filename);
 const PORT = Number(process.env.PORT || 3030);
-const SECRET = process.env.SESSION_SECRET || 'local-development-only-change-me';
 const DATA = path.join(ROOT, 'data'); fs.mkdirSync(DATA, { recursive: true });
 const UPLOADS = path.join(DATA, 'uploads'); fs.mkdirSync(UPLOADS, { recursive: true, mode: 0o700 });
 const db = new DatabaseSync(path.join(DATA, 'fitness.sqlite'));

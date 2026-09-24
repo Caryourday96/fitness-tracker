@@ -2,13 +2,13 @@
 
 Recommended architecture: a separate app such as `fit.adeticket.com`, isolated from `ff.adeticket.com`, `play.adeticket.com`, `adeticket.com`, and `kayodeadetunji.com`. Use a separate Azure App Service or Container App with HTTPS, a persistent mounted volume only for development SQLite, and preferably Azure Database for PostgreSQL plus private Blob Storage for production.
 
-Before deployment: create a new GitHub repository, configure `SESSION_SECRET` and database/storage settings as platform secrets, enable HTTPS-only, set secure cookie behavior, configure backups and restore testing, then add a subdomain DNS record. No DNS, hosting, or production authentication changes have been made by this build.
+Before deployment: configure database/storage settings, enable HTTPS-only, confirm production cookies are Secure, and configure off-site backups with a restore rehearsal. The app stores only a SHA-256 hash of a cryptographically random 256-bit session token, so it has no shared session-signing secret. Production currently uses a persistent App Service volume and one instance.
 
 ## Current Azure proposal
 
 Create a separate Canada Central Azure Web App in resource group `Kayode_IGO`, with the app resource named `fitness-tracker-ca` and the user-facing hostname `fit.adeticket.com`. The Azure Web App hostname is infrastructure-only. Connect the GitHub `main` branch through an OIDC deployment workflow, configure a persistent database/storage service, and keep this app isolated from Friends Showdown and its storage.
 
-The repository now includes `.github/workflows/azure-webapp.yml`. Configure the Web App `fitness-tracker-ca` in `Kayode_IGO` / Canada Central, set startup command `node server.js`, configure `SESSION_SECRET`, `NODE_ENV=production`, HTTPS-only, and the three GitHub Actions OIDC secrets (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`). Configure a persistent database/volume before enabling personal use. The workflow runs tests before deployment. DNS and the secured TLS binding for `fit.adeticket.com` are configured separately; direct users to the custom subdomain.
+The Web App `fitness-tracker-ca` in `Kayode_IGO` / Canada Central uses startup command `node server.js`, `NODE_ENV=production`, HTTPS-only, and GitHub Actions OIDC secrets (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`). DNS and the secured TLS binding for `fit.adeticket.com` are configured; use the custom subdomain. The deployment workflow runs tests first.
 
 Google sign-in uses the Azure Easy Auth provider. Configure the Google client redirect URI as `https://fit.adeticket.com/.auth/login/google/callback`, keep unauthenticated requests allowed so the app's own account flow remains available, and test from the custom domain. The app bridges the authenticated Azure principal to its single local account; it does not store a Google password or token.
 
