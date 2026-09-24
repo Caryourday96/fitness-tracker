@@ -74,6 +74,10 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.equal((await request('/api/meal-favourites/'+favouriteId,undefined,'DELETE')).status,200);
  const csv=await (await request('/api/export.csv',undefined,'GET')).text();assert.match(csv,/"'=HYPERLINK/);assert.match(csv,/"set"/);
  const printable=await request('/api/print-summary',undefined,'GET');assert.equal(printable.status,200);assert.match(await printable.text(),/Steady progress summary/);
+ const beforeShare=await (await request('/api/me',undefined,'GET')).json(),shareWorkout=structuredClone(beforeShare.workout);delete shareWorkout.version;delete shareWorkout.status;shareWorkout.exercises[0]={name:'Treadmill walk',pattern:'cardio',sets:[{duration:'12',distance:'0.8',distanceUnit:'mi',incline:'1'}]};
+ assert.equal((await request('/api/workout',{data:shareWorkout,version:beforeShare.workout.version,status:'completed'})).status,200);
+ const shareCreate=await request('/api/share/create',{});assert.equal(shareCreate.status,200);const shareToken=new URL((await shareCreate.json()).url).hash.slice(1);
+ const publicShare=await fetch(base+'/api/shared-workouts',{method:'POST',headers:{Origin:base,'X-Requested-With':'Steady','Content-Type':'application/json'},body:JSON.stringify({token:shareToken})});assert.equal(publicShare.status,200);const sharedWorkout=(await publicShare.json()).workouts[0];assert.equal(sharedWorkout.exercises[0].pattern,'cardio');assert.equal(sharedWorkout.exercises[0].sets[0].duration,12);assert.equal(sharedWorkout.exercises[0].sets[0].distance,0.8);assert.equal(sharedWorkout.exercises[0].sets[0].incline,1);
  assert.equal((await request('/api/logout',{})).status,200);
  assert.equal((await request('/api/me',undefined,'GET')).status,401);
  for(let i=0;i<8;i++)assert.equal((await request('/api/login',{email:'throttle@example.com',password:'wrong credentials'})).status,401);

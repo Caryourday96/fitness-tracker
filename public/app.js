@@ -25,7 +25,7 @@ document.addEventListener('input',e=>{if(!e.target.matches('#dashboard input,#da
 function wireToday(){
  const f=$('#checkin');if(f)f.onsubmit=e=>{e.preventDefault();saveAction(()=>api('/api/checkin',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(f)))}))};
  const cp=$('#confirmPlan');if(cp)cp.onclick=()=>saveAction(()=>api('/api/plan/confirm',{method:'POST'}));
- const st=$('#startWorkout');if(st)st.onclick=()=>{if(state.workout){document.querySelector('.exercise')?.scrollIntoView({behavior:'smooth'});return}saveAction(()=>api('/api/workout',{method:'POST',body:JSON.stringify({data:{exercises:state.plan.exercises.map(x=>({name:x.name,sets:[]})),startedAt:new Date().toISOString()},status:'active'})}))};
+ const st=$('#startWorkout');if(st)st.onclick=()=>{if(state.workout){document.querySelector('.exercise')?.scrollIntoView({behavior:'smooth'});return}saveAction(()=>api('/api/workout',{method:'POST',body:JSON.stringify({data:{exercises:state.plan.exercises.map(x=>({name:x.name,pattern:x.pattern,sets:[]})),startedAt:new Date().toISOString()},status:'active'})}))};
  const done=$('#completeWorkout');if(done)done.onclick=()=>{if(state.workout)saveAction(()=>api('/api/workout',{method:'POST',body:JSON.stringify({data:state.workout,version:state.workout.version,status:'completed'})}))};
  document.querySelectorAll('[data-save]').forEach(button=>button.onclick=()=>saveAction(async()=>{
    const i=Number(button.dataset.save),data=structuredClone(state.workout);

@@ -32,7 +32,7 @@ To test: use Settings → Private off-site backups → Back up now, then select 
 
 Before schema changes: stop the app, copy the complete DATA_DIR to a timestamped /home/steady-backups directory, verify every file and SQLite integrity, then restart. Never copy only fitness.sqlite while the app writes; SQLite may have committed records in WAL.
 
-Restore: stop the app; preserve the current data directory; choose a verified complete backup; copy it to a fresh /home restore directory; run PRAGMA integrity_check; set DATA_DIR to that directory; restart; verify account and workout access. Do not overwrite the only backup. These local backups protect deployment/migration mistakes, not deletion of the App Service storage. Off-service backup remains outstanding.
+Restore: stop the app; preserve the current data directory; choose a verified complete backup; copy it to a fresh /home restore directory; run PRAGMA integrity_check; set DATA_DIR to that directory; restart; verify account and workout access. Do not overwrite the only backup. These local backups protect deployment/migration mistakes, not deletion of the App Service storage. Off-service backups are configured in production; the owner previously reported that creating and verifying one succeeded. This task did not inspect backup contents or perform a restore. Azure CLI blob listing was denied for the current operator identity; the App Service managed identity remains separately configured with container-scoped access.
 
 The deployment artifact includes the server, backup helper, package manifests, public client, and production dependencies. The redundant deployment workflow is manual-only. Do not re-enable two concurrent production deployments.
 

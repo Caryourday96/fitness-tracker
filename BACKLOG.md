@@ -2,6 +2,8 @@
 
 Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 35992253218 (success). Production remains single-instance SQLite on persistent App Service storage. Private GRS Blob Storage is provisioned and backup integration is prepared in the isolated release candidate; completion still requires deployment, a real snapshot, Azure verification, and restart persistence checks.
 
+Latest app release: `90f387b` (starter food inventory and public accountability links), deployed to `https://fit.adeticket.com` by successful GitHub Actions run `36024218968`. Azure reports the Web App Running and HTTPS-only; backup configuration keys are present. The current Azure CLI identity cannot list private backup blobs, so this session does not independently verify a cloud snapshot. Owner previously reported creating and verifying a backup; the selected backlog intentionally does not require a post-restart or separate-target restore rehearsal.
+
 ## Completed in this release candidate
 
 - **P0 security:** same-origin and `X-Requested-With` checks for state-changing requests; login/setup throttles; bounded JSON parsing; Secure production cookies.
@@ -15,6 +17,9 @@ Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 359922532
 - **P1 private screenshots:** authenticated PNG/JPEG upload/list/preview/caption/date/replace/delete; size, signature and dimensions validated; common metadata stripped. Integration tests cover private image CRUD. Owner must still test iPhone Safari after release.
 - **P1 export:** authenticated formula-safe CSV covering saved record types and printable/PDF-friendly summary.
 - **Safety/security documentation:** AHA blood-pressure guidance source/review date; storage persistence and backup/restore limitations documented.
+- **P1 accountability partner — deployed:** optional public link with no partner sign-in. Anyone with the link can view up to 60 completed workouts; owner can rotate/revoke. Random token hash is stored; token travels in the fragment and viewer sends no owner cookies. Only dates, exercise names, logged sets and cardio are included. No measurements, food, sleep, notes, images or edits. GitHub Actions run `36024218968` passed build/tests and deploy; live route/auth smoke checks passed. Owner still needs to create and privately test a real link on iPhone. Revocation cannot remove copied data.
+- Partner follow-up fix in progress: preserve numeric values saved as form strings, and show cardio duration/distance/incline rather than a reps placeholder. Integration regression coverage added; deploy status will be recorded after Actions completes.
+- **P1 starter food inventory — deployed:** the foods supplied by the owner are seeded idempotently per account, preserving existing entries without inventing nutrition/allergen facts. Owner should verify them under Settings > Food inventory.
 
 ## Blocked on owner or external action
 
@@ -24,8 +29,6 @@ Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 359922532
 - **Owner-device verification:** Google sign-in, saved workouts (including yesterday), upload/replace/delete, print and export remain to be checked in iPhone Safari after this release. No private production records were inspected by this agent.
 
 ## Later / intentionally deferred
-
-- **P1 accountability partner — locally implemented, not deployed:** optional public link with no partner sign-in. Anyone who obtains the link can view up to 60 completed workouts; owner can rotate/revoke. Random token hash is stored; token travels in the fragment and viewer sends no owner cookies. Only dates, exercise names, logged sets and cardio are included. No measurements, food, sleep, notes, images or edits. Required before release: code review and CI; disclose that revocation cannot remove already copied data.
 
 - Preferred training weekdays plus genuinely distinct 3-day/4-day split templates (the current planner uses a rolling session budget and repeatable full-body templates).
 - OCR from screenshots, always requiring explicit review before saving.

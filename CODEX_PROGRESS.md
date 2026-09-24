@@ -1,9 +1,26 @@
 # Fitness tracker checkpoint — 23 September 2026
 
+## Partner workout units/cardio rendering fix — 24 September 2026
+- The owner screenshot showed blank `— reps` rows, including a treadmill. Form inputs are serialized by the client as strings; the partner serializer previously discarded these because it accepted only number-typed values. The initial workout creation path also dropped the exercise pattern.
+- Updated partner serialization to parse only finite numeric strings and expose only the cardio pattern allowlist. New workouts preserve pattern. Partner rendering identifies cardio, displays duration/distance/incline with units, and reports missing measurements without inventing reps.
+- Added an integration regression check for numeric-string cardio and anonymous partner serialization. Local JS syntax and diff checks pending before push; CI will run the full suite. Exact next action: deploy this small fix through main Actions, then recheck the live partner JS and endpoints. No token or private production workout accessed.
+
+## Starter foods and public accountability link — deployment complete — 24 September 2026
+- Commit `90f387bff2fbfb2d0719c20549d8627969cbd0ba` pushed to `main`; GitHub Actions run [36024218968](https://github.com/Caryourday96/fitness-tracker/actions/runs/36024218968) succeeded for build/tests and Azure deploy.
+- Live checks at `https://fit.adeticket.com`: app, `/partner`, `/static/partner.js`, `/api/status` returned 200. Invalid-token public share request returned expected 404; owner-only share status without authentication returned 401. An initial stale 401 for `/partner` cleared on repeat requests; the live route then consistently returned 200 with `Cache-Control: no-store`.
+- No uncommitted source change remains. Local `node --check` and `git diff --check` had passed before deployment; CI also passed. No real bearer token or private production records were inspected, and iPhone behavior remains for owner to check.
+- Exact next action: sign in at `https://fit.adeticket.com`, confirm the seeded foods under Settings > Food inventory, create a link in Share, and test the link in a private browser window. The link is accessible to anyone who has it until rotated/revoked; copied information cannot be recalled.
+
+## Continuation check — 24 September 2026
+- Confirmed GitHub `main` remains at deployed `90f387b`; Actions run `36024218968` succeeded. Azure reports `fitness-tracker-ca` Running and HTTPS-only; required backup setting names are present. Live `/partner` returns 200, an invalid public token returns 404, and owner-only sharing status returns 401 without session.
+- Azure CLI operator identity was denied permission to list blobs in the private backup container; no blob listing or health-data inspection succeeded. Owner previously reported backup creation and verification completed. The user removed post-restart and separate-target restore rehearsal from the active backlog; these are not release gates.
+- Backlog now records deployed features and the remaining owner-session partner-link check. No app-code changes are pending and there is no new app deployment to trigger. Usage at last check was five-hour 96% used (4% remaining), weekly 46% used. Exact next step requiring the owner: verify seeded foods, generate a link while signed in, and open it in a private browser session.
+
 ## Starter food inventory and public accountability link — local implementation checkpoint — 24 September 2026
 - Added idempotent starter-food seeding for existing and new accounts: lean ground beef, chicken, chicken breast, egg whites, yogurt, oats, sweet potatoes, bananas, other fruit, Costco vegetable mix and Costco root vegetable mix. No nutrition values or allergens are invented. Seeding runs once per account and fills only missing names.
 - Added an owner Share tab to create/copy, rotate and revoke a no-sign-in link. It uses a random 256-bit token; only its hash is stored. The token is in a URL fragment and the viewer submits it in a same-origin POST without the owner cookie. A separate page/API return only up to 60 completed workouts and allowlisted exercise/set/cardio fields. Profile, measurements, food, sleep, notes, screenshots and edit routes are excluded.
 - Anyone with the link can view these limited records until revocation; revocation cannot retract data already copied. Link is unlisted, not identity-verified.
+- This section records the implementation-time checkpoint only; the deployment status and current next step are in the deployment-complete checkpoint above.
 - Added partner page assets, restrictive response headers, and included `partner-sharing.js` in the Azure artifact. No new package dependency.
 - Work is isolated at `.deploy/accountability-link` on `feature/accountability-link`, based on `origin/main` commit `d6f6004`. No merge, push or production deployment occurred. Existing stale/dirty worktrees remain untouched.
 - Local tests and browser checks were skipped per owner preference. `node --check` passed for the server and all edited JavaScript modules; `git diff --check` passed. Runtime/browser flow and GitHub Actions remain unverified. Foods will appear in production only after this branch is deployed and the app starts.
