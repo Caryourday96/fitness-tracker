@@ -20,8 +20,8 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  async function request(route,body,method='POST',extra={}){return fetch(base+route,{method,headers:{Origin:base,'X-Requested-With':'Steady','Content-Type':'application/json',Cookie:cookie,...extra},body:body===undefined?undefined:JSON.stringify(body)})}
  try {
  const appPage=await fetch(base+'/');assert.equal(appPage.status,200);assert.match(await appPage.text(),/manifest\.webmanifest/);
- const manifestResponse=await fetch(base+'/manifest.webmanifest');assert.equal(manifestResponse.status,200);assert.match(manifestResponse.headers.get('content-type'),/application\/manifest\+json/);
- const workerResponse=await fetch(base+'/sw.js');assert.equal(workerResponse.status,200);assert.equal(workerResponse.headers.get('service-worker-allowed'),'/');assert.match(await workerResponse.text(),/steady-public-shell/);
+ const manifestResponse=await fetch(base+'/static/manifest.webmanifest');assert.equal(manifestResponse.status,200);assert.match(manifestResponse.headers.get('content-type'),/application\/manifest\+json/);
+ const workerResponse=await fetch(base+'/static/sw.js');assert.equal(workerResponse.status,200);assert.equal(workerResponse.headers.get('service-worker-allowed'),'/');assert.match(await workerResponse.text(),/steady-public-shell/);
  const iconResponse=await fetch(base+'/static/steady-icon.svg');assert.equal(iconResponse.status,200);assert.match(iconResponse.headers.get('content-type'),/image\/svg\+xml/);
  assert.notEqual((await fetch(base+'/static/%2e%2e/server.js')).status,200);
  assert.equal((await request('/api/me',undefined,'GET')).status,401);

@@ -1,6 +1,6 @@
 # Fitness app first-pass handoff
 
-Updated 24 September 2026. This file describes one local implementation batch on the isolated release worktree. The latest production version remains the earlier deployed commit until GitHub Actions confirms this batch.
+Updated 24 September 2026. First-pass commit `d628326` was pushed to `main`; GitHub Actions run `36063235879` passed build/test and Azure deploy. A live smoke test found Azure EasyAuth returns 401 for the new root-level PWA manifest/worker paths. The follow-up correction to use `/static/manifest.webmanifest` and `/static/sw.js` is local and must be redeployed before calling PWA installation complete.
 
 ## Implemented in this first pass
 
@@ -18,7 +18,7 @@ Updated 24 September 2026. This file describes one local implementation batch on
 - `node --check`: server, training planner, app UI, chart helper, timer helper and service worker passed.
 - `git diff --check` passed.
 - Local disposable account preview at 390×844 displayed onboarding, Today and History without horizontal overflow. Sparse charts state zero of 30 days; no personal or production records were used.
-- GitHub CI, push, Azure deployment, production behavior, and a physical iPhone Safari session have not yet been verified for this batch.
+- GitHub CI and Azure deployment for `d628326` succeeded. Public app, static assets, status, partner page and Fitdays page/API returned 200; private upload routes returned 401 without a session. The PWA root routes failed with 401 and were corrected locally. Physical iPhone Safari is still unverified.
 
 ## Explicitly not implemented
 
@@ -30,7 +30,7 @@ Updated 24 September 2026. This file describes one local implementation batch on
 
 ## Next actions by owner/model
 
-1. **Sol (current run):** inspect the scoped diff, reconcile the canonical backlog/checkpoints, push this batch to `main` as authorized, monitor required Actions, fix any failure, then verify public status and asset endpoints. Do not inspect private production data.
+1. **Sol (current run):** commit/push the `/static/` PWA path correction, monitor Actions, verify the manifest and service worker return 200 with `/` scope, and confirm private upload APIs still return 401 without a session. Do not inspect private production data.
 2. **Owner:** use `IOS-OWNER-CHECKLIST.md` on the iPhone after deployment; record actual Safari/iOS outcomes. No desktop check substitutes for this.
 3. **Sol, later:** evaluate catalog-only import/caching for extra exercise alternatives with source attribution and deterministic local fallback. Keep profile/health data out of vendor requests.
 4. **Astra, only if needed:** independently review the planner’s safety and template precedence. Do not rewrite the completed planner without a reproducible defect.
@@ -39,4 +39,4 @@ Updated 24 September 2026. This file describes one local implementation batch on
 
 ## Exact next step
 
-Review `git diff` and the final staged paths. If scoped changes and tests remain clean, commit and push to `main`; then wait for GitHub Actions build/test/deploy success and verify public routes before marking deployment complete.
+Finish the small PWA path correction, run the focused suite, push it to `main`, wait for GitHub Actions success, then verify public manifest/worker and private-route authentication. After that, update release status and stop; the iPhone checklist remains the owner's action.

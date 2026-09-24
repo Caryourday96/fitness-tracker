@@ -168,3 +168,15 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Final pre-release suite: `npm test` passed 38/38. Syntax checks and `git diff --check` passed after all source changes.
 - Git fetch confirmed release HEAD and `origin/main` are both deployed base `c3e7110`; no upstream commits are missing. The isolated worktree contains only the listed app, tests, backlog and handoff files. Review/stage these paths, then push to `main` as explicitly authorized.
 - Usage now 32% five-hour used and 52% weekly used. Stop by 45% five-hour use.
+
+## First deployment smoke finding — PWA public route compatibility — 24 September 2026
+- Commit `d628326` reached GitHub Actions run `36063235879`; build/test and Azure deploy jobs both succeeded. Live root, existing `/static/*` assets, `/api/status`, public `/partner`, and Fitdays page/API returned HTTP 200. Owner uploads/list/image routes returned HTTP 401 when unauthenticated as expected.
+- The new root-level `/manifest.webmanifest` and `/sw.js` returned HTTP 401 from Azure EasyAuth, despite their local routes being public. Root cause is platform-level unauthenticated-path policy; no production auth rules were modified.
+- Corrected locally to reference `/static/manifest.webmanifest` and register `/static/sw.js` with `Service-Worker-Allowed: /`. These use the already-public static path while preserving root worker scope and keep all private APIs/images excluded.
+- Local `npm test` remains 38/38 after the route correction; server/app/worker syntax and `git diff --check` pass. Follow-up commit is not yet pushed; current public `main` is `d628326` with all other first-pass work deployed and PWA install disabled until this small patch deploys.
+- Exact next: commit/push only this scoped route fix; wait for Actions; verify `https://fit.adeticket.com/static/manifest.webmanifest` and `/static/sw.js` return 200, service-worker header permits `/`, and authenticated upload routes remain unauthorized without a session.
+
+## PWA EasyAuth route correction — 24 September 2026
+- Production deployed commit `d628326` through successful Actions run `36063235879`, but smoke testing found root-level PWA manifest and worker requests return Azure EasyAuth 401. Existing app and `/static/*` assets were 200; unauthenticated upload endpoints stayed 401 as expected. No Azure authentication config was weakened.
+- Moved manifest and service-worker URLs to `/static/` (already-public path), added `Service-Worker-Allowed: /` for root scope, and kept API/image caching exclusions unchanged.
+- Focused local verification rerun: `npm test` 38/38, syntax checks and `git diff --check` pass. Correction awaits a small follow-up push and a second live smoke check.

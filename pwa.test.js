@@ -13,7 +13,7 @@ test('PWA opens as an installable standalone shell', () => {
 });
 
 test('service worker only caches its explicit public shell and excludes private routes', () => {
-  assert.match(worker, /const ASSETS=\['\/','\/manifest\.webmanifest'/);
+  assert.match(worker, /const ASSETS=\['\/','\/static\/manifest\.webmanifest'/);
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)/);
   assert.match(worker, /url\.pathname\.startsWith\('\/\.auth\/'\)/);
   assert.match(worker, /request\.method!=='GET'/);

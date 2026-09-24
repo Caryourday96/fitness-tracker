@@ -3,7 +3,7 @@ import { renderShareSettings } from './share.js';
 import { progressChartData } from './progress-charts.js';
 import { restSeconds } from './rest-timer.js';
 const $=s=>document.querySelector(s), app=$('#app'); let mode='login', state=null;
-if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{});
+if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('/static/sw.js',{scope:'/'}).catch(()=>{});
 function clearAppShell(){navigator.serviceWorker?.controller?.postMessage({type:'CLEAR_SHELL'})}
 async function api(url,opt={}){const r=await fetch(url,{...opt,headers:{'Content-Type':'application/json','X-Requested-With':'Steady',...(opt.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const err=Error(d.error||'Request failed');err.status=r.status;throw err}return d}
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}

@@ -1,5 +1,5 @@
 const CACHE='steady-public-shell-v1';
-const ASSETS=['/','/manifest.webmanifest','/static/app.css','/static/app.js','/static/share.js','/static/workout-recap.js','/static/progress-charts.js','/static/rest-timer.js','/static/steady-icon.svg'];
+const ASSETS=['/','/static/manifest.webmanifest','/static/app.css','/static/app.js','/static/share.js','/static/workout-recap.js','/static/progress-charts.js','/static/rest-timer.js','/static/steady-icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('steady-public-shell-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('message',event=>{if(event.data?.type==='CLEAR_SHELL')event.waitUntil(caches.delete(CACHE))});
