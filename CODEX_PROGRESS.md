@@ -61,4 +61,10 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Current live verification passed: `https://fitness-tracker-ca.azurewebsites.net/` returned HTTP 200 and the app hero; `/api/status` returned `{"authenticated":false,"hasUser":false}`.
 - Friends Showdown remains on the shared Windows B1 plan `adeticket`.
 - No custom domain or real health data has been connected. Before personal use, configure backups, persistent storage expectations, and the GitHub OIDC workflow.
+
+## Azure GitHub OIDC prepared — 23 September 2026
+
+- Created managed identity `fitness-tracker-github` in `Kayode_IGO`, scoped Contributor only to the `fitness-tracker-ca` Web App.
+- Added federated trust for `Caryourday96/fitness-tracker` main branch.
+- Repository still needs the three GitHub Actions secrets added by the owner; no secret values are stored in this checkpoint.
 - Verification still needed: authenticated integration tests for cross-user access denial, malformed signatures, size limits, deletion, and browser upload UI.
