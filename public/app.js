@@ -14,7 +14,7 @@ else if(!s.plan||s.plan.status==='unstarted')html+=`<div class="panel"><h2>Check
 else {const p=s.plan; html+=`<div class="panel"><h2>${esc(p.title)}</h2><p>${esc(p.reason)}</p><p class="notice">${esc(p.safety)}</p><div class="stack">${p.exercises.map((x,i)=>`<div class="exercise"><h3>${i+1}. ${esc(x.name)}</h3><p class="muted">${x.pattern==='cardio'?`${esc(x.reps)} · duration-based cardio`:`${esc(x.sets)} sets · ${esc(x.reps)} · ${esc(x.rest)}`} · ${esc(x.muscles)}</p>${x.settings?`<p class="notice">Suggested treadmill settings: speed ${esc(x.settings.speed)}, incline ${esc(x.settings.incline)}, effort ${esc(x.settings.effort)}. Adjust to comfort; these are starting suggestions, not targets.</p>`:''}<small>${esc(x.cue)} Alternatives: ${esc(x.alternatives)}</small>${s.workout?.exercises?.[i]?`<div class="setrow">${x.pattern==='cardio'?`<input data-ex="${i}" data-field="duration" aria-label="Cardio duration in minutes" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Minutes"><input data-ex="${i}" data-field="distance" aria-label="Distance" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Distance"><input data-ex="${i}" data-field="incline" aria-label="Incline percent" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Incline %">`:`<input data-ex="${i}" data-field="weight" aria-label="Weight" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Weight"><input data-ex="${i}" data-field="reps" aria-label="Repetitions" type="number" min="0" inputmode="numeric" placeholder="Reps">`}<label class="check"><input data-ex="${i}" data-field="done" type="checkbox"> Done</label><button class="ghost" data-save="${i}">Save</button></div>`:''}</div>`).join('')}</div><div class="actions"><button class="primary" id="startWorkout">${s.workout?'Resume workout':'Start workout'}</button><button class="ghost" id="completeWorkout">Complete</button></div></div>`}
 html+=`<div class="panel"><h2>Practical food guidance</h2><p class="muted">Build a plate around a protein, vegetables or fruit, and a minimally processed carbohydrate. Keep sodium and saturated fat moderate, and use clinician-provided targets if you have them. One off-plan meal does not require compensatory exercise.</p></div>`;$('#view-today').innerHTML=html;wireToday()}
 let saving=false,dirty=false;
-function notice(text){const n=$('#notice');n.hidden=false;n.textContent=text;n.setAttribute('role','status')}
+function notice(text){const n=$('#notice');n.hidden=false;n.textContent=text;n.setAttribute('role','status');const local=$('#gymSaveStatus');if(local)local.textContent=text}
 async function saveAction(action){if(saving)return;saving=true;notice('Saving…');try{await action();dirty=false;state=await api('/api/me');render();notice('Saved')}catch(e){notice(e.message+' Your input has been kept.')}finally{saving=false}}
 window.addEventListener('beforeunload',e=>{if(dirty||saving){e.preventDefault();e.returnValue=''}});
 document.addEventListener('input',e=>{if(e.target.closest('#dashboard'))dirty=true});
@@ -133,3 +133,31 @@ renderSettings=()=>{
 
 const renderSettingsBeforeBackups=renderSettings;
 renderSettings=()=>{renderSettingsBeforeBackups();const host=$('#view-settings');if(!host||host.querySelector('#privateBackups'))return;host.insertAdjacentHTML('beforeend',`<section class="panel" id="privateBackups"><h2>Private off-site backups</h2><p class="muted">A daily copy of your records and attached screenshots is kept in private Azure storage. Each backup is checked by restoring it to a temporary location and validating its database and files.</p><p id="backupStatus" role="status" aria-live="polite">Checking backup status…</p><div class="actions"><button class="ghost" id="backupNow" type="button">Create backup now</button><button class="ghost" id="verifyBackup" type="button">Verify latest backup</button></div></section>`);const status=$('#backupStatus'),run=$('#backupNow'),verify=$('#verifyBackup');const refresh=async()=>{try{const s=await api('/api/backups/status');if(!s.enabled){status.textContent='Private backup storage is not connected yet.';run.disabled=true;verify.disabled=true;return}status.textContent=s.lastError||`Last backup: ${s.lastBackup?new Date(s.lastBackup).toLocaleString():'pending'} · Restore check: ${s.lastVerification?new Date(s.lastVerification).toLocaleString():'pending'}${s.running?' · Backup running':''}`;run.disabled=!!s.running;verify.disabled=!!s.running||!s.lastBackup}catch{status.textContent='Could not load backup status.'}};run.onclick=async()=>{run.disabled=true;status.textContent='Creating backup and checking its restore…';try{const r=await api('/api/backups/run',{method:'POST',body:'{}'});status.textContent=`Backup and restore check succeeded: ${new Date(r.createdAt).toLocaleString()} · ${r.uploadCount} screenshot(s)`}catch(e){status.textContent=e.message}await refresh()};verify.onclick=async()=>{verify.disabled=true;status.textContent='Checking the latest backup…';try{const r=await api('/api/backups/verify',{method:'POST',body:'{}'});status.textContent=`Restore check passed: ${new Date(r.createdAt).toLocaleString()} · ${r.uploadCount} screenshot(s)`}catch(e){status.textContent=e.message}await refresh()};refresh()};
+
+let activeGymSlot=0;
+const renderTodayBeforeGymFocus=renderToday;
+renderToday=()=>{
+  renderTodayBeforeGymFocus();
+  if(state?.workout?.status!=='active')return;
+  const panel=$('#startWorkout')?.closest('.panel');
+  const exercises=[...(panel?.querySelectorAll('.exercise')||[])];
+  if(!exercises.length)return;
+  activeGymSlot=Math.max(0,Math.min(activeGymSlot,exercises.length-1));
+  panel.classList.add('gym-focus');
+  const heading=document.createElement('div');heading.className='gym-heading';
+  heading.innerHTML='<p class="eyebrow">LIVE WORKOUT</p><h3 id="gymProgress"></h3><p class="muted" id="gymSaveStatus" role="status" aria-live="polite">Saved entries stay available after refresh.</p>';
+  exercises[0].before(heading);
+  const navigation=document.createElement('nav');navigation.className='gym-navigation';navigation.setAttribute('aria-label','Workout exercises');
+  const previous=document.createElement('button'),next=document.createElement('button');
+  previous.type=next.type='button';previous.className=next.className='ghost';previous.textContent='Previous';next.textContent='Next exercise';
+  navigation.append(previous,next);exercises.at(-1).after(navigation);
+  const show=slot=>{
+    activeGymSlot=slot;
+    exercises.forEach((exercise,index)=>{exercise.hidden=index!==slot});
+    $('#gymProgress').textContent=`Exercise ${slot+1} of ${exercises.length}: ${exercises[slot].querySelector('h3')?.textContent||''}`;
+    previous.disabled=slot===0;next.disabled=slot===exercises.length-1;
+  };
+  previous.onclick=()=>show(Math.max(0,activeGymSlot-1));next.onclick=()=>show(Math.min(exercises.length-1,activeGymSlot+1));
+  $('#startWorkout').hidden=true;
+  show(activeGymSlot);
+};
