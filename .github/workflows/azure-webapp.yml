@@ -1,4 +1,4 @@
-name: Deploy fitness tracker
+name: Deploy fitness tracker # OIDC deployment verification
 
 on:
   push:
