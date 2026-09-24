@@ -1,5 +1,11 @@
 # Fitness tracker backlog
 
+## Completed in the current release
+
+- **Google sign-in** — Azure Google provider, canonical `fit.adeticket.com` callback, and a production Easy Auth-to-single-account bridge are implemented and deployed.
+- **iPhone layout** — Safe-area spacing, touch-sized controls, mobile tabs, stacked actions, and responsive workout/table layouts are implemented and deployed.
+- **Canonical URL** — Use `https://fit.adeticket.com` for all normal access; the Azure hostname is infrastructure-only.
+
 ## Fix now before any production deployment
 
 - **P0 security** — Add CSRF protection for state-changing requests and login rate limiting. Acceptance: cross-site POSTs are rejected and repeated failures are throttled. Depends on production origin/session policy. Files: `server.js`.
@@ -9,10 +15,11 @@
 
 ## Next up
 
+- **P1 quick win** — Add a first-run “Today” setup card that confirms units, duration, gym schedule, and safety disclosures before the first check-in. Acceptance: a new account can finish setup and reach a clear workout recommendation without opening Settings. Depends on: onboarding fields in `server.js` and `public/app.js`.
 - **P1** — Complete end-of-day check-in and historical date editing.
 - **P1** — Add step/cardio logging, 7-day averages, weight/waist charts and sparse-data labels.
 - **P1** — Add per-set undo/edit, alternatives with linked exercise history, rest timer and autosave conflict handling.
-- **P1** — Add private PNG/JPG uploads with magic-byte/dimension/size validation and authenticated retrieval.
+- **P1** — Finish the private PNG/JPG upload UI (server validation and authenticated retrieval are implemented); acceptance: upload, preview, replace, caption, and delete work on iPhone.
 - **P1** — Add printable summary/PDF-friendly report and formula-safe full CSV export.
 - **P1** — Add 3-day/4-day schedule progression and actual missed-session/re-entry logic.
 
