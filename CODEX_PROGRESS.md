@@ -222,3 +222,8 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 ## One-handed release and Today hierarchy implementation — 24 September 2026
 - Both same-commit workout deployment runs `36012412766` and `36012413870` succeeded. Public health and static asset checks passed; owner-device iPhone behavior remains unverified.
 - Began the next Sol item in order: one Next step panel on Today, the visible active exercise's Save button as primary, nearby native field validation messages, and form-level server errors that preserve entered values. No local test was run at the owner's request. Exact next action: review the diff, let required GitHub CI validate, deploy, verify public asset, then mark the backlog item appropriately.
+
+## Workout recap implementation — 24 September 2026
+- Today hierarchy release `d78a166` passed GitHub Actions run `36013130305`; public health and static JS returned 200. Backlog/checkpoints reconciled.
+- Implemented next Sol backlog item in isolated release branch: a review step before finishing with completed/partial/skipped exercise counts, cardio and elapsed minutes, correction links to saved sets, and explicit Finish. The server recomputes and stores the dated recap from the confirmed plan and saved workout; History and CSV show it. Added a focused pure recap test for CI. Old workouts without a recap remain readable.
+- No local tests were run, per owner request. Exact next action: run GitHub CI via push, resolve any failure, verify live public health/assets, mark backlog item after evidence. No private production records inspected.

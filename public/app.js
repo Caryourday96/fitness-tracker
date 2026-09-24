@@ -1,3 +1,4 @@
+import { summarizeWorkout } from './workout-recap.js';
 const $=s=>document.querySelector(s), app=$('#app'); let mode='login', state=null;
 async function api(url,opt={}){const r=await fetch(url,{...opt,headers:{'Content-Type':'application/json','X-Requested-With':'Steady',...(opt.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const err=Error(d.error||'Request failed');err.status=r.status;throw err}return d}
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -168,8 +169,44 @@ const renderTodayBeforeHierarchy=renderToday;
 renderToday=()=>{
   renderTodayBeforeHierarchy();
   const view=$('#view-today');if(!view)return;
+  if(state.workout?.status==='completed'){
+    const button=$('#completeWorkout'),panel=button?.closest('.panel');
+    $('#startWorkout')?.remove();button?.remove();
+    if(panel&&state.workout.recap){const summary=document.createElement('p');summary.className='notice';summary.textContent=`Workout finished: ${state.workout.recap.counts.completed} completed, ${state.workout.recap.counts.partial} partial, ${state.workout.recap.counts.skipped} skipped. See History for the saved recap.`;panel.querySelector('h2')?.after(summary)}
+  }
   const action=!state.check?$('#checkin'):state.workout?.status==='active'?view.querySelector('.gym-focus .exercise:not([hidden]) [data-save]'):state.workout?.status==='completed'?null:state.plan?.status==='unstarted'?$('#confirmPlan'):$('#startWorkout');
   const panel=action?.closest('.panel');if(!panel)return;
   panel.classList.add('next-step');
   const heading=panel.querySelector('h2');if(heading){const cue=document.createElement('p');cue.className='eyebrow';cue.textContent='NEXT STEP';heading.before(cue)}
+};
+
+const wireTodayBeforeRecap=wireToday;
+wireToday=()=>{
+  wireTodayBeforeRecap();
+  const finish=$('#completeWorkout');if(!finish||state.workout?.status!=='active')return;
+  finish.textContent='Review and finish';
+  finish.onclick=()=>{
+    if(dirty){notice('Save or clear your unfinished entries before reviewing the workout.');return}
+    $('#finishPreview')?.remove();
+    const recap=summarizeWorkout(state.plan,state.workout);
+    const panel=document.createElement('section');panel.id='finishPreview';panel.className='panel';
+    panel.innerHTML=`<h2>Review today’s workout</h2><p class="muted">Check saved work before finishing. Choose an exercise to correct its entries; nothing is finalized until you confirm.</p><p>${recap.counts.completed} completed · ${recap.counts.partial} partial · ${recap.counts.skipped} skipped${recap.cardioMinutes?` · ${recap.cardioMinutes} cardio min`:''}${recap.durationMinutes!=null?` · about ${recap.durationMinutes} min elapsed`:''}</p><ul>${recap.entries.map((entry,slot)=>`<li><strong>${esc(entry.name)}</strong>: ${esc(entry.status)} · ${entry.logged} of ${entry.planned} ${entry.kind==='cardio'?'cardio entries':'sets'} <button type="button" class="ghost" data-correct-slot="${slot}">Correct</button></li>`).join('')}</ul><div class="actions"><button type="button" class="ghost" id="keepLogging">Keep logging</button><button type="button" class="primary" id="confirmFinish">Finish workout</button></div>`;
+    finish.closest('.panel').after(panel);
+    panel.querySelector('#keepLogging').onclick=()=>panel.remove();
+    panel.querySelectorAll('[data-correct-slot]').forEach(button=>button.onclick=()=>{activeGymSlot=Number(button.dataset.correctSlot);renderToday();$('#gymProgress')?.scrollIntoView({block:'start'})});
+    panel.querySelector('#confirmFinish').onclick=()=>{const data=structuredClone(state.workout);delete data.version;delete data.status;saveAction(()=>api('/api/workout',{method:'POST',body:JSON.stringify({data,version:state.workout.version,status:'completed'})}))};
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+};
+
+const renderHistoryBeforeRecap=renderHistory;
+renderHistory=async()=>{
+  await renderHistoryBeforeRecap();
+  const cards=[...document.querySelectorAll('#view-history .panel:first-child article.exercise')];
+  (state.workoutHistory||[]).forEach((workout,index)=>{
+    const recap=workout.data.recap,card=cards[index];if(!recap||!card)return;
+    const summary=document.createElement('p');summary.className='notice';
+    summary.textContent=`Recap: ${recap.counts.completed} completed, ${recap.counts.partial} partial, ${recap.counts.skipped} skipped${recap.durationMinutes!=null?` · ${recap.durationMinutes} min elapsed`:''}${recap.cardioMinutes?` · ${recap.cardioMinutes} cardio min`:''}.`;
+    card.querySelector('h3')?.after(summary);
+  });
 };
