@@ -1,8 +1,6 @@
 name: Deploy fitness tracker # OIDC deployment verification
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

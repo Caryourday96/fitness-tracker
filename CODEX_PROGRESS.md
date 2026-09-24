@@ -108,3 +108,8 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Updated the Google action to a clearer `Continue with Google` button with an inline Google mark, visible focus state, press state, and iPhone-sized touch target. Updated backlog to record completed Google/mobile work and add a first-run setup card as the next quick win.
 - Local verification: 7 Node tests passed, syntax checks passed, and `git diff --check` passed.
 - Pushed follow-up commit `48e294e`; its Azure deployment is pending. Next exact action: wait for that run to succeed, then refresh `fit.adeticket.com` on iPhone and complete the first check-in to start today's workout.
+
+## Persistence and login hotfix
+- Existing data copied with app stopped to /home/steady-data and /home/steady-backups; original retained. Every file hash matched and target SQLite integrity passed. DATA_DIR set and app restarted. Post-restart comparison pending at checkpoint.
+- SQL history query fixed using a bound parameter; login errors now visible. Button styles apply at all widths and SVG has explicit dimensions. Broader security/onboarding changes are deliberately excluded from this scoped release.
+- Production artifact allowlist excludes databases, uploads and tests. Duplicate push deployment disabled. Full live Google flow remains owner verification.

@@ -15,3 +15,13 @@ Google sign-in uses the Azure Easy Auth provider. Configure the Google client re
 ## Low-cost preview option
 
 For a temporary technical preview, choose App Service **Free F1**. This avoids a normal monthly App Service charge but has quotas, no production reliability guarantee, and local files should be treated as disposable. Do not enter real health history or upload private screenshots on F1. Keep the app on its temporary Azure URL until durable storage and a custom-domain plan are approved. Upgrade only when ready for personal use: a small paid App Service plus a durable database and private Blob Storage is the safer minimum.
+
+## Persistent Azure data
+
+Production DATA_DIR is /home/steady-data, outside /home/site/wwwroot. Database, WAL files and uploads stay together. WEBSITES_ENABLE_APP_SERVICE_STORAGE=true. Keep one app instance for this SQLite configuration. No additional paid service was created.
+
+Before schema changes: stop the app, copy the complete DATA_DIR to a timestamped /home/steady-backups directory, verify every file and SQLite integrity, then restart. Never copy only fitness.sqlite while the app writes; SQLite may have committed records in WAL.
+
+Restore: stop the app; preserve the current data directory; choose a verified complete backup; copy it to a fresh /home restore directory; run PRAGMA integrity_check; set DATA_DIR to that directory; restart; verify account and workout access. Do not overwrite the only backup. These local backups protect deployment/migration mistakes, not deletion of the App Service storage. Off-service backup remains outstanding.
+
+The deployment artifact includes only server.js, package.json and public/. The redundant deployment workflow is manual-only. Do not re-enable two concurrent production deployments.
