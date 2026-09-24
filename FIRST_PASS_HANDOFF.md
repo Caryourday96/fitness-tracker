@@ -30,7 +30,7 @@ Updated 24 September 2026. Feature batch `d628326` and its public static-path co
 
 ## Next actions
 
-1. **Sol, current run:** review, commit and push the exercise-catalog changes; monitor GitHub Actions and validate the deployed app and attribution. The existing workout split/cardio/safety logic remains authoritative.
+1. **Owner:** use **Use alternative** during an active workout on `https://fit.adeticket.com` to review available movements, equipment and cues. The app's workout split/cardio/safety logic remains authoritative.
 2. **Owner:** use `IOS-OWNER-CHECKLIST.md` on the iPhone after deployment; record actual Safari/iOS outcomes. Desktop checks do not substitute for this.
 3. **Sol, future backlog:** consider richer reviewed movement variations only if the owner wants more than user-selectable alternatives; do not treat catalog data as weight-loss programming.
 4. **Astra, only if needed:** independently review planner safety and template precedence. Do not rewrite the completed planner without a reproducible defect.
@@ -39,4 +39,4 @@ Updated 24 September 2026. Feature batch `d628326` and its public static-path co
 
 ## Exact next step
 
-The catalog work is awaiting release verification. After Actions and live checks, record the release and stop. The owner can use `IOS-OWNER-CHECKLIST.md` on the physical iPhone; that device check remains human-run.
+Exercise-catalog item deployed in `92856ef`; Actions `36068156462` and public-route smoke checks succeeded. The owner can use `IOS-OWNER-CHECKLIST.md` on the physical iPhone; that device check remains human-run.
