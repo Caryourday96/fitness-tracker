@@ -178,3 +178,25 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Local checks before deployment: npm test passed 13/13; syntax checks for server.js, public/app.js, progress.js and server.cjs passed. Existing code changes passed local browser QA at 375px.
 - Usage checked after deployment: 10% five-hour used; 17% weekly used. No reset credit used.
 - Exact next action: owner checks Google sign-in and opens the saved workout in iPhone Safari; then arrange a verified off-site backup/restore before larger persistence work.
+
+## Private off-site backup — implementation checkpoint (24 September 2026)
+
+- User redirected from Azure SQL planning to the focused task: implement and test private off-site backups first. No database migration/resource was created.
+- Azure storage prepared in `Kayode_IGO`: Canada Central `fitnessbackupca20260924`, Standard GRS, Cool tier, anonymous blob access disabled, shared-key auth disabled, private `workout-backups` container, 7-day blob soft delete. The App Service system-assigned identity has container-scoped `Storage Blob Data Contributor` only.
+- App Service settings now include `BACKUP_STORAGE_URL`, `BACKUP_CONTAINER`, and `BACKUP_RETENTION_DAYS` (values are non-secret resource configuration); Always On enabled. Restart caused by settings update was followed by successful `https://fit.adeticket.com/api/status` response with `hasUser=true`. No private health records were read.
+- Implemented locally in isolated `fitness-tracker/.deploy/persistence-release` (`fix/persistent-data`): online SQLite snapshot through Node SQLite backup API, referenced upload snapshots, SHA-256 checksums, table counts, 30-day retention/pruning, authenticated backup status/run/verify endpoints, Settings UI, and hourly retry/daily scheduling. Deployment package now includes helper and Azure SDK production dependencies.
+- Security properties: managed identity (no storage keys/SAS), private container, no user-facing blob URLs, auth/CSRF/rate-limit-protected actions, temporary verification downloads removed after checks. No restore overwrites live data.
+- Current local checks before final verification: syntax checks for server/helper/tests/UI passed; `npm test` passed 16/16. Added a focused retention test after that run; rerun all checks. `git diff --check` found a trailing whitespace line in the deployment workflow; remove it and rerun.
+- No real Azure backup exists yet: deployment has not been pushed, and actual Azure Blob upload/read/verification plus post-backup app restart test remain outstanding. This checkpoint must not be interpreted as completed protection.
+- Exact next action: rerun syntax/tests and diff checks; commit in this isolated worktree, push to `main` only after tests pass, monitor the GitHub deployment run, then verify backup status, trigger/verify a real snapshot, and test app restart persistence.
+- Usage visible: 15% five-hour used and 18% weekly used (85% and 82% remaining). No reset used. No secrets recorded.
+
+## Private off-site backup — local implementation and verification (24 September 2026)
+
+- Added `backups.js` for consistent SQLite snapshots, all referenced PNG/JPEG uploads, checksums/counts, private image deduplication, 30-day pruning, and temporary restore verification. Added authenticated `/api/backups/status`, `/run`, and `/verify` endpoints and a Settings panel with manual run/status/verification. Daily startup scheduling retries hourly when needed.
+- Updated the main GitHub Actions package allowlist to include `backups.js`, both Azure SDK dependencies and production `node_modules`; docs and backlog distinguish off-site snapshots from a managed database and state that restore rehearsal is still outstanding.
+- Azure app remains Running. App Service Always On is true; backup settings are present (no setting values or credentials committed). Public health after the config-triggered restart returned `{"authenticated":false,"hasUser":true}`.
+- Final local validation: `npm ci` succeeded with 0 vulnerabilities; `node --check` passed for server, backup helper/test, and browser JS; `npm test` passed 17/17 including corruption rejection, missing-image refusal, deduplication, retention and restore integrity; `git diff --check` passed (only Git LF/CRLF notices remain).
+- The local isolated branch still has uncommitted changes; no release has been pushed yet. Azure storage is configured but no live snapshot exists until the new code is deployed. Cloud data-plane upload, download/verify and post-backup restart remain acceptance gates.
+- Exact next action: commit these scoped changes on `fix/persistent-data`, push that branch to `main` using the established workflow, await successful build/deploy, and verify an actual snapshot from the app and Azure before marking P0 backup complete.
+- Usage visible: 15% five-hour used / 18% weekly used (85% / 82% remaining). No reset used. No secrets recorded.

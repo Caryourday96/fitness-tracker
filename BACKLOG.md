@@ -1,6 +1,6 @@
 # Fitness tracker backlog
 
-Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 35992253218 (success). The production app remains single-instance SQLite and uploads on persistent App Service storage; this is not managed database/object storage or off-site backup. The deployment did not include a verified fresh backup. This list distinguishes deployed code from owner or infrastructure work.
+Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 35992253218 (success). Production remains single-instance SQLite on persistent App Service storage. Private GRS Blob Storage is provisioned and backup integration is prepared in the isolated release candidate; completion still requires deployment, a real snapshot, Azure verification, and restart persistence checks.
 
 ## Completed in this release candidate
 
@@ -18,7 +18,7 @@ Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 359922532
 
 ## Blocked on owner or external action
 
-- **P0 managed storage/off-site backup and restore:** production is single-instance SQLite and uploads on its mounted App Service volume. Restart/deployment persistence is verified, but this is not scale-safe, managed database/object storage, off-site backup or disaster recovery. Do not provision paid resources without price/choice approval. Next: regain authenticated Azure access, inspect existing storage and pricing, choose an approved low-cost destination, then run a restore test.
+- **P0 managed database:** production remains single-instance SQLite on the persistent App Service volume; do not scale out. Evaluate managed database only after backups are verified and present a cost/architecture choice before provisioning. A full disaster-recovery restore rehearsal to a separate target remains outstanding.
 - **P0 clinician review:** owner’s clinician needs to review the blood-pressure and exercise guidance and personal restrictions before this is medically cleared. The app retains conservative safety stops meanwhile.
 - **P1 password recovery:** no self-service reset exists. Google account recovery is the available alternate sign-in path; add password reset only after an owner-approved secure recovery channel is chosen.
 - **Owner-device verification:** Google sign-in, saved workouts (including yesterday), upload/replace/delete, print and export remain to be checked in iPhone Safari after this release. No private production records were inspected by this agent.
@@ -34,4 +34,4 @@ Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 359922532
 
 ## Release status and exact next action
 
-The isolated release is deployed; GitHub Actions build and deploy jobs both succeeded. https://fit.adeticket.com/ and /api/status returned HTTP 200; status reports hasUser=true. A fresh backup was not verified before deployment, and this agent did not inspect private health records. Next: the owner should test Google sign-in, yesterday's saved workout, image upload/replace/delete, export and print on iPhone Safari. Then set up and test an off-site backup/restore path before future schema-changing releases. Never deploy from the broader dirty root checkout.
+The last isolated release is deployed; GitHub Actions build and deploy jobs both succeeded. Private geo-redundant storage, a private container, system identity, and a container-scoped blob role are provisioned. Backup code and settings are still pending release, and no real cloud snapshot has been verified. Next: deploy the integration, trigger a backup, verify it from Settings and independently from Azure, then check that an app restart preserves the live database and backup availability. Never deploy from the broader dirty root checkout.

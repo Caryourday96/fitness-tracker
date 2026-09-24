@@ -10,7 +10,7 @@ Private single-user fitness and weight-loss tracker at `https://fit.adeticket.co
 - Server-rendered JSON API plus a mobile-first vanilla client in `public/`.
 - Private data is scoped to the authenticated account. No health data is in public assets or fixtures.
 - The primary URL is `https://fit.adeticket.com`; the responsive layout is designed for iPhone Safari with safe-area padding and large touch targets.
-- Daily food and snack entries, manually entered sleep/activity, private screenshot uploads, daily reviews and protected history exports are supported. Off-site backups and managed database/blob storage remain outstanding; PWA installability, OCR and reminders are later enhancements.
+- Daily food and snack entries, manually entered sleep/activity, private screenshot uploads, daily reviews and protected history exports are supported. Private off-site SQLite and screenshot backups are stored in Azure Blob Storage and can be integrity-verified from Settings. The live app remains single-instance SQLite; managed database migration, a full restore rehearsal, PWA installability, OCR and reminders remain later work.
 
 ## Local setup
 
@@ -26,4 +26,4 @@ This app supports tracking and general guidance and does not replace a clinician
 
 ## Deployment
 
-Use the dedicated Azure Web App at `fit.adeticket.com`. HTTPS-only is required. Current SQLite runs on a persistent mounted volume with one instance; a managed database and off-site image/backup storage remain backlog work.
+Use the dedicated Azure Web App at `fit.adeticket.com`. HTTPS-only is required. Current SQLite runs on a persistent mounted volume with one instance. Private geo-redundant Blob backup configuration and verification are documented in [DEPLOYMENT.md](DEPLOYMENT.md).

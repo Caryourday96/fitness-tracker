@@ -6,12 +6,21 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
+import { ManagedIdentityCredential } from '@azure/identity';
+import { BlobServiceClient } from '@azure/storage-blob';
+import { createPrivateBackup, verifyLatestPrivateBackup } from './backups.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3030);
 const DATA = process.env.DATA_DIR || path.join(ROOT, 'data'); fs.mkdirSync(DATA, { recursive: true });
 const UPLOADS = path.join(DATA, 'uploads'); fs.mkdirSync(UPLOADS, { recursive: true, mode: 0o700 });
 const db = new DatabaseSync(path.join(DATA, 'fitness.sqlite'));
+const backupStorageUrl = process.env.BACKUP_STORAGE_URL;
+const backupContainerName = process.env.BACKUP_CONTAINER;
+const backupContainer = backupStorageUrl && backupContainerName
+  ? new BlobServiceClient(backupStorageUrl, new ManagedIdentityCredential()).getContainerClient(backupContainerName)
+  : null;
+const backupState = { enabled: !!backupContainer, running: false, lastBackup: null, lastVerification: null, lastError: null };
 const attempts = new Map();
 db.exec(`PRAGMA journal_mode=WAL;
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, created_at TEXT NOT NULL, google_revoked INTEGER NOT NULL DEFAULT 0);
@@ -83,6 +92,9 @@ async function route(req,res) {
   if(method==='POST' && u.pathname==='/api/login') { const b=await json(req), email=String(b.email||'').trim().toLowerCase(), key=`login:${email}`; if(!takeAttempt(key,8,15*60*1000))return send(res,429,{error:'Too many sign-in attempts for this email. Wait 15 minutes or continue with Google.'}); const row=db.prepare('SELECT * FROM users WHERE email=?').get(email); if(!row||!passwordOk(b.password||'',row.password_hash)) return send(res,401,{error:'Invalid email or password'}); attempts.delete(key); return login(res,row.id); }
   if(method==='POST' && (u.pathname==='/api/logout'||u.pathname==='/api/logout-all')) { const token=parseCookies(req.headers.cookie).session; const uid=token?db.prepare('SELECT user_id FROM sessions WHERE token_hash=?').get(hash(token))?.user_id:null; if(u.pathname==='/api/logout-all'&&uid){db.prepare('DELETE FROM sessions WHERE user_id=?').run(uid);db.prepare('UPDATE users SET google_revoked=1 WHERE id=?').run(uid)}else if(token)db.prepare('DELETE FROM sessions WHERE token_hash=?').run(hash(token));res.setHeader('Set-Cookie',`session=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/${process.env.NODE_ENV==='production'?'; Secure':''}`);return send(res,200,{ok:true}); }
   const uid=bridged?.id||sessionUser(req); if(!uid) { send(res,401,{error:'Sign in required'}); return; }
+  if(method==='GET' && u.pathname==='/api/backups/status') return send(res,200,{...backupState});
+  if(method==='POST' && u.pathname==='/api/backups/run') { if(!takeAttempt(`backup:${uid}`,2,60*60*1000))return send(res,429,{error:'Backup limit reached. Try again later.'}); try { const result=await performBackup(); return send(res,200,{ok:true,...result}); } catch { return send(res,503,{error:'Backup failed. Your current app data was not changed.'}); } }
+  if(method==='POST' && u.pathname==='/api/backups/verify') { if(!takeAttempt(`backup-verify:${uid}`,4,60*60*1000))return send(res,429,{error:'Verification limit reached. Try again later.'}); try { const result=await verifyLatestPrivateBackup({container:backupContainer}); backupState.lastVerification=result.createdAt; return send(res,200,{ok:true,...result}); } catch { return send(res,503,{error:'Backup verification failed. Your current app data was not changed.'}); } }
   if(method==='GET' && u.pathname==='/api/progress') {
     const p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data);
     const reviews=db.prepare('SELECT day,data,version FROM day_reviews WHERE user_id=? ORDER BY day DESC LIMIT 365').all(uid).map(r=>({...JSON.parse(r.data),day:r.day,version:r.version}));
@@ -156,6 +168,33 @@ function imageDimensions(buf,mime){
 function stripImageMetadata(buf,mime){
   if(mime==='image/png'){const chunks=[buf.subarray(0,8)],remove=new Set(['tEXt','zTXt','iTXt','eXIf','tIME']);let i=8;while(i+12<=buf.length){const len=buf.readUInt32BE(i),end=i+12+len;if(end>buf.length)break;const type=buf.toString('ascii',i+4,i+8);if(!remove.has(type))chunks.push(buf.subarray(i,end));i=end;if(type==='IEND')break;}return Buffer.concat(chunks)}
   const chunks=[buf.subarray(0,2)],remove=new Set([0xe1,0xed,0xfe]);let i=2;while(i+4<=buf.length){const start=i;if(buf[i]!==0xff)break;while(buf[i]===0xff)i++;const marker=buf[i++];if(marker===0xda||marker===0xd9){chunks.push(buf.subarray(start));return Buffer.concat(chunks)}if(marker===0x01||(marker>=0xd0&&marker<=0xd7)){chunks.push(buf.subarray(start,i));continue}const length=buf.readUInt16BE(i),end=i+length;if(length<2||end>buf.length)break;if(!remove.has(marker))chunks.push(buf.subarray(start,end));i=end;}return Buffer.concat(chunks);
+}
+async function performBackup() {
+  if (!backupContainer) throw new Error('Private backup storage is not configured');
+  if (backupState.running) throw new Error('A backup is already running');
+  backupState.running = true;
+  backupState.lastError = null;
+  try {
+    const result = await createPrivateBackup({ database: db, uploadsDirectory: UPLOADS, container: backupContainer, retentionDays: Number(process.env.BACKUP_RETENTION_DAYS || 30) });
+    const verified = await verifyLatestPrivateBackup({ container: backupContainer });
+    backupState.lastBackup = result.createdAt;
+    backupState.lastVerification = verified.createdAt;
+    return { ...result, verified: true };
+  } catch (error) {
+    backupState.lastError = 'Backup or restore verification failed';
+    console.error('[private-backup] failed', error?.code || error?.statusCode || 'unknown');
+    throw error;
+  } finally {
+    backupState.running = false;
+  }
+}
+if (backupContainer && process.env.NODE_ENV === 'production') {
+  const scheduledBackup = async () => {
+    if (backupState.running || (backupState.lastBackup && Date.now() - Date.parse(backupState.lastBackup) < 24 * 60 * 60 * 1000)) return;
+    try { await performBackup(); } catch { /* retry on the next hourly check */ }
+  };
+  const startupTimer = setTimeout(scheduledBackup, 30_000); startupTimer.unref();
+  const retryTimer = setInterval(scheduledBackup, 60 * 60 * 1000); retryTimer.unref();
 }
 const server=http.createServer((req,res)=>route(req,res).catch(e=>send(res,e.status||500,{error:e.status?e.message:'Request failed'}))); if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) server.listen(PORT,()=>console.log(`Fitness tracker listening on http://localhost:${PORT}`));
 export { planFor, dayFor, passwordHash, passwordOk, easyAuthPrincipal, server };
