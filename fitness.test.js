@@ -1,7 +1,8 @@
-import test from 'node:test'; import assert from 'node:assert/strict'; import { planFor, passwordHash, passwordOk, dayFor } from './server.js';
+import test from 'node:test'; import assert from 'node:assert/strict'; import { planFor, passwordHash, passwordOk, dayFor, easyAuthPrincipal } from './server.js';
 test('password hashing verifies and rejects wrong password',()=>{const h=passwordHash('a very long safe password');assert.equal(passwordOk('a very long safe password',h),true);assert.equal(passwordOk('wrong password',h),false)});
 test('urgent symptoms suppress exercise',()=>{const p=planFor({symptoms:'chest-pain',systolic:120,diastolic:80},{duration:60},'2026-09-23');assert.equal(p.kind,'safety-stop');assert.equal(p.exercises.length,0)});
 test('very high pressure without symptoms still requires clinician contact',()=>{const p=planFor({symptoms:'none',systolic:185,diastolic:121},{duration:60},'2026-09-23');assert.equal(p.kind,'safety-stop')});
 test('low readiness reduces volume deterministically',()=>{const p=planFor({symptoms:'none',energy:'low',soreness:'high',minutes:60},{duration:60},'2026-09-23');assert.equal(p.kind,'recovery-strength');assert.equal(p.exercises[0].sets,2)});
 test('same inputs produce same plan',()=>{const a=planFor({symptoms:'none',energy:'medium',soreness:'none',minutes:60},{duration:60},'2026-09-23');const b=planFor({symptoms:'none',energy:'medium',soreness:'none',minutes:60},{duration:60},'2026-09-23');assert.deepEqual(a,b)});
 test('day helper respects timezone format',()=>{assert.match(dayFor('America/Toronto'),/^\d{4}-\d{2}-\d{2}$/)});
+test('Easy Auth principal is ignored outside production',()=>{const previous=process.env.NODE_ENV;process.env.NODE_ENV='test';assert.equal(easyAuthPrincipal({'headers':{'x-ms-client-principal':Buffer.from(JSON.stringify({userDetails:'user@example.com'})).toString('base64')}}),null);process.env.NODE_ENV=previous});

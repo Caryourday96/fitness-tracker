@@ -32,9 +32,28 @@ const send = (res, status, body, type='application/json') => { res.writeHead(sta
 const json = async (req) => { let s=''; for await (const c of req) s+=c; return s ? JSON.parse(s) : {}; };
 const parseCookies = (s='') => Object.fromEntries(s.split(';').filter(Boolean).map(x=>{const i=x.indexOf('=');return [x.slice(0,i).trim(),decodeURIComponent(x.slice(i+1))]}));
 const sessionUser = (req) => { const token=parseCookies(req.headers.cookie).session; if(!token) return null; const row=db.prepare('SELECT user_id,expires_at FROM sessions WHERE token_hash=?').get(hash(token)); if(!row || row.expires_at<Date.now()) return null; return row.user_id; };
-const requireUser = (req,res) => { const id=sessionUser(req); if(!id) { send(res,401,{error:'Sign in required'}); return null; } return id; };
 const passwordHash = (p) => { const salt=crypto.randomBytes(16).toString('hex'); return `${salt}:${crypto.scryptSync(p,salt,64).toString('hex')}`; };
 const passwordOk = (p, stored) => { const [salt,key]=stored.split(':'); if(!salt||!key) return false; return crypto.timingSafeEqual(Buffer.from(key,'hex'),crypto.scryptSync(p,salt,64)); };
+const establishSession = (res,id) => { const t=crypto.randomBytes(32).toString('base64url'); db.prepare('INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,?)').run(hash(t),id,Date.now()+1000*60*60*24*30); res.setHeader('Set-Cookie',`session=${encodeURIComponent(t)}; Max-Age=2592000; HttpOnly; SameSite=Lax; Path=/`); };
+function easyAuthPrincipal(req) {
+  if (process.env.NODE_ENV !== 'production') return null;
+  const encoded=req.headers['x-ms-client-principal']; if(!encoded) return null;
+  try {
+    const principal=JSON.parse(Buffer.from(encoded,'base64').toString('utf8'));
+    const email=String(principal.userDetails||principal.claims?.find(c=>/email|preferred_username/i.test(c.typ))?.val||'').trim().toLowerCase();
+    return email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? email : null;
+  } catch { return null; }
+}
+function bridgeEasyAuth(req,res) {
+  const email=easyAuthPrincipal(req); if(!email) return null;
+  let row=db.prepare('SELECT id FROM users WHERE email=?').get(email);
+  if(!row) {
+    if(db.prepare('SELECT 1 FROM users LIMIT 1').get()) return {error:'This private tracker account is already assigned to another email.'};
+    const info=db.prepare('INSERT INTO users(email,password_hash,created_at) VALUES(?,?,?)').run(email,passwordHash(crypto.randomBytes(32).toString('hex')),now());
+    db.prepare('INSERT INTO profiles(user_id,data) VALUES(?,?)').run(info.lastInsertRowid,JSON.stringify(profileDefaults)); row={id:info.lastInsertRowid};
+  }
+  establishSession(res,row.id); return {id:row.id};
+}
 const profileDefaults = { timezone:'America/Toronto', heightCm:180, weightLb:255, units:'lb', schedule:3, duration:60, gym:'Movati', experience:'beginner', equipment:'commercial gym', injuries:'', restrictions:'', foods:['Lean ground beef','Chicken breast','Oats','Yogurt','Bananas','Egg whites','Sweet potatoes','Costco vegetable mix','Costco root vegetable mix'] };
 function planFor(check, profile, day) {
   const c=check||{}; const urgent=(Number(c.systolic)>=180||Number(c.diastolic)>=120) || ['chest-pain','fainting','severe-breathlessness'].includes(c.symptoms);
@@ -45,13 +64,14 @@ function planFor(check, profile, day) {
 }
 async function route(req,res) {
   const u=new URL(req.url,`http://${req.headers.host}`), method=req.method;
+  const bridged=bridgeEasyAuth(req,res); if(bridged?.error) return send(res,403,{error:bridged.error});
   if(method==='GET' && (u.pathname==='/'||u.pathname==='/index.html')) return send(res,200,fs.readFileSync(path.join(ROOT,'public','index.html'),'utf8'),'text/html; charset=utf-8');
   if(method==='GET' && u.pathname.startsWith('/static/')) { const f=path.join(ROOT,'public',u.pathname.slice(8)); if(fs.existsSync(f)) return send(res,200,fs.readFileSync(f),f.endsWith('.css')?'text/css':'application/javascript'); return send(res,404,{error:'Not found'}); }
-  if(method==='GET' && u.pathname==='/api/status') { const user=sessionUser(req); return send(res,200,{authenticated:!!user, hasUser:!!db.prepare('SELECT 1 FROM users LIMIT 1').get()}); }
+  if(method==='GET' && u.pathname==='/api/status') { const user=bridged?.id||sessionUser(req); return send(res,200,{authenticated:!!user, hasUser:!!db.prepare('SELECT 1 FROM users LIMIT 1').get()}); }
   if(method==='POST' && u.pathname==='/api/setup') { if(db.prepare('SELECT 1 FROM users LIMIT 1').get()) return send(res,409,{error:'Account already exists'}); const b=await json(req); if(!b.email||!b.password||b.password.length<12) return send(res,400,{error:'Use an email and a password of at least 12 characters'}); const info=db.prepare('INSERT INTO users(email,password_hash,created_at) VALUES(?,?,?)').run(b.email.toLowerCase(),passwordHash(b.password),now()); db.prepare('INSERT INTO profiles(user_id,data) VALUES(?,?)').run(info.lastInsertRowid,JSON.stringify({...profileDefaults,...b.profile})); return login(res,info.lastInsertRowid); }
   if(method==='POST' && u.pathname==='/api/login') { const b=await json(req), row=db.prepare('SELECT * FROM users WHERE email=?').get((b.email||'').toLowerCase()); if(!row||!passwordOk(b.password||'',row.password_hash)) return send(res,401,{error:'Invalid email or password'}); return login(res,row.id); }
   if(method==='POST' && u.pathname==='/api/logout') { const token=parseCookies(req.headers.cookie).session; if(token) db.prepare('DELETE FROM sessions WHERE token_hash=?').run(hash(token)); res.setHeader('Set-Cookie','session=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/'); return send(res,200,{ok:true}); }
-  const uid=requireUser(req,res); if(!uid) return;
+  const uid=bridged?.id||sessionUser(req); if(!uid) { send(res,401,{error:'Sign in required'}); return; }
   if(method==='GET' && u.pathname==='/api/me') { const p=db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid); const tz=(p?JSON.parse(p.data):profileDefaults).timezone||'UTC', day=dayFor(tz); const check=db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day); const plan=db.prepare('SELECT data,status FROM plans WHERE user_id=? AND day=?').get(uid,day); const workout=db.prepare('SELECT data,status FROM workouts WHERE user_id=? AND day=?').get(uid,day); const measures=db.prepare('SELECT kind,value,unit,measured_at FROM measurements WHERE user_id=? ORDER BY measured_at DESC LIMIT 60').all(uid); const foods=db.prepare('SELECT * FROM foods WHERE user_id=? ORDER BY name').all(uid); const foodLogs=db.prepare('SELECT * FROM food_logs WHERE user_id=? AND day=? ORDER BY id DESC').all(uid,day); const sleep=db.prepare('SELECT * FROM sleep_logs WHERE user_id=? AND day=? ORDER BY id DESC LIMIT 1').get(uid,day); const activities=db.prepare('SELECT * FROM activity_logs WHERE user_id=? AND day=? ORDER BY id DESC').all(uid,day); const workoutHistory=db.prepare('SELECT day,data,status FROM workouts WHERE user_id=? AND status="completed" ORDER BY day DESC LIMIT 30').all(uid); return send(res,200,{profile:p?JSON.parse(p.data):profileDefaults,day,check:check?JSON.parse(check.data):null,plan:plan?{...JSON.parse(plan.data),status:plan.status}:null,workout:workout?{...JSON.parse(workout.data),status:workout.status}:null,measures,foods,foodLogs,sleep,activities,workoutHistory}); }
   if(method==='PUT' && u.pathname==='/api/profile') { const b=await json(req); db.prepare('UPDATE profiles SET data=? WHERE user_id=?').run(JSON.stringify({...profileDefaults,...b}),uid); return send(res,200,{ok:true}); }
   if(method==='POST' && u.pathname==='/api/checkin') { const b=await json(req), p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data), day=b.day||dayFor(p.timezone); db.prepare('INSERT INTO checkins(user_id,day,data) VALUES(?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data').run(uid,day,JSON.stringify(b)); let existing=db.prepare('SELECT status FROM plans WHERE user_id=? AND day=?').get(uid,day); if(!existing||existing.status==='unstarted') db.prepare('INSERT INTO plans(user_id,day,data,status) VALUES(?,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data,status=excluded.status').run(uid,day,JSON.stringify(planFor(b,p,day)),'unstarted'); return send(res,200,{ok:true,day}); }
@@ -71,6 +91,6 @@ async function route(req,res) {
   send(res,404,{error:'Not found'});
 }
 function csv(v){return `"${String(v).replaceAll('"','""')}"`};
-function login(res,id){const t=crypto.randomBytes(32).toString('base64url'); db.prepare('INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,?)').run(hash(t),id,Date.now()+1000*60*60*24*30); res.setHeader('Set-Cookie',`session=${encodeURIComponent(t)}; Max-Age=2592000; HttpOnly; SameSite=Lax; Path=/`); return send(res,200,{ok:true});}
+function login(res,id){establishSession(res,id); return send(res,200,{ok:true});}
 const server=http.createServer((req,res)=>route(req,res).catch(e=>send(res,500,{error:'Request failed'}))); server.listen(PORT,()=>console.log(`Fitness tracker listening on http://localhost:${PORT}`));
-export { planFor, dayFor, passwordHash, passwordOk };
+export { planFor, dayFor, passwordHash, passwordOk, easyAuthPrincipal };

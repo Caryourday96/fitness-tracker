@@ -1,13 +1,15 @@
 # Fitness Tracker
 
-Private single-user fitness and weight-loss tracker for a future subdomain (for example `fit.adeticket.com`). It is intentionally isolated from the existing Friends Showdown and portfolio sites.
+Private single-user fitness and weight-loss tracker at `https://fit.adeticket.com`. It is intentionally isolated from the existing Friends Showdown and portfolio sites. Use the custom subdomain for normal access; the Azure Web App hostname is infrastructure-only.
 
 ## Architecture
 
 - Node 24 HTTP server with built-in `node:sqlite` for durable SQLite storage.
 - `crypto.scrypt` password hashing; random opaque sessions in HttpOnly cookies.
+- Optional Google sign-in through Azure App Service Authentication; the first Google account creates the private account and later sign-ins must use the same email.
 - Server-rendered JSON API plus a mobile-first vanilla client in `public/`.
 - Private data is scoped to the authenticated account. No health data is in public assets or fixtures.
+- The primary URL is `https://fit.adeticket.com`; the responsive layout is designed for iPhone Safari with safe-area padding and large touch targets.
 - Image upload, backups, PWA installability, OCR and reminders remain staged enhancements.
 
 ## Local setup
