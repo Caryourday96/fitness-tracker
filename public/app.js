@@ -15,9 +15,11 @@ else {const p=s.plan; html+=`<div class="panel"><h2>${esc(p.title)}</h2><p>${esc
 html+=`<div class="panel"><h2>Practical food guidance</h2><p class="muted">Build a plate around a protein, vegetables or fruit, and a minimally processed carbohydrate. Keep sodium and saturated fat moderate, and use clinician-provided targets if you have them. One off-plan meal does not require compensatory exercise.</p></div>`;$('#view-today').innerHTML=html;wireToday()}
 let saving=false,dirty=false;
 function notice(text){const n=$('#notice');n.hidden=false;n.textContent=text;n.setAttribute('role','status');const local=$('#gymSaveStatus');if(local)local.textContent=text}
-async function saveAction(action){if(saving)return;saving=true;notice('Saving…');try{await action();dirty=false;state=await api('/api/me');render();notice('Saved')}catch(e){notice(e.message+' Your input has been kept.')}finally{saving=false}}
+async function saveAction(action){if(saving)return;const source=document.activeElement?.closest('form');if(source)source.querySelector('.form-error')?.remove();saving=true;notice('Saving…');try{await action();dirty=false;state=await api('/api/me');render();notice('Saved')}catch(e){notice(e.message+' Your input has been kept.');if(source?.isConnected){const error=document.createElement('p');error.className='form-error';error.setAttribute('role','alert');error.textContent=e.message+' Your entries are still here.';source.append(error)}}finally{saving=false}}
 window.addEventListener('beforeunload',e=>{if(dirty||saving){e.preventDefault();e.returnValue=''}});
 document.addEventListener('input',e=>{if(e.target.closest('#dashboard'))dirty=true});
+document.addEventListener('invalid',e=>{const label=e.target.closest('#dashboard label');if(!label)return;let message=label.querySelector('.field-error');if(!message){message=document.createElement('small');message.className='field-error';label.append(message)}message.textContent=e.target.validationMessage||'Check this value.';e.target.setAttribute('aria-invalid','true')},true);
+document.addEventListener('input',e=>{if(!e.target.matches('#dashboard input,#dashboard select,#dashboard textarea'))return;e.target.removeAttribute('aria-invalid');e.target.closest('label')?.querySelector('.field-error')?.remove()});
 function wireToday(){
  const f=$('#checkin');if(f)f.onsubmit=e=>{e.preventDefault();saveAction(()=>api('/api/checkin',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(f)))}))};
  const cp=$('#confirmPlan');if(cp)cp.onclick=()=>saveAction(()=>api('/api/plan/confirm',{method:'POST'}));
@@ -153,11 +155,21 @@ renderToday=()=>{
   navigation.append(previous,next);exercises.at(-1).after(navigation);
   const show=slot=>{
     activeGymSlot=slot;
-    exercises.forEach((exercise,index)=>{exercise.hidden=index!==slot});
+    exercises.forEach((exercise,index)=>{exercise.hidden=index!==slot;exercise.querySelectorAll('[data-save]').forEach(button=>button.classList.toggle('primary',index===slot))});
     $('#gymProgress').textContent=`Exercise ${slot+1} of ${exercises.length}: ${exercises[slot].querySelector('h3')?.textContent||''}`;
     previous.disabled=slot===0;next.disabled=slot===exercises.length-1;
   };
   previous.onclick=()=>show(Math.max(0,activeGymSlot-1));next.onclick=()=>show(Math.min(exercises.length-1,activeGymSlot+1));
   $('#startWorkout').hidden=true;
   show(activeGymSlot);
+};
+
+const renderTodayBeforeHierarchy=renderToday;
+renderToday=()=>{
+  renderTodayBeforeHierarchy();
+  const view=$('#view-today');if(!view)return;
+  const action=!state.check?$('#checkin'):state.workout?.status==='active'?view.querySelector('.gym-focus .exercise:not([hidden]) [data-save]'):state.workout?.status==='completed'?null:state.plan?.status==='unstarted'?$('#confirmPlan'):$('#startWorkout');
+  const panel=action?.closest('.panel');if(!panel)return;
+  panel.classList.add('next-step');
+  const heading=panel.querySelector('h2');if(heading){const cue=document.createElement('p');cue.className='eyebrow';cue.textContent='NEXT STEP';heading.before(cue)}
 };

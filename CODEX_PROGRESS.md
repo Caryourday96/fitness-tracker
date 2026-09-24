@@ -218,3 +218,7 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Meal commit `4397ab9` deployed successfully through GitHub Actions run `36011790168`; live `/api/status` and `/static/app.js` both returned 200, and the asset contained the new meal UI. Backlog/workspace checkpoint reconciled. No production account data inspected.
 - Isolated the existing one-handed iPhone workout layout from the dirty persistence worktree into this release branch: one active exercise at a time, large previous/next/save controls, sticky mobile navigation and nearby save feedback. No training planner, time-control or Astra changes copied.
 - Owner asked to skip further local tests. Exact next action: review the scoped diff, use required GitHub CI for validation, release if clean, verify public asset, then update backlog/checkpoints. Physical iPhone Safari behavior remains owner-device verification.
+
+## One-handed release and Today hierarchy implementation — 24 September 2026
+- Both same-commit workout deployment runs `36012412766` and `36012413870` succeeded. Public health and static asset checks passed; owner-device iPhone behavior remains unverified.
+- Began the next Sol item in order: one Next step panel on Today, the visible active exercise's Save button as primary, nearby native field validation messages, and form-level server errors that preserve entered values. No local test was run at the owner's request. Exact next action: review the diff, let required GitHub CI validate, deploy, verify public asset, then mark the backlog item appropriately.
