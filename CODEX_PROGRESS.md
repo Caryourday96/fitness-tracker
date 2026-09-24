@@ -1,9 +1,16 @@
 # Fitness tracker checkpoint — 23 September 2026
 
-## Partner workout units/cardio rendering fix — 24 September 2026
+## Public workout-days tracker — implementation checkpoint — 24 September 2026
+- User selected public `fitdays.adeticket.com`. Added a responsive 12-month calendar and 7/30/365-day counts showing only completed workout dates, with a clear public-data notice. Page/API are host-scoped to `fitdays.adeticket.com`, noindex, no-store, read-only and anonymous; fitness data other than dates is excluded.
+- Added `workout-days.js`, `public/fitdays.html`, `public/fitdays.css`, `public/fitdays.js`; server delegates only matching host routes before auth and CI artifact includes module. Added a focused regression test asserting date-only payload and host restriction. Syntax/diff checks pass. Full tests pending CI.
+- Azure has unused DNS label `fitdays` in `adeticket.com`; `fitness-tracker-ca` is on existing B1 Linux plan. No DNS/hostname/TLS changes have been applied yet.
+- New user request: safe option to override eligible rest days. Implement after this hostname release as usage permits; preserve all safety stops.
+- Exact next step: complete the deployment workflow; then configure CNAME/TXT, custom hostname and managed certificate; verify the public hostname. Don't claim deployment until live checks pass.
+
+## Partner workout units/cardio rendering fix — deployed — 24 September 2026
 - The owner screenshot showed blank `— reps` rows, including a treadmill. Form inputs are serialized by the client as strings; the partner serializer previously discarded these because it accepted only number-typed values. The initial workout creation path also dropped the exercise pattern.
 - Updated partner serialization to parse only finite numeric strings and expose only the cardio pattern allowlist. New workouts preserve pattern. Partner rendering identifies cardio, displays duration/distance/incline with units, and reports missing measurements without inventing reps.
-- Added an integration regression check for numeric-string cardio and anonymous partner serialization. Local JS syntax and diff checks pending before push; CI will run the full suite. Exact next action: deploy this small fix through main Actions, then recheck the live partner JS and endpoints. No token or private production workout accessed.
+- Added an integration regression check for numeric-string cardio and anonymous partner serialization. Local syntax and diff checks passed. Commit `abbc610` is on `main`; Actions run `36037667631` passed build/tests and deploy. Live `/partner` and JS returned 200; invalid token returns 404 and owner-only status returns 401 without session. No real token/private workout accessed. Remaining owner step: test actual share link in a private browser with an authenticated owner-created link.
 
 ## Starter foods and public accountability link — deployment complete — 24 September 2026
 - Commit `90f387bff2fbfb2d0719c20549d8627969cbd0ba` pushed to `main`; GitHub Actions run [36024218968](https://github.com/Caryourday96/fitness-tracker/actions/runs/36024218968) succeeded for build/tests and Azure deploy.

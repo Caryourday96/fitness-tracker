@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#173b34">
+  <title>Workout days</title>
+  <link rel="stylesheet" href="/static/fitdays.css">
+  <script type="module" src="/static/fitdays.js"></script>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">STEADY · WORKOUT DAYS</p>
+      <h1>Consistency, one day at a time.</h1>
+      <p class="intro">A simple record of completed workout days over the past year.</p>
+      <p class="public-note">This calendar is public. It shows workout dates only—no exercise details, weights, profile or health information.</p>
+    </header>
+    <section class="summary" aria-label="Workout day totals">
+      <article class="stat"><strong id="weekCount">—</strong><span>days · last 7</span></article>
+      <article class="stat"><strong id="monthCount">—</strong><span>days · last 30</span></article>
+      <article class="stat"><strong id="yearCount">—</strong><span>days · last 365</span></article>
+    </section>
+    <section class="calendar-panel" aria-labelledby="calendarTitle">
+      <div class="calendar-heading"><div><p class="eyebrow">THE YEAR AT A GLANCE</p><h2 id="calendarTitle">Workout calendar</h2></div><p class="legend"><span aria-hidden="true"></span> Completed</p></div>
+      <div id="calendar" class="calendar-grid" aria-live="polite"><p class="state">Loading workout days…</p></div>
+    </section>
+    <footer><p id="updated" class="state">Dates come from completed workouts saved in the fitness tracker.</p></footer>
+  </main>
+</body>
+</html>

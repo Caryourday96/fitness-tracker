@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { handleOwnerShare, handlePublicPartner, initializePartnerSharing, seedStarterFoods } from './partner-sharing.js';
+import { handlePublicWorkoutDays } from './workout-days.js';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { ManagedIdentityCredential } from '@azure/identity';
@@ -93,6 +94,7 @@ async function route(req,res) {
   const googleCallback=method==='GET'&&u.pathname==='/api/auth/google';
   const bridged=bridgeEasyAuth(req,res,googleCallback); if(bridged?.error) return send(res,403,{error:bridged.error});
   if(googleCallback){if(!bridged?.id){res.writeHead(302,{Location:'/', 'Cache-Control':'no-store'});return res.end()}res.writeHead(302,{Location:'/', 'Cache-Control':'no-store'});return res.end()}
+  if(handlePublicWorkoutDays(req,res,{db,send,root:ROOT}))return;
   if(method==='GET' && (u.pathname==='/'||u.pathname==='/index.html')) return send(res,200,fs.readFileSync(path.join(ROOT,'public','index.html'),'utf8'),'text/html; charset=utf-8');
   if(method==='GET' && u.pathname.startsWith('/static/')) { const f=path.join(ROOT,'public',u.pathname.slice(8)); if(fs.existsSync(f)) return send(res,200,fs.readFileSync(f),f.endsWith('.css')?'text/css':'application/javascript'); return send(res,404,{error:'Not found'}); }
   if(method==='GET' && u.pathname==='/api/status') { const user=bridged?.id||sessionUser(req); return send(res,200,{authenticated:!!user, hasUser:!!db.prepare('SELECT 1 FROM users LIMIT 1').get()}); }

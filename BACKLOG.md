@@ -2,7 +2,7 @@
 
 Release 12fc926 is deployed to fit.adeticket.com by GitHub Actions run 35992253218 (success). Production remains single-instance SQLite on persistent App Service storage. Private GRS Blob Storage is provisioned and backup integration is prepared in the isolated release candidate; completion still requires deployment, a real snapshot, Azure verification, and restart persistence checks.
 
-Latest app release: `90f387b` (starter food inventory and public accountability links), deployed to `https://fit.adeticket.com` by successful GitHub Actions run `36024218968`. Azure reports the Web App Running and HTTPS-only; backup configuration keys are present. The current Azure CLI identity cannot list private backup blobs, so this session does not independently verify a cloud snapshot. Owner previously reported creating and verifying a backup; the selected backlog intentionally does not require a post-restart or separate-target restore rehearsal.
+Latest app release: `abbc610` (partner numeric/cardio display fix), deployed to `https://fit.adeticket.com` by successful GitHub Actions run `36037667631`. Azure reports the Web App Running and HTTPS-only; backup configuration keys are present. The current Azure CLI identity cannot list private backup blobs, so this session does not independently verify a cloud snapshot. Owner previously reported creating and verifying one; the selected backlog intentionally does not require a post-restart or separate-target restore rehearsal.
 
 ## Completed in this release candidate
 
@@ -18,8 +18,10 @@ Latest app release: `90f387b` (starter food inventory and public accountability 
 - **P1 export:** authenticated formula-safe CSV covering saved record types and printable/PDF-friendly summary.
 - **Safety/security documentation:** AHA blood-pressure guidance source/review date; storage persistence and backup/restore limitations documented.
 - **P1 accountability partner — deployed:** optional public link with no partner sign-in. Anyone with the link can view up to 60 completed workouts; owner can rotate/revoke. Random token hash is stored; token travels in the fragment and viewer sends no owner cookies. Only dates, exercise names, logged sets and cardio are included. No measurements, food, sleep, notes, images or edits. GitHub Actions run `36024218968` passed build/tests and deploy; live route/auth smoke checks passed. Owner still needs to create and privately test a real link on iPhone. Revocation cannot remove copied data.
-- Partner follow-up fix in progress: preserve numeric values saved as form strings, and show cardio duration/distance/incline rather than a reps placeholder. Integration regression coverage added; deploy status will be recorded after Actions completes.
+- Partner view follow-up — deployed in `abbc610`, Actions run `36037667631` succeeded: finite numeric strings are preserved; cardio entries show duration, distance/unit and incline rather than reps; missing cardio data is stated clearly. CI regression verifies public serialization of string-valued cardio. Live route/assets/auth-boundary smoke checks passed; owner still needs to test a real link while signed in.
 - **P1 starter food inventory — deployed:** the foods supplied by the owner are seeded idempotently per account, preserving existing entries without inventing nutrition/allergen facts. Owner should verify them under Settings > Food inventory.
+- **P1 public workout-days tracker — implementation in progress:** user selected `fitdays.adeticket.com`, public/read-only. Planned page shows only completed-workout dates in a 12-month calendar and 7/30/365-day counts; no exercise/health details. Reuse the existing app/plan; finish GitHub deployment and Azure DNS/custom hostname/TLS, then verify.
+- **P1 rest-day override — requested:** offer optional low-intensity activity from eligible recovery days; server-side safety stop/pain/restrictions must take precedence. No code started.
 
 ## Blocked on owner or external action
 

@@ -41,6 +41,7 @@ jobs:
           path: |
             server.js
             partner-sharing.js
+            workout-days.js
             meal-guidance.js
             weekly-review.js
             backups.js

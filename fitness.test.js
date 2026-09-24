@@ -1,4 +1,12 @@
 import test from 'node:test'; import assert from 'node:assert/strict'; import { planFor, passwordHash, passwordOk, dayFor, easyAuthPrincipal } from './server.js';
+import { handlePublicWorkoutDays } from './workout-days.js';
+test('public fitdays endpoint exposes only completed workout dates on its dedicated host',()=>{
+ const db={prepare(sql){if(sql.includes('FROM profiles'))return{get:()=>({data:'{"timezone":"America/Toronto"}'})};if(sql.includes('FROM users'))return{get:()=>({id:7})};if(sql.includes('FROM workouts'))return{all:(userId,start,end)=>{assert.equal(userId,7);assert.match(start,/^\d{4}-\d{2}-\d{2}$/);assert.match(end,/^\d{4}-\d{2}-\d{2}$/);return[{day:'2026-09-23'}]}};throw Error('Unexpected query')}};
+ const res={headers:{},setHeader(name,value){this.headers[name]=value}},result={};
+ const handled=handlePublicWorkoutDays({method:'GET',url:'/api/public-workout-days',headers:{host:'fitdays.adeticket.com'}},res,{db,root:'.',send(_res,status,body){result.status=status;result.body=body}});
+ assert.equal(handled,true);assert.equal(result.status,200);assert.deepEqual(Object.keys(result.body).sort(),['days','today']);assert.deepEqual(result.body.days,['2026-09-23']);assert.equal(res.headers['X-Robots-Tag'],'noindex, nofollow');
+ assert.equal(handlePublicWorkoutDays({method:'GET',url:'/api/public-workout-days',headers:{host:'fit.adeticket.com'}},res,{db,root:'.',send(){}}),false);
+});
 test('password hashing verifies and rejects wrong password',()=>{const h=passwordHash('a very long safe password');assert.equal(passwordOk('a very long safe password',h),true);assert.equal(passwordOk('wrong password',h),false)});
 test('urgent symptoms suppress exercise and direct the user to 911',()=>{const p=planFor({symptoms:'chest-pain',systolic:120,diastolic:80},{duration:60},'2026-09-23');assert.equal(p.kind,'safety-stop');assert.equal(p.exercises.length,0);assert.match(p.safety,/call 911 now/i)});
 test('very high pressure without symptoms pauses exercise and distinguishes repeat/contact guidance',()=>{const p=planFor({symptoms:'none',systolic:185,diastolic:80},{duration:60},'2026-09-23');assert.equal(p.kind,'safety-stop');assert.match(p.safety,/repeat it after at least 1 minute/i);assert.match(p.safety,/contact a healthcare professional promptly/i)});
