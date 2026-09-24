@@ -14,10 +14,11 @@ Updated 24 September 2026. Feature batch `d628326` and its public static-path co
 
 ## Verified
 
-- Before the final worker-cleanup migration: `npm test` passed 38/38; syntax checks passed for server, app, progress charts and rest timer; `git diff --check` passed.
-- The final release candidate still needs its test rerun after the worker cleanup change. Do not describe it as deployed until GitHub Actions and live checks succeed.
+- The initial worker-cleanup commit `aeb889a` is deployed; GitHub Actions run `36064833990` passed build/test and Azure deployment. Live smoke verified app and manifest are 200 and unauthenticated upload routes remain 401.
+- Live smoke also found Azure retained the deleted static worker file from the previous package and still served `/static/sw.js`. A follow-up now explicitly denies that one URL; its focused regression test is part of the current release candidate.
+- Latest local checks after the explicit denial: `npm test` passed 38/38; syntax checks passed for server and app; `git diff --check` passed.
 - Earlier local disposable-account preview at 390×844 showed onboarding, Today and History without horizontal overflow. No personal/production records were used. Physical iPhone Safari is unverified.
-- Live checks after `0fbd7a1`: `/static/manifest.webmanifest` returned 200; `/static/sw.js` returned 200 but the platform omitted `Service-Worker-Allowed`; private upload APIs returned 401 without a session. The follow-up removes the unusable worker and retains the manifest.
+- Live checks after `aeb889a`: `/static/manifest.webmanifest` and app assets returned 200; private upload APIs returned 401; Azure still served stale `/static/sw.js` after package removal. The next release must make that route return 404 and confirm the public manifest and private-route gate remain correct.
 
 ## Explicitly not implemented
 
@@ -29,7 +30,7 @@ Updated 24 September 2026. Feature batch `d628326` and its public static-path co
 
 ## Next actions
 
-1. **Sol, current run:** rerun the 38-test suite and syntax/whitespace checks after removing the worker. Confirm the migration removes this app's old worker/cache without changing other registrations; commit and push to `main` under the owner's existing deployment authorization; monitor Actions; verify the manifest/static app routes and private-route authentication. Confirm the live deployed JS includes the old-worker cleanup.
+1. **Sol, current run:** commit and push the narrow explicit 404 for `/static/sw.js` (tests pass locally), monitor Actions, then verify the old worker route is 404, the manifest/app are 200, and private routes remain 401. Confirm deployed JS includes the old-worker cleanup.
 2. **Owner:** use `IOS-OWNER-CHECKLIST.md` on the iPhone after deployment; record actual Safari/iOS outcomes. Desktop checks do not substitute for this.
 3. **Sol, backlog follow-up:** if exercise API enrichment is requested, import/cache exercise catalog fields and map alternatives through reviewed local movement/equipment rules. Keep planning deterministic and offline-capable; no personal or health data leaves the app.
 4. **Astra, only if needed:** independently review planner safety and template precedence. Do not rewrite the completed planner without a reproducible defect.
@@ -38,4 +39,4 @@ Updated 24 September 2026. Feature batch `d628326` and its public static-path co
 
 ## Exact next step
 
-Rerun focused verification for the worker-cleanup migration, push the safe release correction to `main`, wait for successful build/test and deployment, then verify live public assets and anonymous private-route denial. The iPhone checklist remains the owner's action.
+Push the explicit old-worker URL denial to `main`, wait for successful build/test and deployment, then verify `/static/sw.js` returns 404 while the manifest remains 200 and private upload routes stay 401. The iPhone checklist remains the owner's action.

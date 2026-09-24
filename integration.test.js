@@ -21,6 +21,7 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  try {
  const appPage=await fetch(base+'/');assert.equal(appPage.status,200);assert.match(await appPage.text(),/manifest\.webmanifest/);
  const manifestResponse=await fetch(base+'/static/manifest.webmanifest');assert.equal(manifestResponse.status,200);assert.match(manifestResponse.headers.get('content-type'),/application\/manifest\+json/);
+ assert.equal((await fetch(base+'/static/sw.js')).status,404);
  const iconResponse=await fetch(base+'/static/steady-icon.svg');assert.equal(iconResponse.status,200);assert.match(iconResponse.headers.get('content-type'),/image\/svg\+xml/);
  assert.notEqual((await fetch(base+'/static/%2e%2e/server.js')).status,200);
  assert.equal((await request('/api/me',undefined,'GET')).status,401);
