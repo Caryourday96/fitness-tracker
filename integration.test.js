@@ -62,6 +62,7 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.equal((await request('/api/activity',{day:'2026-09-25',kind:'walk',steps:1000})).status,400);
  assert.equal((await request('/api/sleep',{day:'2026-09-25',hours:7,quality:'good'})).status,400);
  const activity=await (await request('/api/progress',undefined,'GET')).json();assert.equal(activity.foodLogs[0].item,'Banana');assert.equal(activity.sleepLogs[0].hours,7.5);assert.equal(activity.activitySummary.steps.average,4500);assert.equal(activity.activitySummary.steps.days,1);assert.equal(activity.activitySummary.activityMinutes.total,42);
+ const week=await (await request('/api/weekly-review?week=2026-09-23',undefined,'GET')).json();assert.equal(week.steps.days,1);assert.equal(week.steps.average,4500);assert.equal(week.food.days,1);
  assert.equal((await request('/api/food-log',{day:'2026-09-25',meal:'snack',item:'Future'})).status,400);
  assert.equal((await request('/api/foods',{name:'Oats',category:'Carbohydrates'})).status,200);let foods=(await (await request('/api/me',undefined,'GET')).json()).foods;const oats=foods.find(x=>x.name==='Oats');assert.equal(oats.available,1);
  assert.equal((await request('/api/foods/'+oats.id,{name:'Steel-cut oats',category:'Carbohydrates',preference:'limited',notes:'Plain',available:false},'PUT')).status,200);foods=(await (await request('/api/me',undefined,'GET')).json()).foods;assert.equal(foods.find(x=>x.id===oats.id).available,0);assert.equal(foods.find(x=>x.id===oats.id).preference,'limited');

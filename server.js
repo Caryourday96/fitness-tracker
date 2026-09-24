@@ -11,6 +11,7 @@ import { BlobServiceClient } from '@azure/storage-blob';
 import { createPrivateBackup, verifyLatestPrivateBackup } from './backups.js';
 import { suggestMeals, validMealSettings } from './meal-guidance.js';
 import { summarizeWorkout } from './public/workout-recap.js';
+import { weeklyReview, weekBounds } from './weekly-review.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3030);
@@ -100,6 +101,15 @@ async function route(req,res) {
   if(method==='GET' && u.pathname==='/api/backups/status') return send(res,200,{...backupState});
   if(method==='POST' && u.pathname==='/api/backups/run') { if(!takeAttempt(`backup:${uid}`,2,60*60*1000))return send(res,429,{error:'Backup limit reached. Try again later.'}); try { const result=await performBackup(); return send(res,200,{ok:true,...result}); } catch { return send(res,503,{error:'Backup failed. Your current app data was not changed.'}); } }
   if(method==='POST' && u.pathname==='/api/backups/verify') { if(!takeAttempt(`backup-verify:${uid}`,4,60*60*1000))return send(res,429,{error:'Verification limit reached. Try again later.'}); try { const result=await verifyLatestPrivateBackup({container:backupContainer}); backupState.lastVerification=result.createdAt; return send(res,200,{ok:true,...result}); } catch { return send(res,503,{error:'Backup verification failed. Your current app data was not changed.'}); } }
+  if(method==='GET' && u.pathname==='/api/weekly-review'){
+    const profile=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data),today=dayFor(profile.timezone),week=u.searchParams.get('week')||today;
+    if(!validDay(week)||week>today)return send(res,400,{error:'Choose a valid week up to today'});
+    const {start,end}=weekBounds(week),workouts=db.prepare('SELECT day,status,data FROM workouts WHERE user_id=? AND day BETWEEN ? AND ? ORDER BY day').all(uid,start,end).map(row=>({...row,data:JSON.parse(row.data)}));
+    const reviews=db.prepare('SELECT day,data FROM day_reviews WHERE user_id=? AND day BETWEEN ? AND ? ORDER BY day').all(uid,start,end).map(row=>({...JSON.parse(row.data),day:row.day}));
+    const activities=db.prepare('SELECT day,steps FROM activity_logs WHERE user_id=? AND day BETWEEN ? AND ? ORDER BY day').all(uid,start,end);
+    const measurements=db.prepare('SELECT kind,value,unit,measured_at FROM measurements WHERE user_id=? AND substr(measured_at,1,10) BETWEEN ? AND ? ORDER BY measured_at').all(uid,start,end);
+    return send(res,200,weeklyReview({week,today,workouts,reviews,activities,measurements,profile}));
+  }
   if(method==='GET' && u.pathname==='/api/progress') {
     const p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data);
     const reviews=db.prepare('SELECT day,data,version FROM day_reviews WHERE user_id=? ORDER BY day DESC LIMIT 365').all(uid).map(r=>({...JSON.parse(r.data),day:r.day,version:r.version}));

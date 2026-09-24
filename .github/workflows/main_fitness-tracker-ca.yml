@@ -41,6 +41,7 @@ jobs:
           path: |
             server.js
             meal-guidance.js
+            weekly-review.js
             backups.js
             security.js
             progress.js
