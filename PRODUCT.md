@@ -46,6 +46,6 @@ The current workout generator uses a local, deterministic catalog with 3-day ful
 
 Reviewed 2026-09-24: [wger REST API docs](https://github.com/wger-project/docs/blob/master/docs/api/api.rst) describe public exercise-list endpoints, while user-owned routines require authentication. [ExerciseAPI docs](https://exercise-api.com/docs) describe a public exercise catalog, 100 anonymous requests/day, and CC BY 4.0 attribution requirements. These are catalog sources, not individualized coaching or medical validation. No API calls, user profile data, or health data are currently sent to either provider. If the library is expanded, prefer a build-time or explicitly cached catalog with reviewed movement/equipment mappings and visible attribution; preserve a no-network plan fallback.
 
-## Installable app shell
+## Add to Home Screen
 
-On iPhone, open the site in Safari and choose Share → Add to Home Screen. The PWA shell caches only the public app shell and named public assets. Authentication, private data, records, and private images remain network-only. This does not provide offline workout logging or background notifications.
+On iPhone, open the site in Safari and choose Share → Add to Home Screen. The standalone metadata is configured, but the current app does not cache pages or data offline. Azure EasyAuth blocks new root-level worker paths unless production auth exclusions are changed; this build does not change those auth rules. Workout logging, sign-in and saved records require a network connection. No background notifications are provided.

@@ -3,8 +3,7 @@ import { renderShareSettings } from './share.js';
 import { progressChartData } from './progress-charts.js';
 import { restSeconds } from './rest-timer.js';
 const $=s=>document.querySelector(s), app=$('#app'); let mode='login', state=null;
-if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('/static/sw.js',{scope:'/'}).catch(()=>{});
-function clearAppShell(){navigator.serviceWorker?.controller?.postMessage({type:'CLEAR_SHELL'})}
+if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.getRegistrations().then(registrations=>Promise.all(registrations.filter(registration=>[registration.active,registration.waiting,registration.installing].some(worker=>worker?.scriptURL===new URL('/static/sw.js',location.origin).href)).map(registration=>registration.unregister()))).catch(()=>{});if('caches' in window)caches.keys().then(keys=>Promise.all(keys.filter(key=>key==='steady-public-shell-v1').map(key=>caches.delete(key)))).catch(()=>{})}
 async function api(url,opt={}){const r=await fetch(url,{...opt,headers:{'Content-Type':'application/json','X-Requested-With':'Steady',...(opt.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const err=Error(d.error||'Request failed');err.status=r.status;throw err}return d}
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 const weekdayLabels=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -22,7 +21,7 @@ function addPreferredWeekdays(form,selected=[]){
 function showError(e){$('#authError').textContent=e.message}
 document.querySelectorAll('[data-auth]').forEach(b=>b.onclick=()=>{mode=b.dataset.auth;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));$('#authForm button').textContent=mode==='setup'?'Create private account':'Continue'});
 $('#authForm').onsubmit=async e=>{e.preventDefault();$('#authError').textContent='';const f=new FormData(e.target);try{await api(mode==='setup'?'/api/setup':'/api/login',{method:'POST',body:JSON.stringify({email:f.get('email'),password:f.get('password'),profile:{}})});await load()}catch(err){showError(err)}};
-$('#logout').onclick=async()=>{clearAppShell();try{sessionStorage.removeItem('steady.restTimer.v1')}catch{}await api('/api/logout',{method:'POST'});location.href='/.auth/logout?post_logout_redirect_uri=/'};
+$('#logout').onclick=async()=>{try{sessionStorage.removeItem('steady.restTimer.v1')}catch{}await api('/api/logout',{method:'POST'});location.href='/.auth/logout?post_logout_redirect_uri=/'};
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.hidden=x.id!==`view-${b.dataset.view}`);render();const view=document.querySelector(`#view-${b.dataset.view}`);view?.classList.remove('view-enter');void view?.offsetWidth;view?.classList.add('view-enter')});
 async function load(){try{state=await api('/api/me');$('#auth').hidden=true;$('#dashboard').hidden=false;render()}catch(e){if(e.status!==401)showError(e)}}
 function render(){if(!state)return; if(!state.profile.onboardingComplete)return onboarding(); const view=[...document.querySelectorAll('.view')].find(x=>!x.hidden)?.id||'view-today'; if(view==='view-history')return renderHistory();if(view==='view-settings')return renderSettings();if(view==='view-share'){renderShareSettings($('#view-share'),api).catch(error=>{$('#view-share').textContent=error.message});return}renderToday()}
@@ -107,7 +106,7 @@ renderHistory=async()=>{
 };
 
 const renderSettingsBase=renderSettings;
-renderSettings=()=>{renderSettingsBase();const panel=$('#view-settings .panel');if(!panel||$('#revokeSessions'))return;const control=document.createElement('section');control.innerHTML='<hr><h2>Account sessions</h2><p class="muted">Sign out all app sessions. This also signs out of Google on this device.</p><button class="ghost danger" id="revokeSessions">Sign out everywhere</button>';panel.append(control);$('#revokeSessions').onclick=async()=>{if(!confirm('Sign out everywhere? This revokes all Steady app sessions and signs out of Google on this device.'))return;clearAppShell();await api('/api/logout-all',{method:'POST'});location.href='/.auth/logout?post_logout_redirect_uri=/'}}
+renderSettings=()=>{renderSettingsBase();const panel=$('#view-settings .panel');if(!panel||$('#revokeSessions'))return;const control=document.createElement('section');control.innerHTML='<hr><h2>Account sessions</h2><p class="muted">Sign out all app sessions. This also signs out of Google on this device.</p><button class="ghost danger" id="revokeSessions">Sign out everywhere</button>';panel.append(control);$('#revokeSessions').onclick=async()=>{if(!confirm('Sign out everywhere? This revokes all Steady app sessions and signs out of Google on this device.'))return;await api('/api/logout-all',{method:'POST'});location.href='/.auth/logout?post_logout_redirect_uri=/'}}
 
 let activeRestTimer=null;
 const wireTodayBase=wireToday;

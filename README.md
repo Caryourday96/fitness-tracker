@@ -2,7 +2,7 @@
 
 ## Install on iPhone
 
-Open `https://fit.adeticket.com` in Safari, sign in, tap **Share**, then **Add to Home Screen**. Launching from the new icon opens the app in a standalone window on supported iOS versions. The service worker may keep the public app shell available, but it never caches account APIs, login responses, workout records, or private images; logging in and saving data still require a network connection. Sign out before lending the device to someone else.
+Open `https://fit.adeticket.com` in Safari, tap **Share**, then **Add to Home Screen**. Launching from the new icon opens the app in a standalone window on supported iOS versions. The current release does not cache app pages or data offline; sign-in, workout tracking and saved records require a network connection. Sign out before lending the device to someone else.
 
 ## Workout catalog decision
 
