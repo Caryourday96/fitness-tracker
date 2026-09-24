@@ -113,3 +113,11 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 - Existing data copied with app stopped to /home/steady-data and /home/steady-backups; original retained. Every file hash matched and target SQLite integrity passed. DATA_DIR set and app restarted. Post-restart comparison pending at checkpoint.
 - SQL history query fixed using a bound parameter; login errors now visible. Button styles apply at all widths and SVG has explicit dimensions. Broader security/onboarding changes are deliberately excluded from this scoped release.
 - Production artifact allowlist excludes databases, uploads and tests. Duplicate push deployment disabled. Full live Google flow remains owner verification.
+
+## Gym-day release checkpoint
+- Implemented first-run Today setup: timezone, load units, duration, weekly sessions, equipment, experience and optional restrictions. Existing saved profiles preserved; defaults no longer contain personal measurements/food list.
+- Resume no longer resets sets. Saves use optimistic version checks; stale writes rejected; saved sets can be corrected. Cardio retains duration/distance/incline and units. Input retained after failed saves; saving/saved messages added.
+- History offers date-specific daily reviews, step entries and a seven-calendar-day weight summary with coverage. Null measurements remain missing. This is a summary, not the full requested charts/end-of-day feature set.
+- 11 tests pass, including HTTP login/private access/workout persistence/conflicts/daily reviews and calendar/trend tests. Phone-width local inspection reached workout controls, but final browser persistence assertion was inconclusive; do not claim full iPhone/Safari acceptance.
+- Deferred: private upload UI + decoding, Blob/managed database, multi-instance verification, rest timer, alternatives, full charts, comprehensive safety/auth review. Original root worktree has broader unfinished auth edits. Do not merge blindly.
+- Release worktree: fitness-tracker/.deploy/persistence-release. Next: verify deployment then owner gym flow at fit.adeticket.com.

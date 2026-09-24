@@ -30,3 +30,7 @@
 - Optional reminders/push notifications.
 - Advanced charts and optional AI wording that cannot override deterministic safety rules.
 - Apple Health integration is intentionally out of scope.
+
+## Gym-day scope update
+Implemented pending release verification: first-run Today setup; non-destructive resume; treadmill-value persistence; version conflicts; set editing; date-specific daily reviews; weight average with recorded-day coverage. Persistent Azure data already survives restart and deployment.
+Still outstanding: managed database/private Blob storage and scaling; off-service backup restore; private image UI/validation; rest timer/alternatives; full charts; end-of-day cardio/energy/soreness details. Authentication/security hardening remains P0 and is not marked complete.
