@@ -50,6 +50,7 @@ jobs:
             backups.js
             security.js
             progress.js
+            push-reminders.js
             package.json
             package-lock.json
             public/

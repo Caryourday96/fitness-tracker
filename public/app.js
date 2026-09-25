@@ -2,6 +2,8 @@ import { summarizeWorkout } from './workout-recap.js';
 import { renderShareSettings } from './share.js';
 import { progressChartData } from './progress-charts.js';
 import { restSeconds } from './rest-timer.js';
+import { reminderDue } from './reminders.js';
+import { renderPushSettings } from './push-settings.js';
 const $=s=>document.querySelector(s), app=$('#app'); let mode='login', state=null;
 if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!window.navigator.standalone&&!window.matchMedia('(display-mode: standalone)').matches){
   for(const host of [$('#auth'),$('#dashboard')]){
@@ -10,7 +12,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!window.navigator.standalone&&!
     if(host.id==='dashboard')host.querySelector('.nav')?.after(guide);else host.append(guide);
   }
 }
-if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.getRegistrations().then(registrations=>Promise.all(registrations.filter(registration=>[registration.active,registration.waiting,registration.installing].some(worker=>worker?.scriptURL===new URL('/static/sw.js',location.origin).href)).map(registration=>registration.unregister()))).catch(()=>{});if('caches' in window)caches.keys().then(keys=>Promise.all(keys.filter(key=>key==='steady-public-shell-v1').map(key=>caches.delete(key)))).catch(()=>{})}
+if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.getRegistrations().then(async registrations=>{await Promise.all(registrations.filter(registration=>[registration.active,registration.waiting,registration.installing].some(worker=>worker?.scriptURL===new URL('/static/sw.js',location.origin).href)).map(registration=>registration.unregister()));await navigator.serviceWorker.register('/sw.js',{scope:'/'});if('caches' in window)await Promise.all((await caches.keys()).filter(key=>key==='steady-public-shell-v1').map(key=>caches.delete(key)))}).catch(()=>{})}
 async function api(url,opt={}){const r=await fetch(url,{...opt,headers:{'Content-Type':'application/json','X-Requested-With':'Steady',...(opt.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const err=Error(d.error||'Request failed');err.status=r.status;throw err}return d}
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 const weekdayLabels=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -363,8 +365,20 @@ renderSettings=()=>{
   const form=$('#settings');if(!form||form.querySelector('.weekday-picker'))return;
   const picker=addPreferredWeekdays(form,(state.profile.preferredDays||[]).map(Number));
   if(!picker)return;
-  form.onsubmit=e=>{e.preventDefault();if(!picker.isValid()){picker.fieldset.querySelector('input')?.focus();return}const body={...state.profile,...Object.fromEntries(new FormData(form)),preferredDays:picker.values()};saveAction(()=>api('/api/profile',{method:'PUT',body:JSON.stringify(body)}))};
+  const reminder=document.createElement('fieldset');reminder.className='meal-settings';reminder.innerHTML=`<legend>Gentle reminder</legend><label class="check"><input name="reminderInApp" type="checkbox" ${state.profile.reminderInApp?'checked':''}> Show a check-in reminder while Steady is open</label><label>Reminder time<input name="reminderTime" type="time" value="${esc(state.profile.reminderTime||'18:00')}"></label><p class="muted">Uses your saved time zone. This in-app reminder appears only while Steady is open; iPhone push is set up separately.</p>`;const submit=form.querySelector('button.primary');if(submit)submit.before(reminder);else form.append(reminder);
+  form.onsubmit=e=>{e.preventDefault();if(!picker.isValid()){picker.fieldset.querySelector('input')?.focus();return}const body={...state.profile,...Object.fromEntries(new FormData(form)),preferredDays:picker.values(),reminderInApp:reminder.querySelector('[name="reminderInApp"]').checked};saveAction(()=>api('/api/profile',{method:'PUT',body:JSON.stringify(body)}))};
+  renderPushSettings($('#view-settings .panel'),api).catch(()=>{});
 };
+
+function showInAppReminder(){
+  const host=$('#view-today');if(!host||!state?.profile)return;
+  const key=`steady-reminder-${state.day}`;
+  if(!reminderDue(state.profile,state.check,state.day)||sessionStorage.getItem(key)){host.querySelector('#dailyReminder')?.remove();return}
+  if(host.querySelector('#dailyReminder'))return;
+  const banner=document.createElement('div');banner.id='dailyReminder';banner.className='notice';banner.setAttribute('role','status');banner.innerHTML='<strong>A gentle check-in</strong><p>When it suits you, open Today and see what fits your energy.</p><button class="ghost" type="button">Dismiss for today</button>';
+  banner.querySelector('button').onclick=()=>{sessionStorage.setItem(key,'1');banner.remove()};host.prepend(banner);
+}
+setInterval(()=>{if(!document.hidden)showInAppReminder()},60_000);
 
 const renderTodayWithExerciseCatalog=renderToday;
 renderToday=()=>{
@@ -424,3 +438,6 @@ renderToday=()=>{
     const note=document.createElement('p');note.className='muted catalog-exercise-note';note.textContent=`Equipment: ${exercise.equipment}. Keep earlier performance under ${exercise.substitutedFrom||'the previous movement'}; this is a separate exercise history.`;card.append(note);
   });
 };
+
+const renderTodayBeforeReminder=renderToday;
+renderToday=()=>{renderTodayBeforeReminder();showInAppReminder()};

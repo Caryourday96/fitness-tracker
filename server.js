@@ -14,6 +14,7 @@ import { createPrivateBackup, verifyLatestPrivateBackup } from './backups.js';
 import { suggestMeals, validMealSettings } from './meal-guidance.js';
 import { summarizeWorkout } from './public/workout-recap.js';
 import { weeklyReview, weekBounds } from './weekly-review.js';
+import { createPushReminders } from './push-reminders.js';
 import { alternateWorkoutPlan, trainingTemplate, trainingContext, validSchedule, withCatalogOptions } from './training.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -36,7 +37,8 @@ CREATE TABLE IF NOT EXISTS checkins(id INTEGER PRIMARY KEY, user_id INTEGER NOT 
 CREATE TABLE IF NOT EXISTS plans(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, day TEXT NOT NULL, data TEXT NOT NULL, status TEXT NOT NULL, UNIQUE(user_id, day));
 CREATE TABLE IF NOT EXISTS workouts(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, day TEXT NOT NULL, data TEXT NOT NULL, status TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(user_id, day));
 CREATE TABLE IF NOT EXISTS measurements(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, kind TEXT NOT NULL, value REAL NOT NULL, unit TEXT NOT NULL, measured_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS foods(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL, preference TEXT NOT NULL, notes TEXT DEFAULT '');`);
+CREATE TABLE IF NOT EXISTS foods(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL, preference TEXT NOT NULL, notes TEXT DEFAULT '');
+CREATE TABLE IF NOT EXISTS push_subscriptions(user_id INTEGER NOT NULL, endpoint TEXT NOT NULL, subscription_json TEXT NOT NULL, last_sent_day TEXT, created_at TEXT NOT NULL, PRIMARY KEY(user_id,endpoint));`);
 try{db.exec('ALTER TABLE users ADD COLUMN google_revoked INTEGER NOT NULL DEFAULT 0')}catch{}
 try{db.exec('ALTER TABLE foods ADD COLUMN available INTEGER NOT NULL DEFAULT 1')}catch{}
 db.exec(`CREATE TABLE IF NOT EXISTS food_logs(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, day TEXT NOT NULL, meal TEXT NOT NULL, item TEXT NOT NULL, portion TEXT DEFAULT '', notes TEXT DEFAULT '', created_at TEXT NOT NULL);
@@ -55,6 +57,7 @@ const dayFor = (tz = 'UTC') => new Intl.DateTimeFormat('en-CA', { timeZone: tz, 
 const hash = (v) => crypto.createHash('sha256').update(v).digest('hex');
 const send = (res, status, body, type='application/json') => { res.writeHead(status, {'Content-Type': type, 'Cache-Control':'no-store'}); res.end(type==='application/json' ? JSON.stringify(body) : body); };
 const json = async (req, limit=8*1024*1024) => { let s='',size=0; for await (const c of req) { size+=c.length; if(size>limit) { const e=new Error('Request is too large'); e.status=413; throw e; } s+=c; } try{return s ? JSON.parse(s) : {}}catch{const e=new Error('Invalid JSON request');e.status=400;throw e} };
+const pushReminders=createPushReminders({db,env:process.env,dayFor,send,json});
 const parseCookies = (s='') => Object.fromEntries(s.split(';').filter(Boolean).map(x=>{const i=x.indexOf('=');return [x.slice(0,i).trim(),decodeURIComponent(x.slice(i+1))]}));
 const sessionUser = (req) => { const token=parseCookies(req.headers.cookie).session; if(!token) return null; const row=db.prepare('SELECT user_id,expires_at FROM sessions WHERE token_hash=?').get(hash(token)); if(!row || row.expires_at<Date.now()) return null; return row.user_id; };
 const passwordHash = (p) => { const salt=crypto.randomBytes(16).toString('hex'); return `${salt}:${crypto.scryptSync(p,salt,64).toString('hex')}`; };
@@ -76,7 +79,7 @@ function bridgeEasyAuth(req,res,allowGoogleLogin=false) {
   if(row.google_revoked)db.prepare('UPDATE users SET google_revoked=0 WHERE id=?').run(row.id);
   establishSession(res,row.id); return {id:row.id};
 }
-const profileDefaults = {timezone:'UTC', units:'lb', schedule:3, preferredDays:[], duration:60, experience:'beginner', equipment:'', injuries:'', restrictions:'', onboardingComplete:false};
+const profileDefaults = {timezone:'UTC', units:'lb', schedule:3, preferredDays:[], duration:60, experience:'beginner', equipment:'', injuries:'', restrictions:'', onboardingComplete:false, reminderInApp:false, reminderTime:'18:00'};
 function cardioProgression(context, minutes, readinessLimited) {
   const cap=minutes>=75?30:minutes>=60?25:minutes>=40?15:0;
   if(!cap)return{targetMinutes:0,reason:'No separate cardio block fits the selected session duration.'};
@@ -116,6 +119,8 @@ async function route(req,res) {
   if(googleCallback){if(!bridged?.id){res.writeHead(302,{Location:'/', 'Cache-Control':'no-store'});return res.end()}res.writeHead(302,{Location:'/', 'Cache-Control':'no-store'});return res.end()}
   if(handlePublicWorkoutDays(req,res,{db,send,root:ROOT}))return;
   if(method==='GET' && (u.pathname==='/'||u.pathname==='/index.html')) return send(res,200,fs.readFileSync(path.join(ROOT,'public','index.html'),'utf8'),'text/html; charset=utf-8');
+  if(method==='GET' && u.pathname==='/sw.js')return send(res,200,fs.readFileSync(path.join(ROOT,'public','sw.js')),'application/javascript; charset=utf-8');
+  if(method==='GET' && u.pathname==='/offline.html')return send(res,200,fs.readFileSync(path.join(ROOT,'public','offline.html')),'text/html; charset=utf-8');
   if(method==='GET' && u.pathname==='/static/sw.js')return send(res,404,{error:'Not found'});
   if(method==='GET' && u.pathname.startsWith('/static/')) { const name=u.pathname.slice(8); if(!/^[a-z0-9][a-z0-9._-]*$/i.test(name))return send(res,404,{error:'Not found'});const f=path.join(ROOT,'public',name),types={'.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.svg':'image/svg+xml','.webmanifest':'application/manifest+json; charset=utf-8'};if(fs.existsSync(f)&&fs.statSync(f).isFile())return send(res,200,fs.readFileSync(f),types[path.extname(f)]||'application/octet-stream'); return send(res,404,{error:'Not found'}); }
   if(method==='GET' && u.pathname==='/api/status') { const user=bridged?.id||sessionUser(req); return send(res,200,{authenticated:!!user, hasUser:!!db.prepare('SELECT 1 FROM users LIMIT 1').get()}); }
@@ -124,6 +129,7 @@ async function route(req,res) {
   if(method==='POST' && (u.pathname==='/api/logout'||u.pathname==='/api/logout-all')) { const token=parseCookies(req.headers.cookie).session; const uid=token?db.prepare('SELECT user_id FROM sessions WHERE token_hash=?').get(hash(token))?.user_id:null; if(u.pathname==='/api/logout-all'&&uid){db.prepare('DELETE FROM sessions WHERE user_id=?').run(uid);db.prepare('UPDATE users SET google_revoked=1 WHERE id=?').run(uid)}else if(token)db.prepare('DELETE FROM sessions WHERE token_hash=?').run(hash(token));res.setHeader('Set-Cookie',`session=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/${process.env.NODE_ENV==='production'?'; Secure':''}`);return send(res,200,{ok:true}); }
   if(await handlePublicPartner(req,res,{db,hash,send,root:ROOT,json}))return;
   const uid=bridged?.id||sessionUser(req); if(!uid) { send(res,401,{error:'Sign in required'}); return; }
+  if(u.pathname==='/api/push/config'||u.pathname==='/api/push/subscription')return pushReminders.handle(req,res,{uid,u,method});
   seedStarterFoods(db,uid);
   const shareOrigin=process.env.NODE_ENV==='production'?(process.env.APP_ORIGIN||'https://fit.adeticket.com'):`${req.headers['x-forwarded-proto']==='https'?'https':'http'}://${req.headers.host}`;
   if(handleOwnerShare(req,res,{db,userId:uid,hash,now,send,origin:shareOrigin}))return;
@@ -166,7 +172,7 @@ async function route(req,res) {
     return send(res,200,{ok:true,version});
   }
   if(method==='GET' && u.pathname==='/api/me') { const p=db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid); const tz=(p?JSON.parse(p.data):profileDefaults).timezone||'UTC', day=dayFor(tz); const check=db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day); const plan=db.prepare('SELECT data,status FROM plans WHERE user_id=? AND day=?').get(uid,day); const workout=db.prepare('SELECT data,status,updated_at FROM workouts WHERE user_id=? AND day=?').get(uid,day); const measures=db.prepare('SELECT kind,value,unit,measured_at FROM measurements WHERE user_id=? ORDER BY measured_at DESC LIMIT 60').all(uid); const foods=db.prepare('SELECT * FROM foods WHERE user_id=? ORDER BY name').all(uid); const foodLogs=db.prepare('SELECT * FROM food_logs WHERE user_id=? AND day=? ORDER BY id DESC').all(uid,day); const sleep=db.prepare('SELECT * FROM sleep_logs WHERE user_id=? AND day=? ORDER BY id DESC LIMIT 1').get(uid,day); const activities=db.prepare('SELECT * FROM activity_logs WHERE user_id=? AND day=? ORDER BY id DESC').all(uid,day); const mealFavourites=db.prepare('SELECT id,name,meal,food_ids AS foodIds,portion FROM meal_favourites WHERE user_id=? ORDER BY name').all(uid).map(f=>({...f,foodIds:JSON.parse(f.foodIds)})); const exerciseProfiles=db.prepare('SELECT id,exercise_name AS exerciseName,equipment_name AS equipmentName,load_meaning AS loadMeaning,setup_note AS setupNote FROM exercise_profiles WHERE user_id=? ORDER BY exercise_name,equipment_name').all(uid); const workoutHistory=db.prepare('SELECT day,data,status,updated_at FROM workouts WHERE user_id=? ORDER BY day DESC LIMIT 60').all(uid).map(w=>({...w,data:JSON.parse(w.data)})); return send(res,200,{profile:p?JSON.parse(p.data):profileDefaults,day,check:check?JSON.parse(check.data):null,plan:plan?{...withCatalogOptions(JSON.parse(plan.data),p?JSON.parse(p.data):profileDefaults,check?JSON.parse(check.data):{}),status:plan.status}:null,workout:workout?{...JSON.parse(workout.data),status:workout.status,version:workout.updated_at}:null,measures,foods,foodLogs,sleep,activities,workoutHistory,exerciseProfiles,mealFavourites,mealGuidance:suggestMeals(p?JSON.parse(p.data):profileDefaults,foods)}); }
-  if(method==='PUT' && u.pathname==='/api/profile') { const b=await json(req); try{dayFor(b.timezone)}catch{return send(res,400,{error:'Choose a valid time zone'})}; if(!validSchedule(b))return send(res,400,{error:'Choose either no preferred weekdays or exactly the number of days in your weekly schedule.'}); if(!validMealSettings(b))return send(res,400,{error:'Check your meal times and food preferences.'}); db.prepare('UPDATE profiles SET data=? WHERE user_id=?').run(JSON.stringify({...profileDefaults,...b,preferredDays:b.preferredDays??[]}),uid); return send(res,200,{ok:true}); }
+  if(method==='PUT' && u.pathname==='/api/profile') { const b=await json(req); try{dayFor(b.timezone)}catch{return send(res,400,{error:'Choose a valid time zone'})}; if(!validSchedule(b))return send(res,400,{error:'Choose either no preferred weekdays or exactly the number of days in your weekly schedule.'}); if(!validMealSettings(b))return send(res,400,{error:'Check your meal times and food preferences.'}); if(b.reminderInApp!=null&&typeof b.reminderInApp!=='boolean'||b.reminderTime!=null&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(b.reminderTime))return send(res,400,{error:'Choose a valid reminder time.'}); db.prepare('UPDATE profiles SET data=? WHERE user_id=?').run(JSON.stringify({...profileDefaults,...b,preferredDays:b.preferredDays??[]}),uid); return send(res,200,{ok:true}); }
   if(method==='POST' && u.pathname==='/api/exercise-profiles') {
     const b=await json(req),exerciseName=String(b.exerciseName||'').trim(),equipmentName=String(b.equipmentName||'').trim(),setupNote=String(b.setupNote||'').trim();
     if(!exerciseName||exerciseName.length>120||!equipmentName||equipmentName.length>120||setupNote.length>1000||!['total','per hand','per side','assisted'].includes(b.loadMeaning))return send(res,400,{error:'Check exercise, equipment, load label and setup note'});
@@ -320,6 +326,9 @@ if (backupContainer && process.env.NODE_ENV === 'production') {
   };
   const startupTimer = setTimeout(scheduledBackup, 30_000); startupTimer.unref();
   const retryTimer = setInterval(scheduledBackup, 60 * 60 * 1000); retryTimer.unref();
+}
+if(pushReminders.configured&&process.env.NODE_ENV==='production'){
+  const timer=setInterval(()=>pushReminders.sendDue().catch(()=>{}),60_000);timer.unref();
 }
 const server=http.createServer((req,res)=>route(req,res).catch(e=>send(res,e.status||500,{error:e.status?e.message:'Request failed'}))); if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) server.listen(PORT,()=>console.log(`Fitness tracker listening on http://localhost:${PORT}`));
 export { planFor, dayFor, passwordHash, passwordOk, easyAuthPrincipal, server };

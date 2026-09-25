@@ -25,15 +25,20 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  const appPage=await fetch(base+'/');assert.equal(appPage.status,200);assert.match(await appPage.text(),/manifest\.webmanifest/);
  const manifestResponse=await fetch(base+'/static/manifest.webmanifest');assert.equal(manifestResponse.status,200);assert.match(manifestResponse.headers.get('content-type'),/application\/manifest\+json/);
  assert.equal((await fetch(base+'/static/sw.js')).status,404);
+ const worker=await fetch(base+'/sw.js');assert.equal(worker.status,200);assert.match(await worker.text(),/steady-offline-shell-v1/);
+ const offline=await fetch(base+'/offline.html');assert.equal(offline.status,200);assert.match(await offline.text(),/You’re offline/);
  const iconResponse=await fetch(base+'/static/steady-icon.svg');assert.equal(iconResponse.status,200);assert.match(iconResponse.headers.get('content-type'),/image\/svg\+xml/);
  assert.notEqual((await fetch(base+'/static/%2e%2e/server.js')).status,200);
  assert.equal((await request('/api/me',undefined,'GET')).status,401);
+ assert.equal((await request('/api/push/config',undefined,'GET')).status,401);
   const googleLanding=await fetch(base+'/api/auth/google',{headers:{Origin:base},redirect:'manual'});assert.equal(googleLanding.status,302);
  assert.equal((await request('/api/setup',{email:'bad@example.com',password:'long enough password' },'POST',{Origin:'https://attacker.example'})).status,403);
  assert.equal((await request('/api/setup',{email:'bad@example.com',password:'long enough password' },'POST',{'X-Requested-With':'','Origin':base})).status,403);
 
  const setups=await Promise.all([request('/api/setup',{email:'test@example.com',password:'long test password here'}),request('/api/setup',{email:'test@example.com',password:'long test password here'})]);assert.deepEqual(setups.map(x=>x.status).sort(),[200,409]);const setup=setups.find(x=>x.status===200);cookie=setup.headers.get('set-cookie').split(';')[0];
  assert.equal(setup.headers.get('set-cookie').includes('HttpOnly'),true);
+ const pushConfig=await (await request('/api/push/config',undefined,'GET')).json();assert.equal(typeof pushConfig.available,'boolean');
+ assert.equal((await request('/api/push/subscription',{subscription:{endpoint:'https://web.push.apple.com/example'}})).status,pushConfig.available?400:503);
  const trainingDay=new Date(utcToday+'T12:00:00Z').getUTCDay(),preferredDays=[trainingDay,(trainingDay+2)%7,(trainingDay+4)%7];
  assert.equal((await request('/api/profile',{timezone:'UTC',schedule:3,preferredDays:[1,3],onboardingComplete:true},'PUT')).status,400);
  assert.equal((await request('/api/profile',{timezone:'UTC',schedule:3,preferredDays,onboardingComplete:true},'PUT')).status,200);

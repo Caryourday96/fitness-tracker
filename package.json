@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@azure/identity": "^4.13.3",
-    "@azure/storage-blob": "^12.33.0"
+    "@azure/storage-blob": "^12.33.0",
+    "web-push": "^3.6.7"
   }
 }

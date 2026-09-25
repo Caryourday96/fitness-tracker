@@ -2,7 +2,7 @@
 
 ## Install on iPhone
 
-Open `https://fit.adeticket.com` in Safari. Tap **Share** (or **Page Menu**, then **Share**), scroll to **Add to Home Screen**, turn on **Open as Web App** if shown, then tap **Add**. If Add to Home Screen is missing, scroll to **Edit Actions** and add it there. The sign-in and Today screens also have an expandable guide. The current release requires a network connection for sign-in and saved records. Sign out before lending the device to someone else.
+Open `https://fit.adeticket.com` in Safari. Tap **Share** (or **Page Menu**, then **Share**), scroll to **Add to Home Screen**, turn on **Open as Web App** if shown, then tap **Add**. If Add to Home Screen is missing, scroll to **Edit Actions** and add it there. The sign-in and Today screens also have an expandable guide. When offline, the installed app can show a public reconnect page; sign-in, private records and workout edits still require a network connection. Sign out before lending the device to someone else.
 
 ## Workout catalog decision
 
@@ -22,7 +22,15 @@ Private single-user fitness and weight-loss tracker at `https://fit.adeticket.co
 - Server-rendered JSON API plus a mobile-first vanilla client in `public/`.
 - Private data is scoped to the authenticated account. No health data is in public assets or fixtures.
 - The primary URL is `https://fit.adeticket.com`; the responsive layout is designed for iPhone Safari with safe-area padding and large touch targets.
-- Daily food and snack entries, manually entered sleep/activity, private screenshot uploads, daily reviews and protected history exports are supported. Private off-site SQLite and screenshot backups are stored in Azure Blob Storage and can be integrity-verified from Settings. The live app remains single-instance SQLite; managed database migration, a full restore rehearsal, PWA installability, OCR and reminders remain later work.
+- Daily food and snack entries, manually entered sleep/activity, private screenshot uploads, daily reviews and protected history exports are supported. Private off-site SQLite and screenshot backups are stored in Azure Blob Storage and can be integrity-verified from Settings. The live app remains single-instance SQLite. Offline private workout edits and OCR are not implemented.
+
+## Gentle reminders and offline Home Screen behavior
+
+The installed app uses a root-scope service worker for a public offline reconnect page. Its cache contains only that page, CSS and icon; it never caches account APIs, workouts, images or exports. Reconnect before recording a workout.
+
+In Settings, choose a reminder time in your saved time zone and opt in to the in-app reminder. It appears only while Steady is open and today's check-in is unfinished. It can be dismissed for the day. To receive iPhone notifications while Steady is closed, launch from the Home Screen icon, tap **Enable on this iPhone** in Settings, and allow the iOS notification prompt. This is a separate opt-in. Notifications contain only a generic check-in message. **Disable on this iPhone** revokes that device's push subscription.
+
+Push requires `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` as private App Service settings, plus optional `VAPID_SUBJECT` (defaults to `https://fit.adeticket.com/`). Generate one VAPID key pair with the installed `web-push` library, store the private key only in Azure app settings, and keep the same pair across deployments so existing subscriptions remain valid. Do not put it in Git or chat. The single-instance scheduler checks each minute; Azure App Service **Always On** must remain enabled. Push may be delayed when the platform or phone is offline; the app does not promise exact-time delivery. Test actual iPhone delivery and disable/re-enable before calling it complete. [WebKit's iOS Web Push guide](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/) explains the Home Screen and user-gesture requirement; [web-push](https://github.com/web-push-libs/web-push) documents VAPID keys.
 
 ## Local setup
 

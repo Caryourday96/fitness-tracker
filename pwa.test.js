@@ -14,9 +14,12 @@ test('iPhone home-screen app metadata launches the standalone tracker', () => {
   assert.match(html, /apple-mobile-web-app-capable" content="yes"/);
 });
 
-test('the app does not cache private account data for offline use', () => {
+test('offline Home Screen shell excludes private records and API responses', () => {
   const app = fs.readFileSync(new URL('./public/app.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(app, /serviceWorker\.register/);
+  const worker = fs.readFileSync(new URL('./public/sw.js', import.meta.url), 'utf8');
+  assert.match(app, /serviceWorker\.register\('\/sw\.js',\{scope:'\/'\}\)/);
   assert.match(app, /registration\.unregister\(\)/);
-  assert.match(app, /steady-public-shell-v1/);
+  assert.match(worker, /event\.request\.mode!=='navigate'/);
+  assert.match(worker, /\/offline\.html/);
+  assert.doesNotMatch(worker, /cache\.put|\/api\//);
 });
