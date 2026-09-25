@@ -129,7 +129,7 @@ async function route(req,res) {
   if(method==='POST' && (u.pathname==='/api/logout'||u.pathname==='/api/logout-all')) { const token=parseCookies(req.headers.cookie).session; const uid=token?db.prepare('SELECT user_id FROM sessions WHERE token_hash=?').get(hash(token))?.user_id:null; if(u.pathname==='/api/logout-all'&&uid){db.prepare('DELETE FROM sessions WHERE user_id=?').run(uid);db.prepare('UPDATE users SET google_revoked=1 WHERE id=?').run(uid)}else if(token)db.prepare('DELETE FROM sessions WHERE token_hash=?').run(hash(token));res.setHeader('Set-Cookie',`session=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/${process.env.NODE_ENV==='production'?'; Secure':''}`);return send(res,200,{ok:true}); }
   if(await handlePublicPartner(req,res,{db,hash,send,root:ROOT,json}))return;
   const uid=bridged?.id||sessionUser(req); if(!uid) { send(res,401,{error:'Sign in required'}); return; }
-  if(u.pathname==='/api/push/config'||u.pathname==='/api/push/subscription')return pushReminders.handle(req,res,{uid,u,method});
+  if(u.pathname==='/api/push/config'||u.pathname==='/api/push/subscription'||u.pathname==='/api/push/test')return pushReminders.handle(req,res,{uid,u,method});
   seedStarterFoods(db,uid);
   const shareOrigin=process.env.NODE_ENV==='production'?(process.env.APP_ORIGIN||'https://fit.adeticket.com'):`${req.headers['x-forwarded-proto']==='https'?'https':'http'}://${req.headers.host}`;
   if(handleOwnerShare(req,res,{db,userId:uid,hash,now,send,origin:shareOrigin}))return;

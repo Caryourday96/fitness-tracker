@@ -282,3 +282,14 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 
 - Final local verification repeated: 45/45 tests passed, JavaScript syntax checks and `git diff --check` passed. Browser-independent unit tests cover timezone timing, one push send per day, check-in suppression and rejection of a loopback push endpoint. The live History fix remains deployed; reminder/offline changes remain only in the isolated worktree.
 - Asked the owner whether to deploy code and privately set VAPID keys in the existing Azure Web App, deploy code only, or keep local. No answer had arrived at this checkpoint; do not treat elapsed time as approval. Latest visible usage: 46% five-hour and 30% weekly remaining. Exact next action after approval: commit/push the scoped release, verify Actions and public worker/offline routes, configure VAPID only if authorized, then ask the owner to test actual iPhone delivery and offline launch. No secret was generated or recorded.
+
+## Reminder/offline production release — 24 September 2026
+
+- Owner explicitly approved deployment and push configuration. Added `push-reminders.js` to the GitHub Actions deployment artifact, then committed/pushed `8e94346` to `main`. Pre-push focused CI command passed 45/45. Actions run `36085469470` completed successfully.
+- Generated a VAPID pair locally and saved it privately as Azure Web App settings without printing or recording values. Existing App Service `alwaysOn` is enabled; no paid resource was added. Azure was restarted after setting changes. After warm-up, live `https://fit.adeticket.com/sw.js`, `/offline.html`, `/static/reminders.js`, and `/api/status` returned 200. Unauthenticated `/api/push/config` returned 401. No user account data was read.
+- The owner iPhone check is pending: launch from Home Screen, enable notifications by tapping the button, observe actual generic delivery at the saved local time, disable/re-enable, and test the offline reconnect page in Airplane Mode. Do not mark backlog items 3/4 complete until these device checks pass. Latest known live code `8e94346`; exact next action: collect owner results and triage any failure. The canonical backlog was reconciled locally after deployment; this status-only doc change has not yet been pushed.
+
+## Push delivery self-test follow-up — 24 September 2026
+
+- Added an authenticated, per-device **Send test notification** control so the owner can verify iPhone delivery immediately even after today's check-in. The server checks subscription ownership and limits tests to once per minute; payload contains no health data.
+- Local `node --test --test-force-exit` passed 46/46, including ownership and rate-limit checks; `git diff --check` passed. This follow-up is local until its GitHub Actions release is confirmed. Exact next action: push the scoped change, verify workflow and live asset, then collect the owner's iPhone notification/offline results.

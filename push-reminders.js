@@ -9,6 +9,7 @@ const validKey=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{16,256}$/.test(va
 export function createPushReminders({db,env,dayFor,send,json,sendPush=webPush.sendNotification}){
   const publicKey=env.VAPID_PUBLIC_KEY||'',privateKey=env.VAPID_PRIVATE_KEY||'';
   const configured=!!(publicKey&&privateKey);
+  const lastTest=new Map();
   if(configured)webPush.setVapidDetails(env.VAPID_SUBJECT||'https://fit.adeticket.com/',publicKey,privateKey);
 
   async function handle(req,res,{uid,u,method}){
@@ -32,6 +33,18 @@ export function createPushReminders({db,env,dayFor,send,json,sendPush=webPush.se
       const row=db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid),profile=JSON.parse(row.data);
       if(!db.prepare('SELECT 1 FROM push_subscriptions WHERE user_id=? LIMIT 1').get(uid))db.prepare('UPDATE profiles SET data=? WHERE user_id=?').run(JSON.stringify({...profile,reminderPush:false}),uid);
       return send(res,200,{ok:true});
+    }
+    if(u.pathname==='/api/push/test'&&method==='POST'){
+      if(!configured)return send(res,503,{error:'Push reminders are not configured yet.'});
+      const body=await json(req,4096),endpoint=body.endpoint;
+      if(typeof endpoint!=='string'||endpoint.length>2048)return send(res,400,{error:'Choose an enabled iPhone subscription.'});
+      const row=db.prepare('SELECT subscription_json FROM push_subscriptions WHERE user_id=? AND endpoint=?').get(uid,endpoint);
+      if(!row)return send(res,404,{error:'Enable notifications on this iPhone first.'});
+      const key=`${uid}:${endpoint}`,last=lastTest.get(key)||0;
+      if(Date.now()-last<60_000)return send(res,429,{error:'Wait a minute before sending another test.'});
+      lastTest.set(key,Date.now());
+      try{await sendPush(JSON.parse(row.subscription_json),JSON.stringify({body:'This is a Steady test reminder.'}),{TTL:60});return send(res,200,{ok:true})}
+      catch(error){if(error.statusCode===404||error.statusCode===410)db.prepare('DELETE FROM push_subscriptions WHERE user_id=? AND endpoint=?').run(uid,endpoint);return send(res,502,{error:'The iPhone push service did not accept the test. Disable and re-enable notifications, then try again.'})}
     }
     return send(res,405,{error:'Method not allowed'});
   }

@@ -23,3 +23,18 @@ test('push scheduler sends one generic reminder per day and skips completed chec
   assert.equal(rejected.status,400);
   db.close();
 });
+
+test('test push is limited to the owner subscription and one request per minute',async()=>{
+  const db=new DatabaseSync(':memory:');
+  db.exec('CREATE TABLE push_subscriptions(user_id INTEGER,endpoint TEXT,subscription_json TEXT,last_sent_day TEXT,created_at TEXT,PRIMARY KEY(user_id,endpoint))');
+  const subscription={endpoint:'https://web.push.apple.com/owner',keys:{p256dh:'a'.repeat(87),auth:'b'.repeat(22)}};
+  db.prepare('INSERT INTO push_subscriptions VALUES(?,?,?,?,?)').run(1,subscription.endpoint,JSON.stringify(subscription),null,'2026-09-24');
+  const keys=webPush.generateVAPIDKeys(),sent=[];let result;
+  const push=createPushReminders({db,env:{VAPID_PUBLIC_KEY:keys.publicKey,VAPID_PRIVATE_KEY:keys.privateKey},dayFor:()=> '2026-09-24',send:(_res,status,body)=>{result={status,body}},json:async()=>({endpoint:subscription.endpoint}),sendPush:async(_sub,payload)=>sent.push(JSON.parse(payload))});
+  const request={uid:2,u:{pathname:'/api/push/test'},method:'POST'};
+  await push.handle({},null,request);assert.equal(result.status,404);assert.equal(sent.length,0);
+  request.uid=1;
+  await push.handle({},null,request);assert.equal(result.status,200);assert.deepEqual(sent,[{body:'This is a Steady test reminder.'}]);
+  await push.handle({},null,request);assert.equal(result.status,429);assert.equal(sent.length,1);
+  db.close();
+});
