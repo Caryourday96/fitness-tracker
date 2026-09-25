@@ -4,7 +4,7 @@ This is the **single source of truth** for fitness-tracker priorities and handof
 
 ## Current release and decisions
 
-- Latest verified deployment is `8e94346`; Actions run `36085469470` passed. Live `/sw.js`, `/offline.html`, `/static/reminders.js`, and `/api/status` returned 200; unauthenticated `/api/push/config` returned 401. VAPID key settings were privately saved in the existing Azure Web App and the app restarted. Owner iPhone offline launch and notification delivery remain unverified.
+- Latest verified deployment is `6e5a359`; Actions run `36086322316` passed. Live push-settings JavaScript contains **Send test notification**. The prior `8e94346` release established live `/sw.js`, `/offline.html`, `/static/reminders.js`, and `/api/status` with private VAPID settings on the existing Azure Web App. Owner iPhone offline launch and notification delivery remain unverified.
 - Production uses the existing single-instance Linux B1 App Service and SQLite on persistent App Service storage. Do not scale out or migrate the database until an approved design exists.
 - `fitdays.adeticket.com` DNS, App Service hostname and Azure managed TLS binding are configured. On 24 September 2026 Azure reported `SniEnabled`, direct HTTPS requests without certificate bypass returned 200 for `/` and `/api/public-workout-days`, and the in-app browser loaded the calendar totals. This serves the existing deployed workout-days page.
 - Private off-site backup integration was deployed earlier. The owner reports manually creating and verifying a backup. Azure blob contents were not independently inspected in this workspace.

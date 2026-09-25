@@ -293,3 +293,8 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 
 - Added an authenticated, per-device **Send test notification** control so the owner can verify iPhone delivery immediately even after today's check-in. The server checks subscription ownership and limits tests to once per minute; payload contains no health data.
 - Local `node --test --test-force-exit` passed 46/46, including ownership and rate-limit checks; `git diff --check` passed. This follow-up is local until its GitHub Actions release is confirmed. Exact next action: push the scoped change, verify workflow and live asset, then collect the owner's iPhone notification/offline results.
+
+## Test-push release verified — 24 September 2026
+
+- Commit `6e5a359` is on `main`; GitHub Actions `36086322316` completed successfully. Live push-settings JavaScript returned HTTP 200 and contains the test button. Existing VAPID settings remain configured privately; no extra Azure resource was created. Local test suite passed 46/46. Actual iPhone permission, push receipt and offline launch remain owner-device checks. Exact next action: collect the owner's iPhone results and triage any failure; do not mark reminder/offline backlog items complete until then.
+
