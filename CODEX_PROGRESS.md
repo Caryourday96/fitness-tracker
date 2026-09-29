@@ -1,3 +1,21 @@
+## 28 September 2026 — authorized release prepared
+
+- Scope F1 navigation + F10 timer + F2 CSV. User requested finishing and deployment before usage runs out. No new paid resources, auth/DNS change or data migration.
+- Changed release-worktree public/app.js, server.js, today-navigation.test.js, rest-timer.test.js, integration.test.js; reconciled backlog/review/checkpoints. Root dirty source remains untouched.
+- 49/49 isolated tests passed; syntax and whitespace checks passed. Browser timer start/pause/resume/navigation/refresh/skip passed; F1 full workout browser checks recorded above. CSV API checks pass for mi, km, missing distance.
+- Git fetched origin/main and confirmed base f36fbeb. Next exact action: commit scoped files, push HEAD to main, verify GitHub build/deploy and live static code. Deployment not yet confirmed.
+- F3 separate-activity accounting, F4 accessibility, Azure ingress investigation and remaining review items stay open.
+
+## 28 September 2026 — F1 verified locally; release pending
+
+- Owner authorized the first review fix. Completed F1 in `fitness-tracker/.deploy/accountability-link` (base `f36fbeb`): Today workout selectors now stay inside `#view-today`, so hidden History cards cannot be interpreted as today’s planned exercises. No server/database/planning changes; root dirty app files preserved.
+- Application file: `public/app.js` (nine changed lines). Added `today-navigation.test.js` with two regression cases: repeated rendering with saved strength/cardio and a no-plan Today with mounted History. Updated canonical backlog/review and mirrored backlog/review into the release worktree; preserved its earlier checkpoint history.
+- Checks: `node --check public/app.js` passed; isolated temporary `DATA_DIR`, `node --test --test-concurrency=1`: 48/48 passed; `git diff --check` passed. Synthetic mobile browser at 390px verified setup, check-in, start, strength save, repeated Today–History–Today, correction, undo, replacement set, cardio save, refresh, completion recap and completion. History showed exactly one replacement strength set and one cardio entry. No browser error/warning logs. Today/History fit 320px (305px document width); 390px Today fit (375px document width). This is Chromium viewport testing, not physical iPhone Safari.
+- Separate newly confirmed F10: Start 90s rest timer immediately shows Rest complete. `startRestTimer` clears `paused` before calling `restSeconds`, so a fresh timer without a deadline returns zero. Existing unchanged timer logic; not fixed in this scoped F1 change. Add focused start/pause/resume/refresh coverage next.
+- Deployment: NOT pushed or deployed; live release remains f36fbeb based on prior evidence. No production health records, DNS, authentication or Azure resources changed. Local synthetic server stopped after verification.
+- Usage milestone: five-hour 41% used, weekly 20% used (59%/80% remaining); no reset redeemed.
+- Exact next action: review/authorize release of the scoped F1 patch from this worktree; then fix backlog F10 as a separate change before claiming the timer works. F2/F3 and other review items remain outstanding.
+
 # Fitness tracker checkpoint — 23 September 2026
 
 ## Findings and decision
@@ -297,4 +315,9 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 ## Test-push release verified — 24 September 2026
 
 - Commit `6e5a359` is on `main`; GitHub Actions `36086322316` completed successfully. Live push-settings JavaScript returned HTTP 200 and contains the test button. Existing VAPID settings remain configured privately; no extra Azure resource was created. Local test suite passed 46/46. Actual iPhone permission, push receipt and offline launch remain owner-device checks. Exact next action: collect the owner's iPhone results and triage any failure; do not mark reminder/offline backlog items complete until then.
+
+
+## Owner iPhone push and offline feedback — 24 September 2026
+
+- Owner replied 'Yes yes' to the two checks requested after the deployed test button: immediate generic Steady notification and offline Home Screen reconnect page. Treat this as owner-reported pass, not direct device inspection. Reconnect recovery, scheduled reminder delivery, no-push-after-check-in, and disable/re-enable remain unverified. Actions `36086562572` for documentation commit `f36fbeb` completed successfully. No application code changed in this checkpoint. Exact next action: collect remaining owner-device results when convenient; keep backlog items 3/4 open until their full acceptance criteria pass.
 
