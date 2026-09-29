@@ -51,3 +51,5 @@ Fix **F1** first. It is a reproduced break in the primary gym flow, and the accr
 
 ### Release follow-up
 F10 timer and F2 cardio CSV are now fixed locally alongside F1; 49/49 tests pass and timer browser checks passed. Deployment authorized and in progress. F3 activity overlap remains the next investigation; do not interpret earlier findings as still-unimplemented F1/F2/F10 work.
+
+Deployment confirmed: F1/F2/F10 shipped as 9a5ee5b, Actions 36509670600 build/deploy succeeded. Live app.js HTTP 200 contains both client fixes. Authenticated live CSV/device retest remains owner follow-up; local/API coverage passed.

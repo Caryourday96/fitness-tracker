@@ -1,3 +1,11 @@
+## 28 September 2026 — deployment verified
+
+- Pushed 9a5ee5b to main. GitHub Actions 36509670600 completed build and Azure deploy successfully. https://fit.adeticket.com/static/app.js returned HTTP 200 and contains the scoped Today selectors and corrected timer deadline calculation; /api/status responded successfully.
+- Shipped F1 Today/History navigation, F10 timer and F2 cardio CSV units. 49/49 local tests passed plus CI build/tests. Synthetic browser verified timer start/pause/resume/navigation/refresh/skip; earlier F1 complete logging flow passed. No production records altered and no data migration/new resource.
+- Authenticated production CSV and physical iPhone behavior were not retested; server export regressions cover mi/km/no-distance and CI deployment succeeded.
+- Remaining first task: investigate F3 distinct activity vs wearable overlap semantics, then implement/tests without double counting. F4 accessibility and F8 Azure header-boundary verification remain open. Review has seven scoped product ideas and uncertainty labels. OCR remains paused; owner-removed backlog work stays removed.
+- Local test browser closed and temporary server stopped. Root preexisting source preserved. Latest usage check: five-hour 79% used / weekly 25% used; no reset redeemed. Stop here to preserve usage.
+
 ## 28 September 2026 — authorized release prepared
 
 - Scope F1 navigation + F10 timer + F2 CSV. User requested finishing and deployment before usage runs out. No new paid resources, auth/DNS change or data migration.

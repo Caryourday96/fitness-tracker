@@ -4,7 +4,7 @@ This is the **single source of truth** for fitness-tracker priorities and handof
 
 ## Current release and decisions
 
-- Latest verified deployment is `f36fbeb`; Actions run `36086562572` passed. The code release `6e5a359` added **Send test notification**. The prior `8e94346` release established live `/sw.js`, `/offline.html`, `/static/reminders.js`, and `/api/status` with private VAPID settings on the existing Azure Web App. Owner reports the immediate iPhone test notification and offline reconnect page worked; scheduled delivery and reconnect recovery remain unverified.
+- Latest verified deployment is `9a5ee5b`; Actions run `36509670600` passed build and deploy. Live app JavaScript returned HTTP 200 with both navigation and timer fixes. The code release `6e5a359` added **Send test notification**. The prior `8e94346` release established live `/sw.js`, `/offline.html`, `/static/reminders.js`, and `/api/status` with private VAPID settings on the existing Azure Web App. Owner reports the immediate iPhone test notification and offline reconnect page worked; scheduled delivery and reconnect recovery remain unverified.
 - Production uses the existing single-instance Linux B1 App Service and SQLite on persistent App Service storage. Do not scale out or migrate the database until an approved design exists.
 - `fitdays.adeticket.com` DNS, App Service hostname and Azure managed TLS binding are configured. On 24 September 2026 Azure reported `SniEnabled`, direct HTTPS requests without certificate bypass returned 200 for `/` and `/api/public-workout-days`, and the in-app browser loaded the calendar totals. This serves the existing deployed workout-days page.
 - Private off-site backup integration was deployed earlier. The owner reports manually creating and verifying a backup. Azure blob contents were not independently inspected in this workspace.
@@ -50,13 +50,13 @@ Only outstanding work appears here. Completed releases are recorded below. The 2
 
 Paused by owner: screenshot-to-log OCR proposals. If resumed, propose sleep/workout fields from private PNG/JPEG, require correction and explicit save, detect duplicates, and do not send images to external AI without separate consent. `server.js`, `public/app.js`, upload/record tests.
 
-## Verified release — push/deployment in progress
+## Completed release — 9a5ee5b deployed
 
-- **F1 Today–History navigation:** scoped workout selectors in `.deploy/accountability-link/public/app.js`; two new regressions and 48/48 isolated tests pass. Synthetic 390px browser verified repeat navigation, strength edit/undo, cardio, refresh and completion without console errors or lost/duplicated saved sets; 320px Today/History fit. Physical iPhone and live release not yet verified. No push/deployment. F10 has since been fixed and verified below.
+- **F1 Today–History navigation:** scoped workout selectors in `.deploy/accountability-link/public/app.js`; two new regressions and 48/48 isolated tests pass. Synthetic 390px browser verified repeat navigation, strength edit/undo, cardio, refresh and completion without console errors or lost/duplicated saved sets; 320px Today/History fit. Live release verified below; physical iPhone follow-up remains. F10 has since been fixed and verified below.
 
 - **F10 rest timer:** remaining time calculated before changing paused state. Actual-handler regression plus 390px browser verified start/pause/resume, navigation/refresh countdown (82s remaining) and skip with no console errors.
 - **F2 cardio CSV:** duration always uses `min`; distance has a separate `set-distance` row with its recorded unit. API regressions cover mi, km and omitted distance. Existing strength rows and formula escaping preserved.
-- Release validation: 49/49 tests with isolated DATA_DIR, syntax and diff checks pass. Owner explicitly authorized deployment. F3 remains first outstanding code item; requires overlap semantics before changing totals.
+- Release validation: 49/49 tests with isolated DATA_DIR, syntax and diff checks pass. Owner explicitly authorized deployment; Actions 36509670600 succeeded. F3 remains first outstanding code item; requires overlap semantics before changing totals.
 
 ## Completed and deployed
 
