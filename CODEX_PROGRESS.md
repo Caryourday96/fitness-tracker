@@ -1,3 +1,10 @@
+## 30 September 2026 — past workout completion deployed
+
+- Owner asked to make yesterday’s completed workout appear on Fitdays and authorized deployment. Commit 255a783 pushed to main; GitHub Actions 36667702904 build and deploy both succeeded. Live https://fit.adeticket.com/static/app.js returned HTTP 200 with the new History form. Fitdays public endpoint responded over HTTPS.
+- History can mark a date in the previous 365 days completed. Existing active workout exercise data is preserved; a missing workout gets an empty manual completion record. Duplicate/future/today dates rejected. Empty manual dates can be removed; existing workout logs cannot be deleted with this control. This updates the workouts table Fitdays reads.
+- Verification: 49/49 isolated tests passed, syntax/diff checks passed. Integration covered invalid/duplicate dates, authenticated access, Fitdays inclusion/removal, preserved existing sets. Synthetic 390px browser showed yesterday completed and correctable with no console errors or overflow. Production owner record was not changed.
+- Exact owner action: open fit.adeticket.com, History, select actual completed date, tap Mark past workout completed, then check fitdays.adeticket.com. A missing workout records only the day, not invented sets or cardio. Next backlog investigation is F3 activity overlap.
+
 ## 29 September 2026 — past workout date and Fitdays fix prepared
 
 - Cause: History daily review stores a day_review, while Fitdays queries completed rows in workouts; a prior-day workout could not be completed because /api/workout only accepts today.
