@@ -1,3 +1,17 @@
+## 29 September 2026 — past workout date and Fitdays fix prepared
+
+- Cause: History daily review stores a day_review, while Fitdays queries completed rows in workouts; a prior-day workout could not be completed because /api/workout only accepts today.
+- Implemented in .deploy/accountability-link: authenticated POST /api/history/workout for a past date inside the visible 365-day range; preserves an active workout’s saved exercise data or creates an empty manual completion; rejects duplicates, today/future/invalid dates. DELETE reverses only empty manually added days. History form defaults to yesterday, explains no sets are invented, and shows a correction button for manual days. Today’s workout route and plan are unchanged.
+- Tests: isolated serial suite 49/49 passed; server/client syntax and diff checks passed. Integration checks invalid dates, duplicate prevention, completed record, Fitdays handler inclusion/removal, preserving existing saved sets and protected access. Synthetic 390px browser verified yesterday form, weekly count, correction removal, no console errors or horizontal overflow. This was local synthetic data, not owner production data.
+- Deployment authorized by owner but pending at this checkpoint. Exact next step: commit/push scoped worktree files to main, confirm Actions build/deploy, verify live new History code and public Fitdays availability; then guide owner to record yesterday without touching their private record.
+
+## 28 September 2026 — continuation stopped at owner usage threshold
+
+- User requested further backlog work and another deployment. Start-of-turn usage tool reported five-hour 92% used (8% remaining), weekly 28% used. This is below the saved 10% stopping threshold. No application edits, tests, commit, push or deployment in this continuation. No reset redeemed.
+- Existing release remains 9a5ee5b, verified deployed in Actions 36509670600; documentation commit a66f98d is on main. Release worktree was clean.
+- F3 investigation: progress.js activityTrend chooses workout minutes instead of activity minutes on a shared date. activity_logs has no source/overlap field; /api/activity only stores kind, duration, distance, steps and notes. Simply summing would risk counting manually copied wearable summaries twice.
+- Exact next action after usage reset: design an explicit separate-activity vs overlapping-summary choice, preserve legacy records as unknown overlap, add same-day 15+30-minute and duplicate-summary regressions, implement a minimal compatible change, verify and deploy under the latest authorization. Update canonical BACKLOG.md and both checkpoints. Do not re-add owner-removed work.
+
 ## 28 September 2026 — deployment verified
 
 - Pushed 9a5ee5b to main. GitHub Actions 36509670600 completed build and Azure deploy successfully. https://fit.adeticket.com/static/app.js returned HTTP 200 and contains the scoped Today selectors and corrected timer deadline calculation; /api/status responded successfully.

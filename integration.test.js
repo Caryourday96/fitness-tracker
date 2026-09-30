@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { googleIdentity } from './security.js';
+import { handlePublicWorkoutDays } from './workout-days.js';
 test('Google header requires Azure hosting and Google identity',()=>{
  const headers={'x-ms-client-principal':Buffer.from(JSON.stringify({auth_typ:'google',claims:[{typ:'sub',val:'test-subject'},{typ:'email',val:'test@example.com'}]})).toString('base64')};
  assert.equal(googleIdentity(headers,{NODE_ENV:'production'}),null);
@@ -118,8 +119,28 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  }
  const shareCreate=await request('/api/share/create',{});assert.equal(shareCreate.status,200);const shareToken=new URL((await shareCreate.json()).url).hash.slice(1);
  const publicShare=await fetch(base+'/api/shared-workouts',{method:'POST',headers:{Origin:base,'X-Requested-With':'Steady','Content-Type':'application/json'},body:JSON.stringify({token:shareToken})});assert.equal(publicShare.status,200);const sharedWorkout=(await publicShare.json()).workouts[0];assert.equal(sharedWorkout.exercises[0].pattern,'cardio');assert.equal(sharedWorkout.exercises[0].sets[0].duration,12);assert.equal(sharedWorkout.exercises[0].sets[0].distance,0.8);assert.equal(sharedWorkout.exercises[0].sets[0].incline,1);
+ assert.equal((await request('/api/history/workout',{day:futureDay})).status,400);
+ assert.equal((await request('/api/history/workout',{day:utcToday})).status,400);
+ assert.equal((await request('/api/history/workout',{day:priorDay})).status,200);
+ assert.equal((await request('/api/history/workout',{day:priorDay})).status,409);
+ let past=(await (await request('/api/me',undefined,'GET')).json()).workoutHistory.find(w=>w.day===priorDay);
+ assert.equal(past.status,'completed');assert.deepEqual(past.data.exercises,[]);
+ const readFitdays=()=>{const publicDb=new DatabaseSync(path.join(process.env.DATA_DIR,'fitness.sqlite'));let body;try{assert.equal(handlePublicWorkoutDays({method:'GET',url:'/api/public-workout-days',headers:{host:'fitdays.adeticket.com'}},{setHeader(){}},{db:publicDb,root:'.',send(_res,status,value){assert.equal(status,200);body=value}}),true);return body}finally{publicDb.close()}};
+ let fitdays=readFitdays();
+ assert.equal(fitdays.days.filter(day=>day===priorDay).length,1);
+ assert.equal((await request('/api/history/workout',{day:priorDay},'DELETE')).status,200);
+ fitdays=readFitdays();
+ assert.equal(fitdays.days.includes(priorDay),false);
+ assert.equal((await request('/api/history/workout',{day:priorDay},'DELETE')).status,409);
+ const pastDb=new DatabaseSync(path.join(process.env.DATA_DIR,'fitness.sqlite'));
+ pastDb.prepare('INSERT INTO workouts(user_id,day,data,status,updated_at) VALUES(?,?,?,?,?)').run(1,priorDay,JSON.stringify({exercises:[{name:'Seated row',sets:[{weight:30,reps:10}]}]}),'active','v1');pastDb.close();
+ assert.equal((await request('/api/history/workout',{day:priorDay})).status,200);
+ past=(await (await request('/api/me',undefined,'GET')).json()).workoutHistory.find(w=>w.day===priorDay);
+ assert.equal(past.data.exercises[0].sets[0].weight,30);
+ assert.equal((await request('/api/history/workout',{day:priorDay},'DELETE')).status,409);
  assert.equal((await request('/api/logout',{})).status,200);
  assert.equal((await request('/api/me',undefined,'GET')).status,401);
+ assert.equal((await request('/api/history/workout',{day:priorDay})).status,401);
  for(let i=0;i<8;i++)assert.equal((await request('/api/login',{email:'throttle@example.com',password:'wrong credentials'})).status,401);
  assert.equal((await request('/api/login',{email:'throttle@example.com',password:'wrong credentials'})).status,429);
   assert.equal((await request('/api/login',{email:'other@example.com',password:'wrong credentials'},'POST',{Origin:'https://attacker.example'})).status,403);

@@ -442,3 +442,24 @@ renderToday=()=>{
 
 const renderTodayBeforeReminder=renderToday;
 renderToday=()=>{renderTodayBeforeReminder();showInAppReminder()};
+
+const renderHistoryBeforePastWorkout=renderHistory;
+renderHistory=async()=>{
+  await renderHistoryBeforePastWorkout();
+  const host=$('#view-history'),first=host.querySelector('.panel');
+  if(!first)return;
+  const yesterday=new Date(state.day+'T12:00:00Z');yesterday.setUTCDate(yesterday.getUTCDate()-1);
+  const oldest=new Date(state.day+'T12:00:00Z');oldest.setUTCDate(oldest.getUTCDate()-364);
+  const panel=document.createElement('section');panel.className='panel';
+  panel.innerHTML=`<h2>Record a workout from an earlier day</h2><p class="muted">Use this if you finished a workout but did not mark it complete in the app. It will count on Fitdays. This records the day only; it does not invent sets, weights or cardio.</p><form id="pastWorkoutForm" class="stack"><label>Workout date<input name="day" type="date" min="${esc(oldest.toISOString().slice(0,10))}" max="${esc(yesterday.toISOString().slice(0,10))}" value="${esc(yesterday.toISOString().slice(0,10))}" required></label><button class="primary">Mark past workout completed</button><p class="form-error" role="alert" hidden></p></form>`;
+  first.after(panel);
+  const form=panel.querySelector('form'),error=panel.querySelector('.form-error');
+  form.onsubmit=async event=>{event.preventDefault();error.hidden=true;const button=form.querySelector('button');button.disabled=true;try{await api('/api/history/workout',{method:'POST',body:JSON.stringify({day:form.elements.day.value})});state=await api('/api/me');await renderHistory();notice('Past workout saved. It now counts on Fitdays.')}catch(e){error.textContent=e.message;error.hidden=false}finally{button.disabled=false}};
+  const workoutPanel=[...host.querySelectorAll('.panel')].find(item=>item.querySelector('h2')?.textContent==='Workouts');
+  workoutPanel?.querySelectorAll('article.exercise').forEach((card,index)=>{
+    const workout=state.workoutHistory[index];
+    if(workout?.data?.source!=='manual-history')return;
+    const note=document.createElement('p');note.className='muted';note.textContent='Completion recorded later. No exercise details were logged.';card.append(note);
+    const remove=document.createElement('button');remove.type='button';remove.className='ghost danger';remove.textContent='Remove this recorded day';remove.onclick=async()=>{remove.disabled=true;try{await api('/api/history/workout',{method:'DELETE',body:JSON.stringify({day:workout.day})});state=await api('/api/me');await renderHistory();notice('Recorded day removed.')}catch(e){notice(e.message);remove.disabled=false}};card.append(remove);
+  });
+};

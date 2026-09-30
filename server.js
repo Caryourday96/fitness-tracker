@@ -236,6 +236,27 @@ async function route(req,res) {
     db.prepare('INSERT INTO plans(user_id,day,data,status) VALUES(?,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data,status=excluded.status').run(uid,day,JSON.stringify(plan),'confirmed');
     return send(res,200,{ok:true,plan:{...plan,status:'confirmed'}});
   }
+  if(method==='POST' && u.pathname==='/api/history/workout') {
+    const b=await json(req),profile=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data);
+    const day=String(b.day||''),today=dayFor(profile.timezone);
+    const cutoff=new Date(today+'T12:00:00Z');cutoff.setUTCDate(cutoff.getUTCDate()-364);
+    if(!validDay(day)||day>=today||day<cutoff.toISOString().slice(0,10))return send(res,400,{error:'Choose a past date within the last 365 days'});
+    const existing=db.prepare('SELECT data,status FROM workouts WHERE user_id=? AND day=?').get(uid,day);
+    if(existing?.status==='completed')return send(res,409,{error:'A completed workout is already saved for this date'});
+    const data=existing?JSON.parse(existing.data):{exercises:[],source:'manual-history'};
+    data.recordedAt=now();
+    if(existing)db.prepare('UPDATE workouts SET data=?,status=?,updated_at=? WHERE user_id=? AND day=?').run(JSON.stringify(data),'completed',crypto.randomUUID(),uid,day);
+    else db.prepare('INSERT INTO workouts(user_id,day,data,status,updated_at) VALUES(?,?,?,?,?)').run(uid,day,JSON.stringify(data),'completed',crypto.randomUUID());
+    return send(res,200,{ok:true,day});
+  }
+  if(method==='DELETE' && u.pathname==='/api/history/workout') {
+    const b=await json(req),day=String(b.day||'');
+    if(!validDay(day))return send(res,400,{error:'Choose a valid date'});
+    const row=db.prepare('SELECT data,status FROM workouts WHERE user_id=? AND day=?').get(uid,day);
+    if(!row||row.status!=='completed'||JSON.parse(row.data).source!=='manual-history')return send(res,409,{error:'Only an empty manually recorded workout day can be removed here'});
+    db.prepare('DELETE FROM workouts WHERE user_id=? AND day=?').run(uid,day);
+    return send(res,200,{ok:true,day});
+  }
   if(method==='POST' && u.pathname==='/api/workout') {
     const b=await json(req), p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data), day=dayFor(p.timezone);
     if(b.day && b.day!==day) return send(res,400,{error:'Use today’s workout'});
