@@ -1,3 +1,10 @@
+## 2 October 2026 — three releases deployed and live assets verified
+
+- Fitness77f788c8b1c7b9b391273043b5d98b7f3cb0fc6f deployed: Actions37058706846 success. Live fit.adeticket.com/static/app.js HTTP200 contains separate-activity/daily-total controls and legacy explanation. Unauthenticated /api/progress returns401. Fifty tests passed locally; five focused tests reran after removing duplicated guarded migration. No owner workout/health data read or changed. Physical iPhone and authenticated real-data total remain owner verification.
+- Friends Showdownbebdd43c94b0ee0e57982d5b8bbf9a453fc8febe deployed: Azure37058711420, CI37058711700, browser37058711643 all success. Root/health HTTP200; live /assets/index-Bhv51HVi.js contains both refresh-success/failure messages.100 unit/helper and20 browser checks passed locally. Production restart, TV/iPad and broader outage rehearsal remain outstanding.
+- Portfolio35280ee38ebd5d960124f39c5aefa6f91fc4426a deployed: both static-site workflows37058714088/37058714159 success. Live adeticket.com HTTP200 contains fitness and budget canonical links, retaining Friends Showdown. No DNS/paid resource changes. Global portfolio preference saved separately at user Codex AGENTS.md.
+- Backlogs reconciled for this batch. Next concrete action: fitness F4 unique accessible History measurement labels; for game coordinate owner-authenticated restart/hardware verification or choose next unblocked implementation. Do not represent those device checks as passed.
+
 ## 2 October 2026 — verified release approved
 
 Owner authorized publishing fitness activity-minute classification, game stale-host messaging and portfolio project cards. Fitness: 50 tests pass in isolated fixtures; API duplicates use highest daily total, separate activity adds to workout, legacy unknown unchanged. Game: 100 unit/helper tests and 20 browser tests pass. Portfolio phone widths320/390 pass. No production records modified; deployment pending. Next: push normal fast-forward to main, wait for Actions, verify live assets and record evidence.
