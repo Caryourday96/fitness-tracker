@@ -61,6 +61,14 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.equal((await request('/api/workout',{data:{exercises:[{name:'Different exercise',sets:[{duration:12,equipmentProfileId:equipmentId}]}]},status:'active'})).status,400);
  const saved=await request('/api/workout',{data,status:'active'});assert.equal(saved.status,200);
  assert.equal((await request('/api/workout',{data,status:'active'})).status,409);
+ assert.equal((await request('/api/activity',{kind:'Walk',day:utcToday,duration:30,minuteScope:'separate'})).status,200);
+ const summary={kind:'Wearable daily total',day:utcToday,duration:42,minuteScope:'daily-summary'};
+ assert.equal((await request('/api/activity',summary)).status,200);
+ assert.equal((await request('/api/activity',summary)).status,200);
+ assert.equal((await request('/api/activity',{kind:'Walk',duration:5,minuteScope:'invalid'})).status,400);
+ const activityProgress=await (await request('/api/progress',undefined,'GET')).json();
+ assert.equal(activityProgress.activitySummary.activityMinutes.total,42);
+ assert.equal(activityProgress.activities.filter(a=>a.minute_scope==='daily-summary').length,2);
  let current=await (await request('/api/me',undefined,'GET')).json();assert.equal(current.workoutHistory[0].status,'active');assert.deepEqual(current.workout.planSnapshot.template,{schedule:3,index:0});
  assert.equal(current.exerciseProfiles[0].setupNote,'Use handrails only for balance');
  const withOneMore=structuredClone(current.workout);withOneMore.exercises[0].sets.push({duration:2,distance:0.1});assert.equal((await request('/api/workout',{data:withOneMore,version:current.workout.version,status:'active'})).status,200);
@@ -92,7 +100,7 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.equal((await request('/api/activity',{day:recordedDay,kind:'walk',duration:30,steps:4500})).status,200);
  assert.equal((await request('/api/activity',{day:futureDay,kind:'walk',steps:1000})).status,400);
  assert.equal((await request('/api/sleep',{day:futureDay,hours:7,quality:'good'})).status,400);
- const activity=await (await request('/api/progress',undefined,'GET')).json();assert.equal(activity.foodLogs[0].item,'Banana');assert.equal(activity.sleepLogs[0].hours,7.5);assert.equal(activity.activitySummary.steps.average,4500);assert.equal(activity.activitySummary.steps.days,1);assert.equal(activity.activitySummary.activityMinutes.total,42);
+ const activity=await (await request('/api/progress',undefined,'GET')).json();assert.equal(activity.foodLogs[0].item,'Banana');assert.equal(activity.sleepLogs[0].hours,7.5);assert.equal(activity.activitySummary.steps.average,4500);assert.equal(activity.activitySummary.steps.days,1);assert.equal(activity.activitySummary.activityMinutes.total,72);
  const week=await (await request(`/api/weekly-review?week=${recordedDay}`,undefined,'GET')).json();assert.equal(week.steps.days,1);assert.equal(week.steps.average,4500);assert.equal(week.food.days,1);
  assert.equal((await request('/api/food-log',{day:futureDay,meal:'snack',item:'Future'})).status,400);
  assert.equal((await request('/api/foods',{name:'Oats',category:'Carbohydrates'})).status,200);let foods=(await (await request('/api/me',undefined,'GET')).json()).foods;const oats=foods.find(x=>x.name==='Oats');assert.equal(oats.available,1);

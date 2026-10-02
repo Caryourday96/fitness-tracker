@@ -1,5 +1,10 @@
 # Fitness tracker backlog — canonical
 
+## 2 October local implementation update
+
+- F3 activity-minute overlap: implementation and focused regressions complete locally in `.deploy/accountability-link`; isolated API/integration verification passed; deployment and physical iPhone verification pending. Acceptance: 15 treadmill + 30 separate walk = 45; duplicate daily summaries count once; old unknown-overlap records retain previous behavior. Steps unchanged. Next: isolated API/UI check before release.
+
+
 This is the **single source of truth** for fitness-tracker priorities and handoffs in this workspace. Release worktrees must reconcile and carry this same root `BACKLOG.md` before push; do not maintain conflicting task lists.
 
 ## Current release and decisions
@@ -32,7 +37,7 @@ Only outstanding work appears here. Completed releases are recorded below. The 2
 
 | Order | Priority | Item and status | Best model | Acceptance criteria, gates, and main files |
 | --- | --- | --- | --- | --- |
-| 1 | P1 | **F3 Confirmed: separate walk minutes disappear on workout days** | Astra | Distinct 15-minute treadmill + 30-minute walk yields 45 minutes; duplicate wearable summaries count once; legacy activity semantics documented. `progress.js`, `server.js`, progress tests. |
+| 1 | P1 | **F3 Locally fixed and verified; deployment pending: separate activity minutes** | Astra | Distinct 15-minute treadmill + 30-minute walk yields 45 minutes; duplicate wearable summaries count once; legacy activity semantics documented. `progress.js`, `server.js`, progress tests. |
 | 2 | P1 | **F4 Confirmed: unnamed History measurement controls** | Sol | Measurement kind, value, unit and both BP fields have unique accessible names, keyboard flow is intact, and duplicate CSV link is consolidated. `public/app.js:76,109`, browser semantics check. |
 | 3 | P1 investigation | **F8 Suspected: Azure principal header trust boundary** | Astra | Unauthenticated forged identity headers at public HTTPS edge cannot create a session or access `/api/me`; legitimate Google sign-in still works. Confirm actual ingress behavior before changing auth. `security.js`, Azure Easy Auth configuration. |
 | 4 | P1 | Owner iPhone Safari verification — real-session logging/timer pending | Owner, with Sol triage | Owner previously reported pass for sign-in/refresh/logout, workout and exercise choices, online Home Screen launch, private images, CSV/print, Share and History. Confirm real set/cardio save, resume and rest timer during an actual workout. Device: iPhone 15 Pro Max, iOS 27.0; Safari version unknown. |

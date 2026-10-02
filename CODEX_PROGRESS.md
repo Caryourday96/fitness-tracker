@@ -1,3 +1,7 @@
+## 2 October 2026 — verified release approved
+
+Owner authorized publishing fitness activity-minute classification, game stale-host messaging and portfolio project cards. Fitness: 50 tests pass in isolated fixtures; API duplicates use highest daily total, separate activity adds to workout, legacy unknown unchanged. Game: 100 unit/helper tests and 20 browser tests pass. Portfolio phone widths320/390 pass. No production records modified; deployment pending. Next: push normal fast-forward to main, wait for Actions, verify live assets and record evidence.
+
 ## 30 September 2026 — past workout completion deployed
 
 - Owner asked to make yesterday’s completed workout appear on Fitdays and authorized deployment. Commit 255a783 pushed to main; GitHub Actions 36667702904 build and deploy both succeeded. Live https://fit.adeticket.com/static/app.js returned HTTP 200 with the new History form. Fitdays public endpoint responded over HTTPS.
