@@ -413,3 +413,35 @@ Monthly target, rolling-window milestones, accessible eight-week chart and dated
 
 ## Fitdays privacy final refinement — 4 October
 Counts-only refresh now clears previously opened dialog date text and dated private link, not just visible calendar. Two mobile browser tests pass again with hidden-DOM assertions. FD01–FD03 deployment ffd317c Actions37240440061 success. FD04–FD07 0acbc25 pushed; latest deploy verification pending. Next FD08 filters.
+
+
+## FD08 — 4 October
+57 tests and two mobile browser flows pass. Selected date window controls calendar boundaries, dedicated count label and recent weekly chart; full-period summary cards retain explicit7/30/365 labels. Counts-only mode supplies aggregate counts/charts without individual dates. Next FD09 share preview.
+
+
+## FD09 — 4 October
+Two browser flows pass including selected30-day count-only image preview, PNG download and privacy clearing.7/30/90/365 periods supported; individual dates never included in image. Native share cancellation/delivery still owner check. Next monthly recap.
+
+
+## FD10 — 4 October
+58 tests pass including monthly weekly-portion reconciliation and oldest/current partial coverage. Monthly recap select uses recorded counts; no calorie/intensity claims. Next FD11 bests.
+
+
+## FD11 — 4 October
+59 tests pass including corrections/ties and exclusion of partial calendar months. Most-recorded complete month and28-day period are labeled within available coverage, not lifetime. Next FD12 private schedule comparison; public schedule stays unpublished without opt-in.
+
+
+## FD12 — 4 October
+60 tests pass. Private Settings compares elapsed preferred weekdays versus unique completed dates; future/active sessions excluded. Nothing publishes preferred weekdays or treats recovery as failure. Public schedule publication remains unavailable, requiring deliberate owner opt-in design if requested. Next FD13 device-local challenge.
+
+
+## FD13 — 4 October
+61 tests pass. Optional device-local start/end/target challenge supports pause/remove; validates real dates and possible day count. Available coverage and in-progress periods labeled; progress hidden in counts-only mode to avoid individual-date reconstruction. No training integration. Next FD14 factual year recap.
+
+
+## FD14 — 4 October
+62 tests pass. Year recap includes available date bounds, covered calendar days and complete/partial status;365-day leap-year window cannot claim full calendar year. Year count can be previewed in a counts-only image. Next FD15 calendar export.
+
+
+## Fitdays FD08–FD15 final candidate — 4 October
+Implemented date-window filters, counts-only image period/year previews, monthly recap, coverage-labeled bests, private preferred-weekday comparison, device-local challenge pause/remove, partial/full year recap and deterministic-ID all-day ICS export. Counts-only excludes completed-date list and disables date export/challenge date-range progress; no public schedule.63 Node tests pass; expanded two phone browser flows pass at320/390px with challenge, share preview/download, leap/coverage regressions, ICS download and private History/Settings. Optional tools collapsed by default to keep calendar prominent. No fake owner records or new paid resources. Next publish named files then confirm Azure/live assets; native iPhone sharing/install, actual ICS import and Google login date continuity remain owner verification.
