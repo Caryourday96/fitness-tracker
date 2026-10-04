@@ -1,3 +1,7 @@
+## Fitness maintenance — 4 October 2026
+
+F4 History labels and duplicate export link fixed; F5 sparse coverage now counts only past gaps; F7 unit tests use a unique temporary database before importing the server. Local64 tests and two synthetic phone browser scenarios pass. Deployment authorized, pending workflow/live verification. Temporary unit databases contain synthetic data only and remain in the OS temp directory until housekeeping. Next: F8 ingress investigation, then F6 meal variety; owner real-workout/device checks remain.
+
 ## Latest Fitdays verification — 4 October 2026
 
 Code54c96fc deployed successfully (Actions37241979733). Final CI63 tests pass; two synthetic mobile browser scenarios pass. Canonical live page/assets return200; corrected preview CSP verified after restarting the existing Web App; private visibility/export/progress return401 without sign-in. FD01–FD15 first-pass behavior is implemented, including FD12 as private-only schedule comparison. Native owner checks below remain; earlier pending-release notes are superseded. No new paid resources or owner workout edits.
@@ -64,11 +68,8 @@ Only outstanding work appears here. Completed releases are recorded below. The 2
 
 | Order | Priority | Item and status | Best model | Acceptance criteria, gates, and main files |
 | --- | --- | --- | --- | --- |
-| 2 | P1 | **F4 Confirmed: unnamed History measurement controls** | Sol | Measurement kind, value, unit and both BP fields have unique accessible names, keyboard flow is intact, and duplicate CSV link is consolidated. `public/app.js:76,109`, browser semantics check. |
 | 3 | P1 investigation | **F8 Suspected: Azure principal header trust boundary** | Astra | Unauthenticated forged identity headers at public HTTPS edge cannot create a session or access `/api/me`; legitimate Google sign-in still works. Confirm actual ingress behavior before changing auth. `security.js`, Azure Easy Auth configuration. |
 | 4 | P1 | Owner iPhone Safari verification — real-session logging/timer pending | Owner, with Sol triage | Owner previously reported pass for sign-in/refresh/logout, workout and exercise choices, online Home Screen launch, private images, CSV/print, Share and History. Confirm real set/cardio save, resume and rest timer during an actual workout. Device: iPhone 15 Pro Max, iOS 27.0; Safari version unknown. |
-| 5 | P2 | **F5 Confirmed: early-week sparse wording** | Sol | On the first day of a week, saved entries do not trigger “Several days are unrecorded”; actual past gaps still do. `weekly-review.js`, focused test. |
-| 6 | P2 | **F7 Suspected: local tests lack data isolation** | Sol | Default `npm test` passes repeatedly with a local app running and never opens the developer's persistent database. `fitness.test.js`, test setup. |
 | 7 | P2 | **F6 Confirmed UX: repetitive meal ideas** | Sol | A week of suggestions varies available foods, retains allergy/restriction pause, and never logs a suggestion automatically. `meal-guidance.js`, `public/app.js`, focused test. |
 | 8 | P2 | **I1 Focused Today layout** | Sol | At phone width, a returning user reaches the next set in one tap while food/sleep/upload sections remain discoverable and keyboard accessible. `public/app.js`, `public/app.css`. |
 | 9 | P2 | **I2 In-workout equipment labeling** | Sol | A user can label equipment during a workout; load comparisons remain separated by exercise, equipment and unit. `public/app.js`, equipment-profile route/tests. |

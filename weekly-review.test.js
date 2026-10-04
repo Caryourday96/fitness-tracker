@@ -15,3 +15,12 @@ test('weekly review preserves sparse days and uses recorded-day averages',()=>{
   assert.equal(result.food.days,2);
   assert.equal(result.workouts.completed,1);
 });
+
+test('weekly coverage counts past gaps rather than future days',()=>{
+ const monday=weeklyReview({week:'2026-09-21',today:'2026-09-21',reviews:[{day:'2026-09-21',steps:4000}]});
+ assert.doesNotMatch(monday.note,/Several days/);
+ const wednesday=weeklyReview({week:'2026-09-23',today:'2026-09-23',reviews:[{day:'2026-09-23',steps:4000}]});
+ assert.match(wednesday.note,/Several days/);
+ const recorded=weeklyReview({week:'2026-09-23',today:'2026-09-23',reviews:[{day:'2026-09-21'},{day:'2026-09-22'}]});
+ assert.doesNotMatch(recorded.note,/Several days/);
+});

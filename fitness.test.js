@@ -1,4 +1,9 @@
-import test from 'node:test'; import assert from 'node:assert/strict'; import { planFor, passwordHash, passwordOk, dayFor, easyAuthPrincipal } from './server.js';
+import test from 'node:test'; import assert from 'node:assert/strict'; import { mkdtempSync } from 'node:fs'; import { tmpdir } from 'node:os'; import { join } from 'node:path';
+const testData=mkdtempSync(join(tmpdir(),'fitness-unit-'));
+process.env.DATA_DIR=testData;
+process.env.NODE_ENV='test';
+const { planFor, passwordHash, passwordOk, dayFor, easyAuthPrincipal }=await import('./server.js');
+// SQLite remains open until process exit; the isolated OS-temp directory never contains owner data.
 import { handlePublicWorkoutDays } from './workout-days.js';
 test('public fitdays endpoint exposes only completed workout dates on its dedicated host',()=>{
  const db={prepare(sql){if(sql.includes('sqlite_master'))return{get:()=>null};if(sql.includes('FROM profiles'))return{get:()=>({data:'{"timezone":"America/Toronto"}'})};if(sql.includes('FROM users'))return{get:()=>({id:7})};if(sql.includes('FROM workouts'))return{all:(userId,start,end)=>{assert.equal(userId,7);assert.match(start,/^\d{4}-\d{2}-\d{2}$/);assert.match(end,/^\d{4}-\d{2}-\d{2}$/);return[{day:'2026-09-23'}]}};throw Error('Unexpected query')}};
