@@ -453,3 +453,7 @@ Implemented date-window filters, counts-only image period/year previews, monthly
 
 ## Fitdays production-policy image verification — 4 October
 Final review found public CSP img-src self would block blob preview images despite synthetic visible-element checks. Allowed same-origin blob image previews only (no external image hosts). Browser now loads the actual server CSP and asserts1080-pixel natural image width; both flows pass, including ICS download under policy. Next push this scoped fix and confirm final Azure deployment before closing release checkpoint.
+
+
+## Fitdays final deployment verified — 4 October 2026
+Code54c96fc8c3e9c58b35e2a18cda33dd9136088f30; GitHub Actions37241979733 success. Final CI63 tests and two synthetic phone browser scenarios pass. Live final page/controller/model/private schedule module HTTP200; chosen-window boundary label verified. Existing Web App restart required to replace old in-memory CSP; CLI succeeded and live HTML now permits local blob preview images. Private progress/export/visibility return401 without authentication. FD01–FD15 first-pass implementation complete; FD12 remains authenticated/private and no schedule is published. Canonical backlog reconciled; docs/FITDAYS.md explains use and limits. No paid provisioning, DNS changes or owner workout-record edits. Exact next action: owner checks native iPhone PNG sharing, Home Screen launch/icon, actual ICS import and selected History date after Google sign-in; fix any reported failure before expanding scope. Other app backlogs unchanged.
