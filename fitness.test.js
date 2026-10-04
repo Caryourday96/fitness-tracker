@@ -1,10 +1,10 @@
 import test from 'node:test'; import assert from 'node:assert/strict'; import { planFor, passwordHash, passwordOk, dayFor, easyAuthPrincipal } from './server.js';
 import { handlePublicWorkoutDays } from './workout-days.js';
 test('public fitdays endpoint exposes only completed workout dates on its dedicated host',()=>{
- const db={prepare(sql){if(sql.includes('FROM profiles'))return{get:()=>({data:'{"timezone":"America/Toronto"}'})};if(sql.includes('FROM users'))return{get:()=>({id:7})};if(sql.includes('FROM workouts'))return{all:(userId,start,end)=>{assert.equal(userId,7);assert.match(start,/^\d{4}-\d{2}-\d{2}$/);assert.match(end,/^\d{4}-\d{2}-\d{2}$/);return[{day:'2026-09-23'}]}};throw Error('Unexpected query')}};
+ const db={prepare(sql){if(sql.includes('sqlite_master'))return{get:()=>null};if(sql.includes('FROM profiles'))return{get:()=>({data:'{"timezone":"America/Toronto"}'})};if(sql.includes('FROM users'))return{get:()=>({id:7})};if(sql.includes('FROM workouts'))return{all:(userId,start,end)=>{assert.equal(userId,7);assert.match(start,/^\d{4}-\d{2}-\d{2}$/);assert.match(end,/^\d{4}-\d{2}-\d{2}$/);return[{day:'2026-09-23'}]}};throw Error('Unexpected query')}};
  const res={headers:{},setHeader(name,value){this.headers[name]=value}},result={};
  const handled=handlePublicWorkoutDays({method:'GET',url:'/api/public-workout-days',headers:{host:'fitdays.adeticket.com'}},res,{db,root:'.',send(_res,status,body){result.status=status;result.body=body}});
- assert.equal(handled,true);assert.equal(result.status,200);assert.deepEqual(Object.keys(result.body).sort(),['days','today']);assert.deepEqual(result.body.days,['2026-09-23']);assert.equal(res.headers['X-Robots-Tag'],'noindex, nofollow');
+ assert.equal(handled,true);assert.equal(result.status,200);assert.deepEqual(Object.keys(result.body).sort(),['days','today','visibility']);assert.deepEqual(result.body.days,['2026-09-23']);assert.equal(res.headers['X-Robots-Tag'],'noindex, nofollow');
  assert.equal(handlePublicWorkoutDays({method:'GET',url:'/api/public-workout-days',headers:{host:'fit.adeticket.com'}},res,{db,root:'.',send(){}}),false);
 });
 test('password hashing verifies and rejects wrong password',()=>{const h=passwordHash('a very long safe password');assert.equal(passwordOk('a very long safe password',h),true);assert.equal(passwordOk('wrong password',h),false)});

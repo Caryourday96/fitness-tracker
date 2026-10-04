@@ -381,3 +381,15 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 
 ## Fitdays authorized release — 4 October 2026
 Owner authorized publishing the six-feature batch and continuing FD01/FD02. Final 54/54 Node tests and synthetic mobile browser regression pass (320/390px, navigation, target persistence, dialogs, PNG fallback, refresh failure). No private records changed. Push/deployment pending; next verify workflow/live assets then implement sync confirmation and freshness.
+
+
+## FD01 sync confirmation — 4 October
+Existing isolated integration test proves historical save is public once, duplicate save returns409, deletion removes public date, and logged exercise details survive completion. Updated success notices to distinguish server save from next public fetch. 54 release tests pass before this copy-only change; no owner data touched. Next FD02 return refresh/freshness. Release876701a workflow37240063592 in progress.
+
+
+## FD02 verified — 4 October
+Visible page refreshes on return/online/pageshow with30-second throttle and one-minute visible heartbeat for configured server-local day rollover. Single-flight loading prevents concurrent requests. Actual successful-fetch timestamp and stale failure label added. Synthetic browser passes phone layout, bounded return events, next-day response rollover and preserved data on503. Next FD03 owner visibility design; no API privacy expansion. Initial Azure release still in progress.
+
+
+## Fitdays release verified and FD03 completed — 4 October
+876701a deployed: Actions37240063592 success; canonical page/data/manifest/icon HTTP200, warmed icon image/png. FD01–FD03 follow-up passes54 tests and expanded synthetic phone browser: duplicate history persistence, private-owner-only visibility writes (401/403), invalid mode400, counts-only API excludes date list and DOM removes date buttons/dialog/download; defaults preserve dates. Separate settings table avoids profile overwrites; public timezone now matches selected owner. Visible return and minute refresh handles server-local dates. Native iPhone share/install still pending. Next publish follow-up then FD04 monthly device-local goal. No owner workout values inspected or changed.
