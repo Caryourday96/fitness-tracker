@@ -393,3 +393,19 @@ Visible page refreshes on return/online/pageshow with30-second throttle and one-
 
 ## Fitdays release verified and FD03 completed — 4 October
 876701a deployed: Actions37240063592 success; canonical page/data/manifest/icon HTTP200, warmed icon image/png. FD01–FD03 follow-up passes54 tests and expanded synthetic phone browser: duplicate history persistence, private-owner-only visibility writes (401/403), invalid mode400, counts-only API excludes date list and DOM removes date buttons/dialog/download; defaults preserve dates. Separate settings table avoids profile overwrites; public timezone now matches selected owner. Visible return and minute refresh handles server-local dates. Native iPhone share/install still pending. Next publish follow-up then FD04 monthly device-local goal. No owner workout values inspected or changed.
+
+
+## FD04 — 4 October
+Optional1–31 monthly comparison target saves only on device; no workout edits or catch-up prescription. Mobile browser confirms12 target persists after reload and current month count matches fixture. Next FD05.
+
+
+## FD05 — 4 October
+Threshold acknowledgement10/25/50/100 uses deduplicated rolling365 count, recomputes on every fetch including corrections; no animation/extra exercise/lifetime claims. Uses counts-only data too. Syntax check next, then FD06.
+
+
+## FD05/FD06 verified — 4 October
+56 Node tests pass including milestone correction and Monday weekly aggregation. Eight-week chart has text counts/ranges and partial-week labels; counts-only server supplies aggregates without completed-date lists. Next FD07 dated private History shortcut.
+
+
+## FD04–FD07 release candidate — 4 October
+Monthly target, rolling-window milestones, accessible eight-week chart and dated private History shortcut are implemented. 56 Node tests pass; two synthetic browser flows pass at320/390px, including selected-date form population and zero writes from navigation, freshness rollover/throttle/stale fallback, target persistence and counts-only DOM. Google redirect date continuity uses tab sessionStorage; physical Google/iPhone check pending. FD01–FD03 ffd317c workflow37240440061 status checked separately. Next deploy this scoped batch, verify live assets, then FD08 period filters; FD08–FD15 remain outstanding. No real workout records or paid resources changed.

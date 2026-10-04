@@ -4,3 +4,7 @@ test('leap date and rolling counts use calendar dates',()=>{const x=workoutCalen
 
 test('calendar week starts Monday and month comparisons use elapsed dates',()=>{const x=consistencyInsights({today:'2026-10-04',days:['2026-09-28','2026-09-30','2026-10-03','2026-10-03','2026-09-03','2026-09-20']});assert.equal(x.week.start,'2026-09-28');assert.equal(x.week.count,3);assert.equal(x.current.count,1);assert.equal(x.previousComparable.end,'2026-09-04');assert.equal(x.previousComparable.count,1);assert.equal(x.previousFull.count,4);});
 test('previous comparable month clamps to its real last day',()=>{const x=consistencyInsights({today:'2024-03-31',days:['2024-02-29']});assert.equal(x.currentComparable.end,'2024-03-29');assert.equal(x.previousComparable.end,'2024-02-29');assert.equal(x.previousComparable.count,1);});
+
+import {recordedMilestone,weeklyCounts} from './public/fitdays-data.js';
+test('milestones recompute from current available count, including corrections',()=>{assert.equal(recordedMilestone(9),null);assert.equal(recordedMilestone(10),10);assert.equal(recordedMilestone(100),100);assert.equal(recordedMilestone(49),25)});
+test('weekly counts use Monday ranges, duplicate filtering and a partial current week',()=>{const weeks=weeklyCounts({today:'2026-10-07',days:['2026-10-05','2026-10-05','2026-10-07','2026-10-08','2026-09-30']});assert.equal(weeks.length,8);assert.deepEqual(weeks.at(-1),{start:'2026-10-05',end:'2026-10-07',count:2,partial:true});assert.equal(weeks.at(-2).count,1)});

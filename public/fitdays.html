@@ -30,11 +30,11 @@
     </section>
     <section class="insight-panel" aria-labelledby="consistencyTitle">
       <h2 id="consistencyTitle">Your week, at a glance</h2>
-      <p id="weekProgress">Loading recorded days…</p>
+      <p id="milestone" class="state"></p><p id="weekProgress">Loading recorded days…</p>
       <label>Optional weekly comparison target<select id="weeklyTarget"><option value="">No target</option><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option><option value="4">4 days</option><option value="5">5 days</option><option value="6">6 days</option><option value="7">7 days</option></select></label>
       <p class="state">Saved on this device only; not a training prescription. Recovery days matter, and missing records do not prove inactivity.</p>
-      <p id="monthTrend" class="state"></p>
-      <button id="shareSummary" type="button" disabled>Share summary image</button>
+      <label>Optional monthly comparison target<input id="monthlyTarget" type="number" min="1" max="31" step="1" inputmode="numeric" placeholder="No target"></label><p id="monthlyProgress" class="state"></p><p id="monthTrend" class="state"></p>
+      <h3>Recent weeks</h3><p class="state">Monday-based recorded-day counts. A zero means no completion was recorded, not that you were inactive.</p><ol id="weeklyHistory" class="weekly-history"></ol><button id="shareSummary" type="button" disabled>Share summary image</button>
       <a id="downloadSummary" hidden download="fitdays-summary.png">Download summary image</a>
       <p id="shareStatus" role="status" class="state"></p>
     </section>
