@@ -461,3 +461,7 @@ Code54c96fc8c3e9c58b35e2a18cda33dd9136088f30; GitHub Actions37241979733 success.
 
 ## 4 October — scoped fitness maintenance
 Implemented F4 accessible History measurement/BP labels and one CSV action; F5 weekly notes count actual past gaps; F7 isolated unit-test database before dynamic server import. Files: public/app.js, weekly-review.js, weekly-review.test.js, fitness.test.js, docs/verification/fitdays-browser.spec.ts, BACKLOG.md.64 Node tests and two synthetic phone browser scenarios pass. Initial Windows cleanup of open SQLite failed; removed unsafe exit cleanup and retain synthetic OS-temp directory for housekeeping. No owner data or production auth changes. Authorized deployment pending; next verify main workflow and live assets, then checkpoint release evidence.
+
+
+## 4 October — fitness maintenance deployed
+Release8644a47 pushed to main; GitHub Actions37245282596 build/deploy succeeded. Default npm test and CI-style suite each passed64 tests; two synthetic mobile browser scenarios passed. Live app.js HTTP200 contains measurement/BP labels and excludes the duplicate CSV action. Existing fitness-tracker-ca restarted successfully to load weekly-review module; Fitdays HTTP200, unauthenticated private progress401 after temporary startup timeouts. F4/F5/F7 complete; no owner records, paid resources, DNS or auth configuration changed. Physical screen-reader and real-workout verification remain owner checks. Exact next step: inspect F8 Azure header trust at ingress without changing auth; then implement F6 meal variety.

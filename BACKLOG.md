@@ -1,6 +1,6 @@
 ## Fitness maintenance — 4 October 2026
 
-F4 History labels and duplicate export link fixed; F5 sparse coverage now counts only past gaps; F7 unit tests use a unique temporary database before importing the server. Local64 tests and two synthetic phone browser scenarios pass. Deployment authorized, pending workflow/live verification. Temporary unit databases contain synthetic data only and remain in the OS temp directory until housekeeping. Next: F8 ingress investigation, then F6 meal variety; owner real-workout/device checks remain.
+F4 History labels and duplicate export link fixed; F5 sparse coverage now counts only past gaps; F7 unit tests use a unique temporary database before importing the server. Local64 tests and two synthetic phone browser scenarios pass. Deployed8644a47; Actions37245282596 succeeded; live History assets200, Fitdays200, private progress401 after temporary startup timeouts. Temporary unit databases contain synthetic data only and remain in the OS temp directory until housekeeping. Next: F8 ingress investigation, then F6 meal variety; owner real-workout/device checks remain.
 
 ## Latest Fitdays verification — 4 October 2026
 
