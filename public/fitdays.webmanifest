@@ -1,0 +1,18 @@
+{
+  "name": "Fitdays · Workout days",
+  "short_name": "Fitdays",
+  "id": "https://fitdays.adeticket.com/",
+  "start_url": "https://fitdays.adeticket.com/",
+  "scope": "https://fitdays.adeticket.com/",
+  "display": "standalone",
+  "background_color": "#f4f2ec",
+  "theme_color": "#173b34",
+  "icons": [
+    {
+      "src": "/static/fitdays-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

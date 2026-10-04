@@ -1,3 +1,19 @@
+## 4 October 2026 — Fitdays ideas added to canonical backlog
+
+Added15 ordered follow-ups FD01–FD15, consolidating automatic refresh/freshness and preserving the six implemented features as pending release/device verification. Each item has priority/type, user benefit, acceptance criteria, dependencies/files and suggested model. Privacy settings must enforce counts-only at API level; milestones/bests/annual reports require honest history coverage; schedule sharing needs owner opt-in; exports/share cards contain no private health/workout detail. No application files changed or deployment performed. Next: authorize current batch release, verify iPhone native sharing/install, then implement tracker sync confirmationFD01 and refresh/freshnessFD02.
+
+## 4 October 2026 — all six Fitdays improvements built locally
+
+Implemented month picker/previous/next/today and optional full-year view, device-local optional weekly target, Monday-based weekly recorded counts, month-so-far and equal-elapsed-day comparison with date ranges, keyboard-accessible date details, counts-only1080px PNG sharing/download, Fitdays PNG icons/manifest and iPhone installation guide. Retains365-day-window fix, monthly counts and failed-refresh recovery. Public API payload unchanged; no account/private health data added. Target explicitly comparison-only, not a training prescription; unmarked dates distinguish unknown/recovery/future/outside coverage. Calendar-year quick count labels shown-window limitation.
+
+Verification:54 fitness tests passed before final wording/date-boundary refinement; four focused Fitdays regressions passed after refinement plus JS syntax check. Synthetic browser passed320/390px layout, navigation, persisted target, completed/unmarked dialogs and focus,13-month year view, PNG download, installation guide and failed-refresh retention. Native iPhone share sheet/Home Screen installation not physically verified. Browser regression saved release docs/verification/fitdays-browser.spec.ts; PNG assets180/512 and image/png static MIME added. No service worker/offline records feature added.
+
+Files: release public/fitdays.js,fitdays-data.js,fitdays.html,fitdays.css,fitdays.webmanifest,fitdays-icon-180.png,fitdays-icon-512.png; server.js static MIME; fitdays-data.test.js and browser verification notes. Not deployed. Exact next: owner authorize complete Fitdays release, fetch current main, publish scoped changes via existing workflow, verify live manifest/images/JS and dates-only endpoint; owner verify native share and Home Screen on iPhone.
+
+## 4 October 2026 — Fitdays locally verified, not deployed
+
+Fixed365-day total versus12-month display mismatch: all intersecting months shown, current month first. Added monthly recorded-day counts and Refresh/retry; failed refresh retains last loaded calendar with stale message. Dates validated/deduplicated; unmarked dates do not imply missed workouts. No server/database or public-data expansion.52 fitness tests pass, including two date regressions; synthetic browser passes13-month span, newest-first, failed refresh and320/390px overflow checks. Files in fitness release: public/fitdays.js/html/css, public/fitdays-data.js, fitdays-data.test.js; browser evidence script docs/verification/fitdays-browser.spec.ts requires Playwright harness. Publication pending. Exact next: authorize scoped release, fetch current main, push normally and verify live assets. Owner real-history/iPhone check remains.
+
 ## 2 October 2026 — three releases deployed and live assets verified
 
 - Fitness77f788c8b1c7b9b391273043b5d98b7f3cb0fc6f deployed: Actions37058706846 success. Live fit.adeticket.com/static/app.js HTTP200 contains separate-activity/daily-total controls and legacy explanation. Unauthenticated /api/progress returns401. Fifty tests passed locally; five focused tests reran after removing duplicated guarded migration. No owner workout/health data read or changed. Physical iPhone and authenticated real-data total remain owner verification.
@@ -361,3 +377,7 @@ Add CSRF protection and login rate limiting, then add integration tests proving 
 
 - Owner replied 'Yes yes' to the two checks requested after the deployed test button: immediate generic Steady notification and offline Home Screen reconnect page. Treat this as owner-reported pass, not direct device inspection. Reconnect recovery, scheduled reminder delivery, no-push-after-check-in, and disable/re-enable remain unverified. Actions `36086562572` for documentation commit `f36fbeb` completed successfully. No application code changed in this checkpoint. Exact next action: collect remaining owner-device results when convenient; keep backlog items 3/4 open until their full acceptance criteria pass.
 
+
+
+## Fitdays authorized release — 4 October 2026
+Owner authorized publishing the six-feature batch and continuing FD01/FD02. Final 54/54 Node tests and synthetic mobile browser regression pass (320/390px, navigation, target persistence, dialogs, PNG fallback, refresh failure). No private records changed. Push/deployment pending; next verify workflow/live assets then implement sync confirmation and freshness.

@@ -1,0 +1,17 @@
+import {test,expect} from '@playwright/test';import fs from 'node:fs';import path from 'node:path';
+test('Fitdays navigation, goals, details, sharing and refresh work on mobile',async({page})=>{
+ const root=path.resolve(import.meta.dirname, '../../public');let fail=false;
+ await page.route('**/fitdays-preview',route=>route.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(root,'fitdays.html'),'utf8')}));
+ await page.route('**/static/fitdays*',route=>{const name=new URL(route.request().url()).pathname.split('/').pop()!;return route.fulfill({contentType:name.endsWith('.css')?'text/css':name.endsWith('.png')?'image/png':name.endsWith('.webmanifest')?'application/manifest+json':'text/javascript',body:fs.readFileSync(path.join(root,name))})});
+ await page.route('**/api/public-workout-days',route=>route.fulfill({status:fail?503:200,json:{today:'2026-10-04',days:['2025-10-05','2026-09-03','2026-10-03']}}));
+ await page.goto('/fitdays-preview');await expect(page.locator('.month')).toHaveCount(1);await expect(page.locator('.month h3')).toHaveText('October 2026');await expect(page.locator('#yearCount')).toHaveText('3');
+ await page.getByLabel('Optional weekly comparison target').selectOption('3');await expect(page.locator('#weekProgress')).toContainText('1 of 3');await page.reload();await expect(page.getByLabel('Optional weekly comparison target')).toHaveValue('3');
+ await page.getByRole('button',{name:'Previous month',exact:true}).click();await expect(page.locator('.month h3')).toHaveText('September 2026');await page.getByRole('button',{name:'Jump to today'}).click();await expect(page.locator('[aria-current="date"]')).toBeFocused();
+ await page.getByRole('button',{name:/October 3, 2026.*workout completed/}).click();await expect(page.getByRole('dialog')).toBeVisible();await expect(page.locator('#dayStatus')).toContainText('completed workout is recorded');await page.getByRole('button',{name:'Close',exact:true}).click();
+ await page.getByRole('button',{name:/October 2, 2026.*no completion recorded/}).click();await expect(page.locator('#dayStatus')).toContainText('recovery day');await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).not.toBeVisible();
+ await page.getByRole('button',{name:'Show full year'}).click();await expect(page.locator('.month')).toHaveCount(13);
+ for(const width of [390,320]){await page.setViewportSize({width,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true)}
+ await page.getByRole('button',{name:'Share summary image'}).click();await expect(page.getByRole('link',{name:'Download summary image'})).toBeVisible();const download=page.waitForEvent('download');await page.getByRole('link',{name:'Download summary image'}).click();expect((await download).suggestedFilename()).toBe('fitdays-summary.png');
+ await page.getByText('Add Fitdays to your iPhone Home Screen',{exact:true}).click();await expect(page.locator('.install-guide')).toContainText('Add to Home Screen');expect(await page.locator('link[rel="apple-touch-icon"]').getAttribute('href')).toContain('fitdays-icon-180.png');
+ fail=true;await page.getByRole('button',{name:'Refresh',exact:true}).click();await expect(page.locator('#updated')).toContainText('last loaded dates');await expect(page.locator('.month')).toHaveCount(13);await expect(page.getByRole('button',{name:'Refresh',exact:true})).toBeEnabled();
+});

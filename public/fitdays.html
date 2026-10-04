@@ -6,14 +6,19 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#173b34">
-  <title>Workout days</title>
+  <title>Fitdays · Workout days</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Fitdays">
+  <link rel="manifest" href="/static/fitdays.webmanifest">
+  <link rel="icon" href="/static/steady-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/fitdays-icon-180.png">
   <link rel="stylesheet" href="/static/fitdays.css">
   <script type="module" src="/static/fitdays.js"></script>
 </head>
 <body>
   <main class="page">
     <header class="hero">
-      <div class="hero-topline"><p class="eyebrow">STEADY · WORKOUT DAYS</p><div class="year-counter" role="group" aria-label="Completed workout days this calendar year"><strong id="yearQuickCount">—</strong><span id="yearQuickLabel">workout days this year</span></div></div>
+      <div class="hero-topline"><p class="eyebrow">STEADY · WORKOUT DAYS</p><div class="year-counter" role="group" aria-label="Recorded workout days this year within the available window"><strong id="yearQuickCount">—</strong><span id="yearQuickLabel">workout days this year</span></div></div>
       <h1>Consistency, one day at a time.</h1>
       <p class="intro">A simple record of completed workout days over the past year.</p>
       <p class="public-note">This calendar is public. It shows workout dates only—no exercise details, weights, profile or health information.</p>
@@ -23,11 +28,30 @@
       <article class="stat"><strong id="monthCount">—</strong><span>days · last 30</span></article>
       <article class="stat"><strong id="yearCount">—</strong><span>days · last 365</span></article>
     </section>
+    <section class="insight-panel" aria-labelledby="consistencyTitle">
+      <h2 id="consistencyTitle">Your week, at a glance</h2>
+      <p id="weekProgress">Loading recorded days…</p>
+      <label>Optional weekly comparison target<select id="weeklyTarget"><option value="">No target</option><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option><option value="4">4 days</option><option value="5">5 days</option><option value="6">6 days</option><option value="7">7 days</option></select></label>
+      <p class="state">Saved on this device only; not a training prescription. Recovery days matter, and missing records do not prove inactivity.</p>
+      <p id="monthTrend" class="state"></p>
+      <button id="shareSummary" type="button" disabled>Share summary image</button>
+      <a id="downloadSummary" hidden download="fitdays-summary.png">Download summary image</a>
+      <p id="shareStatus" role="status" class="state"></p>
+    </section>
     <section class="calendar-panel" aria-labelledby="calendarTitle">
-      <div class="calendar-heading"><div><p class="eyebrow">THE YEAR AT A GLANCE</p><h2 id="calendarTitle">Workout calendar</h2></div><p class="legend"><span aria-hidden="true"></span> Completed</p></div>
+      <div class="calendar-heading"><div><p class="eyebrow">THE YEAR AT A GLANCE</p><h2 id="calendarTitle">Workout calendar</h2><button id="refresh" type="button">Refresh</button></div><p class="legend"><span aria-hidden="true"></span> Completed</p></div>
+      <div class="calendar-controls">
+        <button id="olderMonth" type="button" disabled>Previous month</button>
+        <label>Month<select id="monthSelect" disabled></select></label>
+        <button id="newerMonth" type="button" disabled>Next month</button>
+        <button id="todayMonth" type="button" disabled>Jump to today</button>
+        <button id="calendarMode" type="button" aria-pressed="false" disabled>Show full year</button>
+      </div>
       <div id="calendar" class="calendar-grid" aria-live="polite"><p class="state">Loading workout days…</p></div>
     </section>
-    <footer><p id="updated" class="state">Dates come from completed workouts saved in the fitness tracker.</p></footer>
+    <dialog id="dayDetail" aria-labelledby="dayTitle"><h2 id="dayTitle"></h2><p id="dayStatus"></p><p class="state">This public page cannot edit workouts. Correct or complete a past workout in the fitness tracker’s History.</p><a href="https://fit.adeticket.com/">Open the fitness tracker</a><form method="dialog"><button>Close</button></form></dialog>
+    <details class="install-guide"><summary>Add Fitdays to your iPhone Home Screen</summary><p>Open fitdays.adeticket.com in Safari. Tap Share, then Add to Home Screen (under More if needed), and tap Add. Internet access is needed to load or refresh workout dates.</p></details>
+    <footer><p id="updated" class="state" role="status">Dates come from completed workouts saved in the fitness tracker.</p></footer>
   </main>
 </body>
 </html>
