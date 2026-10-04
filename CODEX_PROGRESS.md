@@ -449,3 +449,7 @@ Implemented date-window filters, counts-only image period/year previews, monthly
 
 ## Fitdays final label refinement and release — 4 October
 12876cf Actions37241598984 succeeded; live page/model/controller/gym-week assets HTTP200 and include final features; public API contains approved fields only, private visibility/export/progress return401. Found short-window boundary month label still used365-day start; corrected to selected-window start and two browser flows pass again including explicit partial-month assertion. docs/FITDAYS.md explains controls, privacy and unverified native checks. Next push label/docs release and confirm workflow; then owner native checks.
+
+
+## Fitdays production-policy image verification — 4 October
+Final review found public CSP img-src self would block blob preview images despite synthetic visible-element checks. Allowed same-origin blob image previews only (no external image hosts). Browser now loads the actual server CSP and asserts1080-pixel natural image width; both flows pass, including ICS download under policy. Next push this scoped fix and confirm final Azure deployment before closing release checkpoint.
