@@ -445,3 +445,7 @@ Two browser flows pass including selected30-day count-only image preview, PNG do
 
 ## Fitdays FD08–FD15 final candidate — 4 October
 Implemented date-window filters, counts-only image period/year previews, monthly recap, coverage-labeled bests, private preferred-weekday comparison, device-local challenge pause/remove, partial/full year recap and deterministic-ID all-day ICS export. Counts-only excludes completed-date list and disables date export/challenge date-range progress; no public schedule.63 Node tests pass; expanded two phone browser flows pass at320/390px with challenge, share preview/download, leap/coverage regressions, ICS download and private History/Settings. Optional tools collapsed by default to keep calendar prominent. No fake owner records or new paid resources. Next publish named files then confirm Azure/live assets; native iPhone sharing/install, actual ICS import and Google login date continuity remain owner verification.
+
+
+## Fitdays final label refinement and release — 4 October
+12876cf Actions37241598984 succeeded; live page/model/controller/gym-week assets HTTP200 and include final features; public API contains approved fields only, private visibility/export/progress return401. Found short-window boundary month label still used365-day start; corrected to selected-window start and two browser flows pass again including explicit partial-month assertion. docs/FITDAYS.md explains controls, privacy and unverified native checks. Next push label/docs release and confirm workflow; then owner native checks.
