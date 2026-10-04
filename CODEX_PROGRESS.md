@@ -409,3 +409,7 @@ Threshold acknowledgement10/25/50/100 uses deduplicated rolling365 count, recomp
 
 ## FD04–FD07 release candidate — 4 October
 Monthly target, rolling-window milestones, accessible eight-week chart and dated private History shortcut are implemented. 56 Node tests pass; two synthetic browser flows pass at320/390px, including selected-date form population and zero writes from navigation, freshness rollover/throttle/stale fallback, target persistence and counts-only DOM. Google redirect date continuity uses tab sessionStorage; physical Google/iPhone check pending. FD01–FD03 ffd317c workflow37240440061 status checked separately. Next deploy this scoped batch, verify live assets, then FD08 period filters; FD08–FD15 remain outstanding. No real workout records or paid resources changed.
+
+
+## Fitdays privacy final refinement — 4 October
+Counts-only refresh now clears previously opened dialog date text and dated private link, not just visible calendar. Two mobile browser tests pass again with hidden-DOM assertions. FD01–FD03 deployment ffd317c Actions37240440061 success. FD04–FD07 0acbc25 pushed; latest deploy verification pending. Next FD08 filters.
