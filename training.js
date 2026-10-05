@@ -113,7 +113,7 @@ export function alternateWorkoutPlan(plan,profile={},check={},previousNames=[]){
 }
 
 export function trainingContext(rows=[],day,check={}){
-  const logged=rows.filter(row=>row.day<day&&(row.status==='completed'||row.data?.exercises?.some(exercise=>exercise.sets?.length)));
+  const logged=[...rows].sort((a,b)=>b.day.localeCompare(a.day)).filter(row=>row.day<day&&(row.status==='completed'||row.data?.exercises?.some(exercise=>exercise.sets?.length)));
   const current=Date.parse(`${day}T12:00:00Z`);
   const daysSinceLastWorkout=logged[0]?Math.floor((current-Date.parse(`${logged[0].day}T12:00:00Z`))/86400000):null;
   const lastTemplate=logged[0]?.data?.planSnapshot?.template;
@@ -123,6 +123,7 @@ export function trainingContext(rows=[],day,check={}){
   return{
     daysSinceLastWorkout:check.trainedYesterday==='yes'?1:check.trainedYesterday==='no'?null:daysSinceLastWorkout,
     sessionsInLast7:logged.filter(row=>{const diff=current-Date.parse(`${row.day}T12:00:00Z`);return diff>=0&&diff<=6*86400000}).length,
-    lastTemplate,lastPatterns,lastExerciseNames
+    lastTemplate,lastPatterns,lastExerciseNames,
+    recentFeedback:daysSinceLastWorkout>0&&daysSinceLastWorkout<=7&&lastSession?.status==='completed'?lastSession.data?.feedback:null
   };
 }

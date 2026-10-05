@@ -21,3 +21,13 @@ test('weekly session preference caps the 3-day plan and lightens a 4th session',
 test('same inputs produce same plan',()=>{const a=planFor({symptoms:'none',energy:'medium',soreness:'none',minutes:60},{duration:60},'2026-09-23');const b=planFor({symptoms:'none',energy:'medium',soreness:'none',minutes:60},{duration:60},'2026-09-23');assert.deepEqual(a,b)});
 test('day helper respects timezone format',()=>{assert.match(dayFor('America/Toronto'),/^\d{4}-\d{2}-\d{2}$/)});
 test('Easy Auth principal is ignored outside production',()=>{const previous=process.env.NODE_ENV;process.env.NODE_ENV='test';assert.equal(easyAuthPrincipal({'headers':{'x-ms-client-principal':Buffer.from(JSON.stringify({userDetails:'user@example.com'})).toString('base64')}}),null);process.env.NODE_ENV=previous});
+
+test('too-hard feedback conservatively reduces volume without bypassing recovery or safety',()=>{
+ const check={energy:'high',minutes:90,symptoms:'none'},profile={duration:60},context={recentFeedback:'too-hard',overrideRecovery:true};
+ const p=planFor(check,profile,'2026-10-04',context);
+ assert.equal(p.exercises[0].sets,2);assert.ok(p.cardioProgression.targetMinutes<=10);assert.match(p.reason,/most recent session too hard/);
+ assert.deepEqual(p,planFor(check,profile,'2026-10-04',context));
+ assert.equal(planFor({...check,symptoms:'chest-pain'},profile,'2026-10-04',context).kind,'safety-stop');
+ assert.equal(planFor({...check,trainedYesterday:'yes'},profile,'2026-10-04',{recentFeedback:'too-hard'}).kind,'recovery');
+ const baseline=planFor(check,profile,'2026-10-04');assert.deepEqual(planFor(check,profile,'2026-10-04',{recentFeedback:'comfortable'}),baseline);
+});

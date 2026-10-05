@@ -1,0 +1,11 @@
+# Training outlook and feedback
+
+Reviewed 2026-10-04. Product inspiration: [Zing Coach features](https://zingcoach.zendesk.com/hc/en-us/articles/15325938740892-What-You-ll-Find-in-Zing-Coach) and [custom workout](https://zingcoach.zendesk.com/hc/en-us/articles/10033049485596-Custom-workout). We adopt optional session feedback and an upcoming schedule, not their AI service or claims. Existing alternatives/equipment selection remain. No body scans, inferred recovery percentages, calorie compensation or Apple Health integration.
+
+Review and finish optionally records comfortable, challenging or too-hard. It is private workout JSON, saved with the existing optimistic version check. Skipping is allowed. The latest past logged session must be completed and within seven calendar days for its feedback to apply; older feedback expires. Too-hard reduces volume and limits cardio using existing lower-readiness rules. Comfortable/challenging never raise weights. Safety, clinician restrictions and recovery retain precedence; existing active/completed plans are untouched. This seven-day feedback window is a conservative product choice, not a physiological recovery estimate.
+
+The five-day outlook uses the server's account-local day and UTC calendar arithmetic to avoid client-time-zone shifts. It shows weekday preferences, not confirmed future plans; daily check-in remains necessary. No schema migration or private public-payload change.
+
+Verification:70 Node tests, including enum validation, context age/order, safety precedence, deterministic output and API feedback persistence. Synthetic mobile browser at390/320px verifies finish/save/refresh and no writes from outlook viewing. Browser script docs/verification/coach-browser.spec.ts uses an installed Playwright harness and FITNESS_PUBLIC_ROOT; no owner data. Real iPhone session remains owner-run.
+
+F8: enabled Azure authentication confirmed; anonymous forged-principal /api/me401 and /api/auth/google302 to /, neither issuing an app session. hasUser checked first; no account created. These cases did not reproduce a header bypass. Legitimate Google sign-in not repeated. Microsoft reference: https://learn.microsoft.com/en-us/azure/app-service/configure-authentication-user-identities .

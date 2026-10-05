@@ -1,3 +1,7 @@
+## 4 October — current coaching batch (local, release pending)
+
+Optional review/finish feedback and private five-day training outlook implemented.70 Node tests and one synthetic mobile finish/refresh flow pass. No future workout is pre-confirmed; no automatic load increase or public health-data expansion. F8 tested ingress cases pass; owner sign-in remains. Existing gym mode, equipment profile selection and saved meal reuse reconciled below; remaining rows describe only follow-up work. Source/review notes: docs/COACHING_NOTES.md.
+
 ## 4 October — daily meal variety
 
 F6 implemented: suggestions rotate deterministically using the account-local date and available food categories, vary across meals, preserve disclosed-allergy/restriction pause, and never log food automatically.66 Node tests pass. Deployed424db55; Actions37246202815 succeeded. Existing app restarted; fitness/Fitdays200 and private progress401. Next: F8 authentication ingress investigation; owner device checks remain.
@@ -72,11 +76,11 @@ Only outstanding work appears here. Completed releases are recorded below. The 2
 
 | Order | Priority | Item and status | Best model | Acceptance criteria, gates, and main files |
 | --- | --- | --- | --- | --- |
-| 1 | P1 investigation | **F8 Suspected: Azure principal header trust boundary** | Astra | Unauthenticated forged identity headers at public HTTPS edge cannot create a session or access `/api/me`; legitimate Google sign-in still works. Confirm actual ingress behavior before changing auth. `security.js`, Azure Easy Auth configuration. |
+| 1 | P1 verification | **F8 edge probe passed; owner Google sign-in follow-up only** | Owner with Sol triage | Forged anonymous principal headers returned401 on /api/me and302 to / without session issuance on callback. Enabled Azure middleware confirmed. Owner verify normal Google sign-in; no auth configuration change made. |
 | 2 | P1 | Owner iPhone Safari verification — real-session logging/timer pending | Owner, with Sol triage | Owner previously reported pass for sign-in/refresh/logout, workout and exercise choices, online Home Screen launch, private images, CSV/print, Share and History. Confirm real set/cardio save, resume and rest timer during an actual workout. Device: iPhone 15 Pro Max, iOS 27.0; Safari version unknown. |
-| 3 | P2 | **I1 Focused Today layout** | Sol | At phone width, a returning user reaches the next set in one tap while food/sleep/upload sections remain discoverable and keyboard accessible. `public/app.js`, `public/app.css`. |
-| 4 | P2 | **I2 In-workout equipment labeling** | Sol | A user can label equipment during a workout; load comparisons remain separated by exercise, equipment and unit. `public/app.js`, equipment-profile route/tests. |
-| 5 | P2 | **I3 Quick-add recent food and saved meals** | Sol | A recent snack can be logged in two taps with editable portion; viewing a suggestion never records it. `public/app.js`, food routes/tests. |
+| 3 | P2 verification | **I1 focused Today already implemented; new outlook/feedback verified locally** | Owner with Sol triage | Existing one-exercise gym mode and review/finish confirmed; synthetic phone feedback save/refresh passes. Owner confirm next-set navigation during actual gym use. |
+| 4 | P2 | **I2 In-workout equipment creation — existing profile selection is implemented** | Sol | A user can create a new equipment profile without leaving a workout; existing profiles are already selectable; load comparisons remain separated by exercise, equipment and unit. `public/app.js`, equipment-profile route/tests. |
+| 5 | P2 | **I3 Recent-food shortcut — saved meal reuse already implemented** | Sol | A recent snack can be logged in two taps with editable portion; viewing a suggestion never records it. `public/app.js`, food routes/tests. |
 | 6 | P2 | **I4 Optional step baseline and measurement cadence** | Astra | Unknown baseline remains unknown; conservative step targets wait for real observations; setup remains skippable. `public/app.js`, `server.js`, planning tests. |
 | 7 | P2 | **I5 Factual weekly highlights** | Sol | Summary cites recorded dates/counts, handles sparse evidence and suggests no food-compensation workout. `weekly-review.js`, `public/app.js`. |
 | 8 | P2 investigation | **F9 Suspected: large-history mobile payload** | Sol | Measure 1–2-year synthetic fixture response size, p95 API time and phone render time; split/paginate only if budget exceeded. `server.js:174`, `public/app.js`. |

@@ -114,7 +114,9 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  const csv=await (await request('/api/export.csv',undefined,'GET')).text();assert.match(csv,/"'=HYPERLINK/);assert.match(csv,/"set"/);
  const printable=await request('/api/print-summary',undefined,'GET');assert.equal(printable.status,200);assert.match(await printable.text(),/Steady progress summary/);
  const beforeShare=await (await request('/api/me',undefined,'GET')).json(),shareWorkout=structuredClone(beforeShare.workout);delete shareWorkout.version;delete shareWorkout.status;shareWorkout.exercises[0]={name:'Treadmill walk',pattern:'cardio',sets:[{duration:'12',distance:'0.8',distanceUnit:'mi',incline:'1'}]};
+ shareWorkout.feedback='too-hard';
  assert.equal((await request('/api/workout',{data:shareWorkout,version:beforeShare.workout.version,status:'completed'})).status,200);
+ assert.equal((await (await request('/api/me',undefined,'GET')).json()).workout.feedback,'too-hard');
  for(const example of [{duration:15,distance:1.2,distanceUnit:'km'},{duration:15},{duration:12,distance:0.8,distanceUnit:'mi',incline:1}]){
    const latest=await (await request('/api/me',undefined,'GET')).json(),updated=structuredClone(latest.workout);
    updated.exercises[0].sets=[example];

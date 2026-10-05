@@ -16,7 +16,7 @@ export function allowedWrite(req, origin) {
     String(req.headers['content-type'] || '').startsWith('application/json');
 }
 export function validWorkout(data) {
-  return data && Array.isArray(data.exercises) && data.exercises.length <= 30 && data.exercises.every(e =>
+  return data && (data.feedback == null || ['', 'comfortable', 'challenging', 'too-hard'].includes(data.feedback)) && Array.isArray(data.exercises) && data.exercises.length <= 30 && data.exercises.every(e =>
     typeof e.name === 'string' && Array.isArray(e.sets) && e.sets.length <= 100 && e.sets.every(s =>
       ['weight','reps','duration','distance','incline','speed'].every(k => s[k] == null || s[k] === '' ||
         (Number.isFinite(Number(s[k])) && Number(s[k]) >= 0 && Number(s[k]) <= 10000))));
