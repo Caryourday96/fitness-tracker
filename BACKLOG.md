@@ -1,6 +1,6 @@
 ## 4 October — daily meal variety
 
-F6 implemented: suggestions rotate deterministically using the account-local date and available food categories, vary across meals, preserve disclosed-allergy/restriction pause, and never log food automatically.66 Node tests pass. Release pending. Next: F8 authentication ingress investigation; owner device checks remain.
+F6 implemented: suggestions rotate deterministically using the account-local date and available food categories, vary across meals, preserve disclosed-allergy/restriction pause, and never log food automatically.66 Node tests pass. Deployed424db55; Actions37246202815 succeeded. Existing app restarted; fitness/Fitdays200 and private progress401. Next: F8 authentication ingress investigation; owner device checks remain.
 
 ## Fitness maintenance — 4 October 2026
 
@@ -72,18 +72,18 @@ Only outstanding work appears here. Completed releases are recorded below. The 2
 
 | Order | Priority | Item and status | Best model | Acceptance criteria, gates, and main files |
 | --- | --- | --- | --- | --- |
-| 3 | P1 investigation | **F8 Suspected: Azure principal header trust boundary** | Astra | Unauthenticated forged identity headers at public HTTPS edge cannot create a session or access `/api/me`; legitimate Google sign-in still works. Confirm actual ingress behavior before changing auth. `security.js`, Azure Easy Auth configuration. |
-| 4 | P1 | Owner iPhone Safari verification — real-session logging/timer pending | Owner, with Sol triage | Owner previously reported pass for sign-in/refresh/logout, workout and exercise choices, online Home Screen launch, private images, CSV/print, Share and History. Confirm real set/cardio save, resume and rest timer during an actual workout. Device: iPhone 15 Pro Max, iOS 27.0; Safari version unknown. |
-| 8 | P2 | **I1 Focused Today layout** | Sol | At phone width, a returning user reaches the next set in one tap while food/sleep/upload sections remain discoverable and keyboard accessible. `public/app.js`, `public/app.css`. |
-| 9 | P2 | **I2 In-workout equipment labeling** | Sol | A user can label equipment during a workout; load comparisons remain separated by exercise, equipment and unit. `public/app.js`, equipment-profile route/tests. |
-| 10 | P2 | **I3 Quick-add recent food and saved meals** | Sol | A recent snack can be logged in two taps with editable portion; viewing a suggestion never records it. `public/app.js`, food routes/tests. |
-| 11 | P2 | **I4 Optional step baseline and measurement cadence** | Astra | Unknown baseline remains unknown; conservative step targets wait for real observations; setup remains skippable. `public/app.js`, `server.js`, planning tests. |
-| 12 | P2 | **I5 Factual weekly highlights** | Sol | Summary cites recorded dates/counts, handles sparse evidence and suggests no food-compensation workout. `weekly-review.js`, `public/app.js`. |
-| 13 | P2 investigation | **F9 Suspected: large-history mobile payload** | Sol | Measure 1–2-year synthetic fixture response size, p95 API time and phone render time; split/paginate only if budget exceeded. `server.js:174`, `public/app.js`. |
-| 14 | P2 | Offline Home Screen reconnect recovery pending | Owner, with Sol triage | Owner reported offline page works. Confirm return to the live account after reconnect; private records and edits remain online-only and no private API response is cached. `public/sw.js`, `public/offline.html`, `pwa.test.js`. |
-| 15 | P2 | Scheduled gentle reminder delivery pending | Owner, with Sol triage | Immediate iPhone test push was owner-reported. Confirm scheduled local-time delivery, no reminder after check-in, and disable/re-enable. `push-reminders.js`, `public/push-settings.js`. |
-| 16 | P3 | **I6 Private in-app month calendar** | Sol | Calendar distinguishes completed, active, planned rest and missing days; public Fitdays remains date-only. `public/app.js`, `public/fitdays.js`. |
-| 17 | P3 | **I7 Date-range export preview** | Sol | After F2, chosen date range exports correct units and excludes screenshots by default. `server.js`, `public/app.js`, export tests. |
+| 1 | P1 investigation | **F8 Suspected: Azure principal header trust boundary** | Astra | Unauthenticated forged identity headers at public HTTPS edge cannot create a session or access `/api/me`; legitimate Google sign-in still works. Confirm actual ingress behavior before changing auth. `security.js`, Azure Easy Auth configuration. |
+| 2 | P1 | Owner iPhone Safari verification — real-session logging/timer pending | Owner, with Sol triage | Owner previously reported pass for sign-in/refresh/logout, workout and exercise choices, online Home Screen launch, private images, CSV/print, Share and History. Confirm real set/cardio save, resume and rest timer during an actual workout. Device: iPhone 15 Pro Max, iOS 27.0; Safari version unknown. |
+| 3 | P2 | **I1 Focused Today layout** | Sol | At phone width, a returning user reaches the next set in one tap while food/sleep/upload sections remain discoverable and keyboard accessible. `public/app.js`, `public/app.css`. |
+| 4 | P2 | **I2 In-workout equipment labeling** | Sol | A user can label equipment during a workout; load comparisons remain separated by exercise, equipment and unit. `public/app.js`, equipment-profile route/tests. |
+| 5 | P2 | **I3 Quick-add recent food and saved meals** | Sol | A recent snack can be logged in two taps with editable portion; viewing a suggestion never records it. `public/app.js`, food routes/tests. |
+| 6 | P2 | **I4 Optional step baseline and measurement cadence** | Astra | Unknown baseline remains unknown; conservative step targets wait for real observations; setup remains skippable. `public/app.js`, `server.js`, planning tests. |
+| 7 | P2 | **I5 Factual weekly highlights** | Sol | Summary cites recorded dates/counts, handles sparse evidence and suggests no food-compensation workout. `weekly-review.js`, `public/app.js`. |
+| 8 | P2 investigation | **F9 Suspected: large-history mobile payload** | Sol | Measure 1–2-year synthetic fixture response size, p95 API time and phone render time; split/paginate only if budget exceeded. `server.js:174`, `public/app.js`. |
+| 9 | P2 | Offline Home Screen reconnect recovery pending | Owner, with Sol triage | Owner reported offline page works. Confirm return to the live account after reconnect; private records and edits remain online-only and no private API response is cached. `public/sw.js`, `public/offline.html`, `pwa.test.js`. |
+| 10 | P2 | Scheduled gentle reminder delivery pending | Owner, with Sol triage | Immediate iPhone test push was owner-reported. Confirm scheduled local-time delivery, no reminder after check-in, and disable/re-enable. `push-reminders.js`, `public/push-settings.js`. |
+| 11 | P3 | **I6 Private in-app month calendar** | Sol | Calendar distinguishes completed, active, planned rest and missing days; public Fitdays remains date-only. `public/app.js`, `public/fitdays.js`. |
+| 12 | P3 | **I7 Date-range export preview** | Sol | After F2, chosen date range exports correct units and excludes screenshots by default. `server.js`, `public/app.js`, export tests. |
 
 Paused by owner: screenshot-to-log OCR proposals. If resumed, propose sleep/workout fields from private PNG/JPEG, require correction and explicit save, detect duplicates, and do not send images to external AI without separate consent. `server.js`, `public/app.js`, upload/record tests.
 
