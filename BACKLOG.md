@@ -1,6 +1,6 @@
-## 4 October — current coaching batch (local, release pending)
+## 4 October — coaching batch deployed641f7ca
 
-Optional review/finish feedback and private five-day training outlook implemented.70 Node tests and one synthetic mobile finish/refresh flow pass. No future workout is pre-confirmed; no automatic load increase or public health-data expansion. F8 tested ingress cases pass; owner sign-in remains. Existing gym mode, equipment profile selection and saved meal reuse reconciled below; remaining rows describe only follow-up work. Source/review notes: docs/COACHING_NOTES.md.
+Actions37254979078 succeeded. Live coaching module200 and private progress401. Optional review/finish feedback and private five-day training outlook implemented.70 Node tests and one synthetic mobile finish/refresh flow pass. No future workout is pre-confirmed; no automatic load increase or public health-data expansion. F8 tested ingress cases pass; owner sign-in remains. Existing gym mode, equipment profile selection and saved meal reuse reconciled below; remaining rows describe only follow-up work. Source/review notes: docs/COACHING_NOTES.md.
 
 ## 4 October — daily meal variety
 
