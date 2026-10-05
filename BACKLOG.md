@@ -1,3 +1,7 @@
+## 4 October — daily meal variety
+
+F6 implemented: suggestions rotate deterministically using the account-local date and available food categories, vary across meals, preserve disclosed-allergy/restriction pause, and never log food automatically.66 Node tests pass. Release pending. Next: F8 authentication ingress investigation; owner device checks remain.
+
 ## Fitness maintenance — 4 October 2026
 
 F4 History labels and duplicate export link fixed; F5 sparse coverage now counts only past gaps; F7 unit tests use a unique temporary database before importing the server. Local64 tests and two synthetic phone browser scenarios pass. Deployed8644a47; Actions37245282596 succeeded; live History assets200, Fitdays200, private progress401 after temporary startup timeouts. Temporary unit databases contain synthetic data only and remain in the OS temp directory until housekeeping. Next: F8 ingress investigation, then F6 meal variety; owner real-workout/device checks remain.
@@ -70,7 +74,6 @@ Only outstanding work appears here. Completed releases are recorded below. The 2
 | --- | --- | --- | --- | --- |
 | 3 | P1 investigation | **F8 Suspected: Azure principal header trust boundary** | Astra | Unauthenticated forged identity headers at public HTTPS edge cannot create a session or access `/api/me`; legitimate Google sign-in still works. Confirm actual ingress behavior before changing auth. `security.js`, Azure Easy Auth configuration. |
 | 4 | P1 | Owner iPhone Safari verification — real-session logging/timer pending | Owner, with Sol triage | Owner previously reported pass for sign-in/refresh/logout, workout and exercise choices, online Home Screen launch, private images, CSV/print, Share and History. Confirm real set/cardio save, resume and rest timer during an actual workout. Device: iPhone 15 Pro Max, iOS 27.0; Safari version unknown. |
-| 7 | P2 | **F6 Confirmed UX: repetitive meal ideas** | Sol | A week of suggestions varies available foods, retains allergy/restriction pause, and never logs a suggestion automatically. `meal-guidance.js`, `public/app.js`, focused test. |
 | 8 | P2 | **I1 Focused Today layout** | Sol | At phone width, a returning user reaches the next set in one tap while food/sleep/upload sections remain discoverable and keyboard accessible. `public/app.js`, `public/app.css`. |
 | 9 | P2 | **I2 In-workout equipment labeling** | Sol | A user can label equipment during a workout; load comparisons remain separated by exercise, equipment and unit. `public/app.js`, equipment-profile route/tests. |
 | 10 | P2 | **I3 Quick-add recent food and saved meals** | Sol | A recent snack can be logged in two taps with editable portion; viewing a suggestion never records it. `public/app.js`, food routes/tests. |

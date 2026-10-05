@@ -465,3 +465,11 @@ Implemented F4 accessible History measurement/BP labels and one CSV action; F5 w
 
 ## 4 October — fitness maintenance deployed
 Release8644a47 pushed to main; GitHub Actions37245282596 build/deploy succeeded. Default npm test and CI-style suite each passed64 tests; two synthetic mobile browser scenarios passed. Live app.js HTTP200 contains measurement/BP labels and excludes the duplicate CSV action. Existing fitness-tracker-ca restarted successfully to load weekly-review module; Fitdays HTTP200, unauthenticated private progress401 after temporary startup timeouts. F4/F5/F7 complete; no owner records, paid resources, DNS or auth configuration changed. Physical screen-reader and real-workout verification remain owner checks. Exact next step: inspect F8 Azure header trust at ingress without changing auth; then implement F6 meal variety.
+
+
+## 4 October — cross-app improvements candidate
+Fitness F6 daily meal rotation; game N4 outcome/time audit with backward-compatible scorecard; budget private CSV with all actuals and formula escaping; roots/catalogue keyboard skip/focus implemented. Fitness66 tests, budget13 tests, game94 Vitest+7 Node/typecheck/build, four synthetic browser scenarios pass. Added one further game audit regression awaiting final check. No owner data, auth configuration, paid resources or DNS changes. Files in release checkouts plus canonical backlogs updated; unrelated root source preserved. Next: final game tests/browser run, publish approved changes through existing workflows and budget ZIP, verify live, record SHAs.
+
+
+## Cross-app candidate verification complete — 4 October
+Fitness66 tests; budget13 tests and phone CSV-download scenario; roots/catalogue3 keyboard/320/390px scenarios; game95 Vitest+7 Node+20 browser scenarios, typecheck/build/format pass. New records get outcome/command timestamp; old metadata remains unavailable. Release next through existing GitHub workflows and whitelisted budget ZIP including export.js. No persistent owner files in package.
