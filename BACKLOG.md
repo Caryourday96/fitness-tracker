@@ -1,3 +1,7 @@
+## 5 October — release closeout
+
+Coaching batch deployed and final live checks pass after startup timeouts: fitness/Fitdays/coaching module200; private progress401 anonymously. No new implementation outstanding for this batch; owner physical-device follow-up remains.
+
 ## 4 October — coaching batch deployed641f7ca
 
 Actions37254979078 succeeded. Live coaching module200 and private progress401. Optional review/finish feedback and private five-day training outlook implemented.70 Node tests and one synthetic mobile finish/refresh flow pass. No future workout is pre-confirmed; no automatic load increase or public health-data expansion. F8 tested ingress cases pass; owner sign-in remains. Existing gym mode, equipment profile selection and saved meal reuse reconciled below; remaining rows describe only follow-up work. Source/review notes: docs/COACHING_NOTES.md.
