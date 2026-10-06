@@ -492,6 +492,24 @@ renderSettings=()=>{settingsBeforeFitdays();const host=$('#view-settings');const
 const settingsBeforeWeekComparison=renderSettings;renderSettings=()=>{settingsBeforeWeekComparison();const summary=plannedWeekComparison(state.profile,state.workoutHistory||[],state.day),panel=document.createElement('section');panel.className='panel';panel.innerHTML='<h2>Private weekly schedule comparison</h2>';const text=document.createElement('p');text.textContent=summary.hasSchedule?summary.start+' to '+summary.end+': '+summary.planned+' preferred gym weekdays elapsed; '+summary.recorded+' completed workout days recorded ('+summary.onPlanned+' on preferred days). Recovery, safety and changes of schedule are valid; these counts are not failures or catch-up requirements.':'Choose preferred training weekdays in Settings if you want a comparison. No schedule is assumed.';panel.append(text);const note=document.createElement('p');note.className='muted';note.textContent='Your preferred schedule is private and is not published on Fitdays.';panel.append(note);$('#view-settings').append(panel)};
 
 // A schedule preference is never a confirmed future workout.
+const renderTodayBeforeRecentFoods=renderToday;
+renderToday=()=>{
+  renderTodayBeforeRecentFoods();
+  const form=$('#foodLog');if(!form)return;
+  const panel=document.createElement('section');panel.className='recent-foods';
+  panel.innerHTML='<h3>Use a recent food or snack</h3><p class="muted">Choose one to fill the form, adjust the portion, then tap Log food. Nothing is logged automatically.</p><p role="status">Loading recent foods…</p><div class="actions"></div>';
+  form.before(panel);
+  api('/api/recent-foods').then(rows=>{
+    if(!panel.isConnected)return;
+    panel.querySelector('[role="status"]').textContent=rows.length?'':'Your recently logged foods will appear here.';
+    for(const food of rows){
+      const button=document.createElement('button');button.type='button';button.className='ghost';
+      button.textContent=`${food.item} · ${food.meal}${food.portion?' · '+food.portion:''}`;
+      button.onclick=()=>{for(const field of ['meal','item','portion'])form.elements.namedItem(field).value=food[field]||'';dirty=true;form.elements.portion.focus();notice('Food filled in. Review the portion, then tap Log food to save.');};
+      panel.querySelector('.actions').append(button);
+    }
+  }).catch(()=>{if(panel.isConnected)panel.querySelector('[role="status"]').textContent='Recent foods are unavailable. You can still enter food below.'});
+};
 const renderTodayBeforeOutlook=renderToday;
 renderToday=()=>{
   renderTodayBeforeOutlook();

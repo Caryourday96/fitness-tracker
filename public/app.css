@@ -42,3 +42,5 @@ button:not(:disabled):active{transform:scale(.985)}
 .install-guide{margin:18px 0;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#edf3ec}.install-guide summary{cursor:pointer;font-weight:750;min-height:28px}.install-guide p{margin:10px 0 0;line-height:1.5}
 #anotherWorkout{display:block;width:100%;min-height:48px;margin:12px 0}
 .training-outlook summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700}.training-outlook ul{padding:0;list-style:none}.training-outlook li{display:flex;flex-wrap:wrap;gap:.4rem 1rem;justify-content:space-between;padding:.7rem 0;border-bottom:1px solid #d6ddd7}.training-outlook li span{overflow-wrap:anywhere;min-width:0}
+
+.recent-foods .actions button{white-space:normal;overflow-wrap:anywhere;min-width:0;text-align:left}

@@ -32,6 +32,7 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.notEqual((await fetch(base+'/static/%2e%2e/server.js')).status,200);
  assert.equal((await request('/api/me',undefined,'GET')).status,401);assert.equal((await request('/api/fitdays/visibility',{visibility:'counts'},'PUT')).status,401);
  assert.equal((await request('/api/push/config',undefined,'GET')).status,401);
+ assert.equal((await request('/api/recent-foods',undefined,'GET')).status,401);
   const googleLanding=await fetch(base+'/api/auth/google',{headers:{Origin:base},redirect:'manual'});assert.equal(googleLanding.status,302);
  assert.equal((await request('/api/setup',{email:'bad@example.com',password:'long enough password' },'POST',{Origin:'https://attacker.example'})).status,403);
  assert.equal((await request('/api/setup',{email:'bad@example.com',password:'long enough password' },'POST',{'X-Requested-With':'','Origin':base})).status,403);
@@ -96,6 +97,9 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  assert.equal((await request('/api/measurements',{kind:'blood-pressure',value:120,unit:'lb',measuredDay:recordedDay})).status,400);
  const progress=await (await request('/api/progress',undefined,'GET')).json();assert.equal(progress.reviews[0].steps,null);assert.equal(progress.reviews[0].weight,100);assert.equal(progress.trend.days,1);
  assert.equal((await request('/api/food-log',{day:recordedDay,meal:'snack',item:'Banana',portion:'one'})).status,200);
+ const recentFoods=await (await request('/api/recent-foods',undefined,'GET')).json();
+ assert.deepEqual(recentFoods,[{meal:'snack',item:'Banana',portion:'one'}]);
+ const recentAgain=await (await request('/api/recent-foods',undefined,'GET')).json();assert.deepEqual(recentAgain,recentFoods);
  assert.equal((await request('/api/sleep',{day:recordedDay,hours:7.5,quality:'good'})).status,200);
  assert.equal((await request('/api/activity',{day:recordedDay,kind:'walk',duration:30,steps:4500})).status,200);
  assert.equal((await request('/api/activity',{day:futureDay,kind:'walk',steps:1000})).status,400);
