@@ -1,3 +1,10 @@
+## 5 October — fitness and Friends Showdown releases complete
+
+Fitness51e1143 deployed successfully in Actions37403525999, following equipment release42901ec. Live app.js200 confirms both features; anonymous recent-foods/progress return401. I2 inline equipment creation and I3 recent-food shortcuts are complete/deployed. 70 Node tests plus synthetic phone equipment and recent-food flows pass; actual iPhone remains owner verification.
+
+Friends Showdownb126860 deployed: Azure37403548213 attempt2 succeeded including production smoke. Validation37403548168 and browser37403548096 succeeded. First attempt was aborted by Windows OneDeploy during copy; retry resolved it without code/config changes. Live index-Dk3rOXoc.js matches tested bundle. Player readiness text and library dialog focus shipped; proxy-addr2.0.8/source-map-js1.2.2 patch the audit findings.102 unit/helper and23 browser tests pass, audit clean, typecheck/build/format pass.
+
+No owner records modified or new paid resources provisioned. Shared/root backlogs reconciled. Next: fitness I4 optional baseline/cadence design or Sol I5 factual weekly highlights; game N3 broader physical screen-reader/contrast review, and F2/F4 controlled production/hardware rehearsal. Removed infrastructure items and paused OCR remain excluded. Working release paths: fitness-tracker/.deploy/accountability-link and .deploy/ihechi-birthday. Do not use the dirty root fitness source as the release checkout.
 ## 5 October — second batch prepared for authorized deployment
 
 ## 5 October — I3 recent-food shortcut verified; deployment authorized
@@ -519,5 +526,3 @@ Fitness66 tests; budget13 tests and phone CSV-download scenario; roots/catalogue
 
 ## 4 October cross-app batch — deployed and verified
 Fitness424db55: F6 daily rotation,66 tests, Actions37246202815 success; existing app restart succeeded; login/Fitdays200, private progress401. Gameed4abfa: N4 round outcome/time and catalogue keyboard access;95 Vitest+7 Node+20 browser tests/typecheck/build/format pass; Azure37246208973, validation37246209013/browser37246209022 success; live audit bundle and catalogue verified. Roots5ba98fd: three keyboard/320/390px scenarios pass; workflows37246214661/37246214750 success; both root pages200 with skip link. Budgetfcf7590: private formula-safe CSV;13 tests and mobile download pass; existing B1 ZIP deployment39f9e6b6-0760-405f-b80e-9a1abd76aacb complete/status4, CLI exit0; live export control200, unauthenticated export/state401. Saved browser specs support explicit root overrides and four scenarios passed again; temporary cross-repo specs removed. No production account/data edits, paid provisioning, DNS or auth configuration changes. Owner Safari/private download and game hardware verification remain; no claim those were performed. Canonical backlogs reconcile F6/N4 completed, recommended fitness order renumbered. Exact next action: investigate fitness F8 trust boundary read-only and budget P0 security; game N3 accessibility audit next; roots credential wording/CMP need owner/external evidence.
-
-
