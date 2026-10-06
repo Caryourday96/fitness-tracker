@@ -297,7 +297,7 @@ wireToday=()=>{
     select.value=String(exercise.sets.at(-1)?.equipmentProfileId||'');
     const showProfile=()=>{
       const profile=profiles.find(item=>String(item.id)===select.value);
-      details.textContent=profile?`${profile.loadMeaning} load · ${profile.setupNote||'No setup note yet.'}`:'Create an equipment profile in Settings for comparable load history.';
+      details.textContent=profile?`${profile.loadMeaning} load · ${profile.setupNote||'No setup note yet.'}`:'Choose or add equipment here for comparable load history.';
       history.replaceChildren();if(!profile)return;
       const previous=(state.workoutHistory||[]).filter(w=>w.day<state.day).flatMap(w=>(w.data.exercises||[]).filter(x=>x.name===exercise.name).flatMap(x=>[...(x.sets||[])].reverse().map(set=>({day:w.day,set})))).find(item=>Number(item.set.equipmentProfileId)===profile.id);
       if(!previous){history.textContent='No earlier set saved with this exact equipment.';return}
@@ -307,6 +307,24 @@ wireToday=()=>{
       use.onclick=()=>{for(const field of ['weight','reps','duration','distance','incline']){const input=el.querySelector(`[data-ex="${index}"][data-field="${field}"]`);if(input&&set[field]!=null){input.value=set[field];input.dispatchEvent(new Event('input',{bubbles:true}))}}};history.append(use);
     };
     select.onchange=showProfile;showProfile();
+    const create=document.createElement('details');
+    create.innerHTML=`<summary>Add equipment for this exercise</summary><form class="stack"><p>${esc(exercise.name)} · applies to new sets only.</p><label>Equipment name<input name="equipmentName" maxlength="120" required></label><label>How load is shown<select name="loadMeaning"><option value="total">Total machine load</option><option value="per hand">Per hand</option><option value="per side">Per side</option><option value="assisted">Assisted weight</option></select></label><label>Setup note<textarea name="setupNote" maxlength="1000"></textarea></label><button type="submit" class="ghost">Save and select equipment</button><p role="status" aria-live="polite"></p></form>`;
+    area.append(create);
+    const form=create.querySelector('form'),message=create.querySelector('[role="status"]'),submit=create.querySelector('button');
+    form.onsubmit=async event=>{
+      event.preventDefault();if(submit.disabled)return;
+      const values=Object.fromEntries(new FormData(form)),body={...values,exerciseName:exercise.name};
+      submit.disabled=true;message.textContent='Saving equipment…';
+      try{
+        const result=await api('/api/exercise-profiles',{method:'POST',body:JSON.stringify(body)});
+        const profile={...body,id:result.id,equipmentName:body.equipmentName.trim(),setupNote:body.setupNote.trim()};
+        state.exerciseProfiles ||= [];state.exerciseProfiles.push(profile);profiles.push(profile);
+        select.add(new Option(`${profile.equipmentName} · ${profile.loadMeaning}`,String(profile.id)));
+        select.value=String(profile.id);showProfile();form.reset();message.textContent='Saved and selected for new sets.';
+        create.open=false;select.focus();
+      }catch(error){message.textContent=error.message}
+      finally{submit.disabled=false}
+    };
     const rows=[...el.querySelectorAll('.saved-sets p')].slice(1);
     rows.forEach((row,setIndex)=>{const id=exercise.sets[setIndex]?.equipmentProfileId,profile=(state.exerciseProfiles||[]).find(item=>item.id===Number(id));row.prepend(document.createTextNode(profile?`${profile.equipmentName} (${profile.loadMeaning}) · `:'Unlabelled equipment · '))});
   });
