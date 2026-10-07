@@ -2,6 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { weekBounds, weeklyReview } from './weekly-review.js';
 
+test('highlights cite recorded dates, separate recovery and exclude future workouts',()=>{
+ const result=weeklyReview({week:'2026-10-06',today:'2026-10-06',workouts:[{day:'2026-10-05',status:'completed',data:{exercises:[]}},{day:'2026-10-07',status:'completed',data:{exercises:[]}}],reviews:[{day:'2026-10-06',workout:'planned rest',steps:4000,food:'off track'}]});
+ assert.equal(result.highlights.length,3);
+ assert.match(result.highlights[0],/1 completed workout day recorded: 2026-10-05/);
+ assert.match(result.highlights[1],/Planned recovery recorded on 2026-10-06/);
+ assert.match(result.highlights[2],/1 of 2 elapsed days/);
+ assert.match(result.highlights[2],/Sparse data/);
+ assert.doesNotMatch(result.highlights.join(' '),/2026-10-07|calories|compensate|burn/);
+ assert.equal(result.workouts.completed,1);
+});
+
+test('empty week does not imply failure or fabricate activity',()=>{
+ const result=weeklyReview({week:'2026-10-06',today:'2026-10-06'});
+ assert.equal(result.highlights.length,1);
+ assert.match(result.highlights[0],/Missing entries are not missed workouts/);
+ assert.equal(result.steps.average,null);
+});
+
 test('week bounds use Monday through Sunday',()=>{
   assert.deepEqual(weekBounds('2026-09-24'),{start:'2026-09-21',end:'2026-09-27'});
 });

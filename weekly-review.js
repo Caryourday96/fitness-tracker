@@ -12,7 +12,7 @@ function measurementTrend(kind,measurements,reviews,start,end,target){
 }
 export function weeklyReview({week,today,workouts=[],reviews=[],activities=[],measurements=[],profile={}}){
   const {start,end}=weekBounds(week),elapsed=Math.max(0,Math.min(7,Math.round((dayDate(today)-dayDate(start))/86400000)+1));
-  const inWeek=day=>day>=start&&day<=end;
+  const inWeek=day=>day>=start&&day<=end&&day<=today;
   const weekWorkouts=workouts.filter(row=>inWeek(row.day)),weekReviews=reviews.filter(row=>inWeek(row.day));
   const stepDays=new Map();for(const activity of activities.filter(row=>inWeek(row.day)&&row.steps!=null))stepDays.set(activity.day,(stepDays.get(activity.day)||0)+Number(activity.steps));
   for(const review of weekReviews)if(review.steps!=null)stepDays.set(review.day,Number(review.steps));
@@ -22,5 +22,12 @@ export function weeklyReview({week,today,workouts=[],reviews=[],activities=[],me
   const strength=[...performance.values()].filter(days=>days.size>=2).map(days=>{const rows=[...days.values()];return {name:rows[0].name,equipmentProfileId:rows[0].equipmentProfileId,first:rows[0],last:rows.at(-1)}}).slice(0,8);
   const recordedDays=new Set([...weekWorkouts.map(row=>row.day),...weekReviews.map(row=>row.day),...stepDays.keys()]);
   const missingPastDays=Array.from({length:Math.max(0,elapsed-1)},(_,index)=>addDays(start,index)).filter(day=>!recordedDays.has(day)).length;
-  return {start,end,elapsedDays:elapsed,workouts:{completed:weekWorkouts.filter(row=>row.status==='completed').length,active:weekWorkouts.filter(row=>row.status==='active').length,plannedRest:weekReviews.filter(row=>row.workout==='planned rest').length},steps:{days:stepDays.size,average:stepValues.length?Math.round(stepValues.reduce((a,b)=>a+b,0)/stepValues.length):null},weight:measurementTrend('weight',measurements,weekReviews,start,end,profile.units||'lb'),waist:measurementTrend('waist',measurements,weekReviews,start,end,profile.waistUnit||'in'),food,strength,note:missingPastDays>=2?'Several days are unrecorded. Keep logging before drawing conclusions or changing targets.':'Review your recovery and consistency; no automatic calorie or exercise change is made from one reading.'};
+  const completedDates=[...new Set(weekWorkouts.filter(row=>row.status==='completed').map(row=>row.day))].sort();
+  const restDates=[...new Set(weekReviews.filter(row=>row.workout==='planned rest').map(row=>row.day))].sort();
+  const highlights=[];
+  if(completedDates.length)highlights.push(`${completedDates.length} completed workout day${completedDates.length===1?'':'s'} recorded: ${completedDates.join(', ')}.`);
+  if(restDates.length)highlights.push(`Planned recovery recorded on ${restDates.join(', ')}. Recovery is part of your routine.`);
+  if(stepDays.size)highlights.push(`Steps recorded on ${stepDays.size} of ${elapsed} elapsed days: ${[...stepDays.keys()].sort().join(', ')}. ${stepDays.size<3?'Sparse data; this is not a weekly baseline.':'The average uses recorded days only.'}`);
+  if(!highlights.length)highlights.push('No completed workout, planned recovery or step entries recorded for this week yet. Missing entries are not missed workouts.');
+  return {start,end,elapsedDays:elapsed,highlights,workouts:{completed:weekWorkouts.filter(row=>row.status==='completed').length,active:weekWorkouts.filter(row=>row.status==='active').length,plannedRest:weekReviews.filter(row=>row.workout==='planned rest').length},steps:{days:stepDays.size,average:stepValues.length?Math.round(stepValues.reduce((a,b)=>a+b,0)/stepValues.length):null},weight:measurementTrend('weight',measurements,weekReviews,start,end,profile.units||'lb'),waist:measurementTrend('waist',measurements,weekReviews,start,end,profile.waistUnit||'in'),food,strength,note:missingPastDays>=2?'Several days are unrecorded. Keep logging before drawing conclusions or changing targets.':'Review your recovery and consistency; no automatic calorie or exercise change is made from one reading.'};
 }
