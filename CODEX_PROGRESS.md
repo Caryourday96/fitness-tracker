@@ -1,3 +1,9 @@
+## 7 October — food UI retired locally; deployment pending
+
+Owner requested removal of food from the fitness app because it clutters the experience. `public/app.js` removes food guidance/logging/inventory/meal ideas/adherence UI from Today, Settings and History; `server.js` allows a day review without food and retains the former value on edits, and omits food from the printable summary. Existing food tables, records and CSV export remain intact. `integration.test.js` covers new and edited food-free reviews. All 72 Node tests passed before the test addition; the focused integration test passed 2/2 afterward. JS syntax passed. A synthetic local account was used to inspect Today, Settings and History in the browser; no food controls appeared, while sleep/activity, reminders and workout time remained. Owner iPhone/production sign-in remain unverified.
+
+Current release checkout: `fitness-tracker/.deploy/accountability-link`, branch `feature/accountability-link`, fetched `origin/main` with 0/0 divergence before edits. Next: commit scoped files, push to main under standing release authorization, verify Actions and live anonymous routes, then ask owner to confirm the iPhone interface. Do not reintroduce food UI from historical backlog entries; preserve legacy data. No production records or schema changed locally.
+
 ## 6 October — weekly highlights and host shortcuts deployed
 
 Fitness e1a6b7d deployed successfully: Actions37561067204. Live app.js200 contains Recorded highlights; anonymous weekly-review401. I5 implemented/deployed: dated workout/recovery highlights, recorded-step coverage, sparse/empty labels, no automatic plan or nutrition changes.72 Node tests pass. Actual authenticated owner/iPhone review not performed.

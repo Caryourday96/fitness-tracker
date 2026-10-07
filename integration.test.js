@@ -92,6 +92,14 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  const review={day:recordedDay,workout:'planned rest',cardio:'not planned',food:'partly',energy:'medium',soreness:'none',steps:'',weight:'100',weightUnit:'kg',waist:'42',waistUnit:'in',systolic:'',diastolic:'',notes:'=HYPERLINK("https://example.com")'};
  assert.equal((await request('/api/day-review',review,'PUT')).status,200);
  assert.equal((await request('/api/day-review',review,'PUT')).status,409);
+ const savedReview=(await (await request('/api/progress',undefined,'GET')).json()).reviews.find(r=>r.day===recordedDay);
+ const {food:ignoredFood,...reviewWithoutFood}=review;
+ assert.equal((await request('/api/day-review',{...reviewWithoutFood,version:savedReview.version,notes:'Edited without food tracking'},'PUT')).status,200);
+ const preservedReview=(await (await request('/api/progress',undefined,'GET')).json()).reviews.find(r=>r.day===recordedDay);
+ assert.equal(preservedReview.food,'partly');
+ assert.equal(preservedReview.notes,'Edited without food tracking');
+ assert.equal((await request('/api/day-review',{...reviewWithoutFood,day:priorDay,weight:'',waist:''},'PUT')).status,200);
+ assert.equal((await (await request('/api/progress',undefined,'GET')).json()).reviews.find(r=>r.day===priorDay).food,null);
  assert.equal((await request('/api/measurements',{kind:'weight',value:101,unit:'kg',measuredDay:recordedDay})).status,200);
  assert.equal((await request('/api/measurements',{kind:'weight',value:101,unit:'kg',measuredDay:futureDay})).status,400);
  assert.equal((await request('/api/measurements',{kind:'blood-pressure',value:120,unit:'lb',measuredDay:recordedDay})).status,400);

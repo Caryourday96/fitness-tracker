@@ -1,3 +1,7 @@
+## 7 October — food tracking retired from the fitness interface
+
+Owner requested that food be removed because it clutters the app. Today meal cards and food logging, Settings inventory and meal times, History food summaries and the printable food column are retired. New day reviews no longer ask for food. Existing private food records remain in storage and CSV export so no historical data is destroyed. Do not revive meal suggestions, food inventory, recent-food shortcuts or food-adherence UI without a new owner request. Workout time remains an editable setting. Deployment and owner iPhone check are tracked in the latest checkpoint.
+
 ## 6 October — weekly highlights and host shortcuts deployed
 
 Fitness e1a6b7d deployed successfully: Actions37561067204. Live app.js200 contains Recorded highlights; anonymous weekly-review401. I5 implemented/deployed: dated workout/recovery highlights, recorded-step coverage, sparse/empty labels, no automatic plan or nutrition changes.72 Node tests pass. Actual authenticated owner/iPhone review not performed.
