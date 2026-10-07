@@ -1,3 +1,10 @@
+## 6 October — weekly highlights and host shortcuts deployed
+
+Fitness e1a6b7d deployed successfully: Actions37561067204. Live app.js200 contains Recorded highlights; anonymous weekly-review401. I5 implemented/deployed: dated workout/recovery highlights, recorded-step coverage, sparse/empty labels, no automatic plan or nutrition changes.72 Node tests pass. Actual authenticated owner/iPhone review not performed.
+
+Friends Showdown8e10f20 deployed successfully: Azure37561077678, validation37561077732, browser37561077700. Live index-BsptYRPO.js200 contains shortcut toggle; production smoke routes/origin pass.102 local unit/helper tests,4 focused keyboard browser tests, build/typecheck/audit pass; complete browser suite passed in CI. N3 shortcut opt-out complete; physical screen-reader/contrast and F2/F4 hardware/restart rehearsal remain open.
+
+No owner records, schema, DNS or paid resources changed. Next fitness: I4 optional baseline/cadence design or I6 private calendar for Sol; next game: remaining N3 verified accessibility issues, with hardware-dependent tasks separately scheduled. Release checkouts remain fitness-tracker/.deploy/accountability-link and .deploy/ihechi-birthday. Owner-removed infrastructure and paused OCR remain excluded.
 ## 6 October — weekly highlights and host shortcut control prepared
 
 Fitness I5: weekly review highlights list completed-workout dates, recorded planned recovery dates and step coverage, with sparse/empty wording. Missing days never imply failed workouts; no food-compensation or automated target changes. Future-dated workouts/reviews/activity do not enter current-week highlights or counts. Files: weekly-review.js, weekly-review.test.js, public/app.js. Five focused weekly tests pass, including empty/future/sparse cases; syntax passes. Existing schema and records unchanged.
@@ -104,7 +111,7 @@ Only outstanding work appears here. Completed releases are recorded below. The 2
 | 4 | P2 | **I2 In-workout equipment creation — deployed 42901ec** | Sol | A user can create a new equipment profile without leaving a workout; existing profiles are already selectable; load comparisons remain separated by exercise, equipment and unit. `public/app.js`, equipment-profile route/tests. |
 | 5 | P2 | **I3 Recent-food shortcut — deployed 51e1143** | Sol | A recent snack can be logged in two taps with editable portion; viewing a suggestion never records it. `public/app.js`, food routes/tests. |
 | 6 | P2 | **I4 Optional step baseline and measurement cadence** | Astra | Unknown baseline remains unknown; conservative step targets wait for real observations; setup remains skippable. `public/app.js`, `server.js`, planning tests. |
-| 7 | P2 | **I5 Factual weekly highlights — implemented; release pending** | Sol | Summary cites recorded dates/counts, handles sparse evidence and suggests no food-compensation workout. `weekly-review.js`, `public/app.js`. |
+| 7 | P2 | **I5 Factual weekly highlights — deployed e1a6b7d** | Sol | Summary cites recorded dates/counts, handles sparse evidence and suggests no food-compensation workout. `weekly-review.js`, `public/app.js`. |
 | 8 | P2 investigation | **F9 Suspected: large-history mobile payload** | Sol | Measure 1–2-year synthetic fixture response size, p95 API time and phone render time; split/paginate only if budget exceeded. `server.js:174`, `public/app.js`. |
 | 9 | P2 | Offline Home Screen reconnect recovery pending | Owner, with Sol triage | Owner reported offline page works. Confirm return to the live account after reconnect; private records and edits remain online-only and no private API response is cached. `public/sw.js`, `public/offline.html`, `pwa.test.js`. |
 | 10 | P2 | Scheduled gentle reminder delivery pending | Owner, with Sol triage | Immediate iPhone test push was owner-reported. Confirm scheduled local-time delivery, no reminder after check-in, and disable/re-enable. `push-reminders.js`, `public/push-settings.js`. |
