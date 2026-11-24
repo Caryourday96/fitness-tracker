@@ -15,7 +15,7 @@ import { suggestMeals, validMealSettings } from './meal-guidance.js';
 import { summarizeWorkout } from './public/workout-recap.js';
 import { weeklyReview, weekBounds } from './weekly-review.js';
 import { createPushReminders } from './push-reminders.js';
-import { alternateWorkoutPlan, trainingTemplate, trainingContext, validSchedule, withCatalogOptions } from './training.js';
+import { alternateWorkoutPlan, defaultGymDay, gymRoutine, gymWorkoutPlan, matchesGymPlan, trainingTemplate, trainingContext, validGymDay, validSchedule, withCatalogOptions } from './training.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3030);
@@ -95,10 +95,16 @@ function cardioProgression(context, minutes, readinessLimited) {
   if(readinessLimited) {target=Math.min(target,10);reason='Readiness is lower today, so keep cardio short and easy; progression is paused.'}
   return{targetMinutes:target,reason};
 }
-function planFor(check, profile, day, context={}) {
+function safetyStop(check, profile) {
   const c=check||{}; const urgent=(Number(c.systolic)>=180||Number(c.diastolic)>=120) || ['chest-pain','fainting','severe-breathlessness'].includes(c.symptoms);
   if(urgent) return {kind:'safety-stop', title:'Pause exercise and get medical guidance', reason:'Your check-in includes a reading or symptom that should be assessed before exercise.', exercises:[], cardio:null, safety:'If chest pain, fainting, severe shortness of breath, or another concerning symptom is present, call 911 now. For a reading at or above 180 systolic or 120 diastolic without symptoms, sit quietly and repeat it after at least 1 minute; if it remains that high, contact a healthcare professional promptly.'};
   if(profile.clearance==='restricted'||profile.injuries||profile.restrictions) return {kind:'safety-stop',title:'Review your movement restrictions',reason:'Follow your clinician-approved routine. This planner cannot interpret free-text restrictions safely.',exercises:[],cardio:null,safety:'Tracking remains available.'};
+  return null;
+}
+function planFor(check, profile, day, context={}) {
+  const blocked=safetyStop(check,profile);
+  if(blocked)return blocked;
+  const c=check||{};
   if(!context.overrideRecovery&&(check.trainedYesterday==='yes'||(check.trainedYesterday!=='no'&&context.daysSinceLastWorkout===1)))return{kind:'recovery',title:'Recovery day after yesterday’s workout',reason:'You reported or logged a workout yesterday. Give strength training a recovery day; a short easy walk is optional if it feels comfortable.',exercises:[],cardio:check.gym==='no'?'Rest or gentle mobility':'Optional 10–20 minute comfortable walk',safety:'Keep any activity easy and stop if you feel pain, dizziness, unusual breathlessness, or concerning symptoms.'};
   const scheduled=Number(profile.schedule)||3,completed=context.sessionsInLast7||0;
   if(!context.overrideRecovery&&completed>=scheduled)return{kind:'recovery',title:'Planned recovery day',reason:`You have logged ${completed} sessions in the past seven days, meeting your ${scheduled}-session preference. Take a recovery day; do not make up missed workouts.`,exercises:[],cardio:'Optional comfortable walk or gentle mobility',safety:'Keep activity easy and stop for pain, dizziness, unusual breathlessness, or concerning symptoms.'};
@@ -114,7 +120,12 @@ function planFor(check, profile, day, context={}) {
   const selectedExercises=mins<=40?[...exercises.filter(x=>x.pattern!=='cardio').slice(0,2),...exercises.filter(x=>x.pattern==='cardio')]:exercises;
   return {template:selected.template,catalogAttribution:selectedExercises.some(exercise=>exercise.substitutions?.some(option=>option.source==='ExerciseAPI'))?selected.catalogAttribution:null,kind:low?'recovery-strength':reentry?'reentry':fourthLight?'fourth-light':'strength', title:low?'Steady recovery session':reentry?'Gentle return session':fourthLight?'Light fourth session':`${selected.title} · strength for sustainable weight loss`, reason:low?(feedbackLimited?'Reduced volume because you rated your most recent session too hard. Cardio progression is paused; choose comfortable loads and reassess after this session.':'Reduced volume because your check-in shows lower readiness.'):reentry?'Reduced the session to two sets per movement after a longer gap; do not make up missed workouts.':fourthLight?'Reduced the fourth session to two sets per movement after three sessions in the last seven days.':`Next in your ${scheduled}-session sequence: ${selected.title}. Repeatable resistance work supports maintaining muscle during weight loss; missed days do not add catch-up volume.`, exercises:selectedExercises, cardio:cardio.targetMinutes?`${cardio.targetMinutes} min easy-to-moderate walk`:'No separate cardio block planned for this short session', cardioProgression:cardio, safety:'Warm up 5 minutes, breathe continuously, stop for chest pain, fainting, severe dizziness, unusual shortness of breath, or movement-related pain.'};
 }
-async function route(req,res) {
+function selectedGymPlan(check, profile, routineDay) {
+  const blocked = safetyStop(check, profile);
+  return blocked ? { ...blocked, routineDay } : gymWorkoutPlan(routineDay, check);
+}
+
+async function route(req,res,useGymRoutine) {
   const u=new URL(req.url,`http://${req.headers.host}`), method=req.method;
   if(['POST','PUT','PATCH','DELETE'].includes(method)) {
     const origin=process.env.NODE_ENV==='production'?(process.env.APP_ORIGIN||'https://fit.adeticket.com'):`${req.headers['x-forwarded-proto']==='https'?'https':'http'}://${req.headers.host}`;
@@ -178,7 +189,14 @@ async function route(req,res) {
     db.prepare('INSERT INTO day_reviews(user_id,day,data,version) VALUES(?,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data,version=excluded.version').run(uid,b.day,JSON.stringify(data),version);
     return send(res,200,{ok:true,version});
   }
-  if(method==='GET' && u.pathname==='/api/me') { const p=db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid); const tz=(p?JSON.parse(p.data):profileDefaults).timezone||'UTC', day=dayFor(tz); const check=db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day); const plan=db.prepare('SELECT data,status FROM plans WHERE user_id=? AND day=?').get(uid,day); const workout=db.prepare('SELECT data,status,updated_at FROM workouts WHERE user_id=? AND day=?').get(uid,day); const measures=db.prepare('SELECT kind,value,unit,measured_at FROM measurements WHERE user_id=? ORDER BY measured_at DESC LIMIT 60').all(uid); const foods=db.prepare('SELECT * FROM foods WHERE user_id=? ORDER BY name').all(uid); const foodLogs=db.prepare('SELECT * FROM food_logs WHERE user_id=? AND day=? ORDER BY id DESC').all(uid,day); const sleep=db.prepare('SELECT * FROM sleep_logs WHERE user_id=? AND day=? ORDER BY id DESC LIMIT 1').get(uid,day); const activities=db.prepare('SELECT * FROM activity_logs WHERE user_id=? AND day=? ORDER BY id DESC').all(uid,day); const mealFavourites=db.prepare('SELECT id,name,meal,food_ids AS foodIds,portion FROM meal_favourites WHERE user_id=? ORDER BY name').all(uid).map(f=>({...f,foodIds:JSON.parse(f.foodIds)})); const exerciseProfiles=db.prepare('SELECT id,exercise_name AS exerciseName,equipment_name AS equipmentName,load_meaning AS loadMeaning,setup_note AS setupNote FROM exercise_profiles WHERE user_id=? ORDER BY exercise_name,equipment_name').all(uid); const workoutHistory=db.prepare('SELECT day,data,status,updated_at FROM workouts WHERE user_id=? ORDER BY day DESC LIMIT 60').all(uid).map(w=>({...w,data:JSON.parse(w.data)})); return send(res,200,{profile:p?JSON.parse(p.data):profileDefaults,day,check:check?JSON.parse(check.data):null,plan:plan?{...withCatalogOptions(JSON.parse(plan.data),p?JSON.parse(p.data):profileDefaults,check?JSON.parse(check.data):{}),status:plan.status}:null,workout:workout?{...JSON.parse(workout.data),status:workout.status,version:workout.updated_at}:null,measures,foods,foodLogs,sleep,activities,workoutHistory,exerciseProfiles,mealFavourites,mealGuidance:suggestMeals(p?JSON.parse(p.data):profileDefaults,foods,day)}); }
+  if(method==='GET' && u.pathname==='/api/me') { const p=db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid); const tz=(p?JSON.parse(p.data):profileDefaults).timezone||'UTC', day=dayFor(tz); const check=db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day); const plan=db.prepare('SELECT data,status FROM plans WHERE user_id=? AND day=?').get(uid,day); const workout=db.prepare('SELECT data,status,updated_at FROM workouts WHERE user_id=? AND day=?').get(uid,day);
+    const savedPlan = plan ? JSON.parse(plan.data) : null;
+    const viewPlan = useGymRoutine
+      ? savedPlan && (workout || validGymDay(savedPlan.routineDay))
+        ? { ...savedPlan, catalogAttribution: null, exercises: savedPlan.exercises.map(({ substitutions, ...exercise }) => exercise) }
+        : null
+      : withCatalogOptions(savedPlan,p?JSON.parse(p.data):profileDefaults,check?JSON.parse(check.data):{});
+    const measures=db.prepare('SELECT kind,value,unit,measured_at FROM measurements WHERE user_id=? ORDER BY measured_at DESC LIMIT 60').all(uid); const foods=db.prepare('SELECT * FROM foods WHERE user_id=? ORDER BY name').all(uid); const foodLogs=db.prepare('SELECT * FROM food_logs WHERE user_id=? AND day=? ORDER BY id DESC').all(uid,day); const sleep=db.prepare('SELECT * FROM sleep_logs WHERE user_id=? AND day=? ORDER BY id DESC LIMIT 1').get(uid,day); const activities=db.prepare('SELECT * FROM activity_logs WHERE user_id=? AND day=? ORDER BY id DESC').all(uid,day); const mealFavourites=db.prepare('SELECT id,name,meal,food_ids AS foodIds,portion FROM meal_favourites WHERE user_id=? ORDER BY name').all(uid).map(f=>({...f,foodIds:JSON.parse(f.foodIds)})); const exerciseProfiles=db.prepare('SELECT id,exercise_name AS exerciseName,equipment_name AS equipmentName,load_meaning AS loadMeaning,setup_note AS setupNote FROM exercise_profiles WHERE user_id=? ORDER BY exercise_name,equipment_name').all(uid); const workoutHistory=db.prepare('SELECT day,data,status,updated_at FROM workouts WHERE user_id=? ORDER BY day DESC LIMIT 60').all(uid).map(w=>({...w,data:JSON.parse(w.data)})); return send(res,200,{profile:p?JSON.parse(p.data):profileDefaults,day,check:check?JSON.parse(check.data):null,plan:viewPlan?{...viewPlan,status:plan.status}:null,gymRoutine:useGymRoutine?{days:gymRoutine,defaultDay:defaultGymDay(day)}:null,workout:workout?{...JSON.parse(workout.data),status:workout.status,version:workout.updated_at}:null,measures,foods,foodLogs,sleep,activities,workoutHistory,exerciseProfiles,mealFavourites,mealGuidance:suggestMeals(p?JSON.parse(p.data):profileDefaults,foods,day)}); }
   if(method==='PUT' && u.pathname==='/api/profile') { const b=await json(req); try{dayFor(b.timezone)}catch{return send(res,400,{error:'Choose a valid time zone'})}; if(!validSchedule(b))return send(res,400,{error:'Choose either no preferred weekdays or exactly the number of days in your weekly schedule.'}); if(!validMealSettings(b))return send(res,400,{error:'Check your meal times and food preferences.'}); if(b.reminderInApp!=null&&typeof b.reminderInApp!=='boolean'||b.reminderTime!=null&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(b.reminderTime))return send(res,400,{error:'Choose a valid reminder time.'}); db.prepare('UPDATE profiles SET data=? WHERE user_id=?').run(JSON.stringify({...profileDefaults,...b,preferredDays:b.preferredDays??[]}),uid); return send(res,200,{ok:true}); }
   if(method==='GET' && u.pathname==='/api/recent-foods') {
     const rows=db.prepare('SELECT meal,item,portion,MAX(id) AS latest FROM food_logs WHERE user_id=? GROUP BY meal,item,portion ORDER BY latest DESC LIMIT 8').all(uid);
@@ -210,9 +228,42 @@ async function route(req,res) {
     const id=Number(u.pathname.split('/').pop()),result=db.prepare('DELETE FROM meal_favourites WHERE id=? AND user_id=?').run(id,uid);
     return send(res,result.changes?200:404,result.changes?{ok:true}:{error:'Saved meal not found'});
   }
-  if(method==='POST' && u.pathname==='/api/checkin') { const b=await json(req), p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data), day=b.day||dayFor(p.timezone); db.prepare('INSERT INTO checkins(user_id,day,data) VALUES(?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data').run(uid,day,JSON.stringify(b)); let existing=db.prepare('SELECT status FROM plans WHERE user_id=? AND day=?').get(uid,day); if(!existing||existing.status==='unstarted') db.prepare('INSERT INTO plans(user_id,day,data,status) VALUES(?,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data,status=excluded.status').run(uid,day,JSON.stringify(planFor(b,p,day,planningContext(uid,day,b))),'unstarted'); return send(res,200,{ok:true,day}); }
-  if(method==='POST' && u.pathname==='/api/plan/confirm') { const p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data), day=dayFor(p.timezone), c=db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day); if(!c) return send(res,400,{error:'Complete today’s check-in first'}); if(db.prepare('SELECT 1 FROM workouts WHERE user_id=? AND day=?').get(uid,day)) return send(res,409,{error:'Resume your saved workout instead of regenerating it.'}); const check=JSON.parse(c.data),plan=planFor(check,p,day,planningContext(uid,day,check)); db.prepare('INSERT INTO plans(user_id,day,data,status) VALUES(?,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data,status=excluded.status').run(uid,day,JSON.stringify(plan),'confirmed'); return send(res,200,{ok:true,plan:{...plan,status:'confirmed'}}); }
+  if(method==='POST' && u.pathname==='/api/checkin') {
+    const check = await json(req);
+    const profile = JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data);
+    const day = check.day || dayFor(profile.timezone);
+    if (useGymRoutine && (!validDay(day) || (check.routineDay !== undefined && !validGymDay(check.routineDay)))) {
+      return send(res,400,{error:'Choose a valid gym day.'});
+    }
+    db.prepare('INSERT INTO checkins(user_id,day,data) VALUES(?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data').run(uid,day,JSON.stringify(check));
+    const existing = db.prepare('SELECT status FROM plans WHERE user_id=? AND day=?').get(uid,day);
+    const workout = useGymRoutine && db.prepare('SELECT 1 FROM workouts WHERE user_id=? AND day=?').get(uid,day);
+    if (useGymRoutine ? !workout : !existing || existing.status==='unstarted') {
+      const plan = useGymRoutine
+        ? selectedGymPlan(check, profile, check.routineDay ?? defaultGymDay(day))
+        : planFor(check,profile,day,planningContext(uid,day,check));
+      db.prepare('INSERT INTO plans(user_id,day,data,status) VALUES(?,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data,status=excluded.status').run(uid,day,JSON.stringify(plan),'unstarted');
+    }
+    return send(res,200,{ok:true,day});
+  }
+  if(method==='POST' && u.pathname==='/api/plan/confirm') {
+    const body = useGymRoutine ? await json(req) : {};
+    const profile = JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data);
+    const day = dayFor(profile.timezone);
+    const record = db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day);
+    if (!record) return send(res,400,{error:'Complete today’s check-in first'});
+    if (db.prepare('SELECT 1 FROM workouts WHERE user_id=? AND day=?').get(uid,day)) {
+      return send(res,409,{error:'Resume your saved workout instead of replacing it.'});
+    }
+    const check = JSON.parse(record.data);
+    const routineDay = body.routineDay ?? check.routineDay ?? defaultGymDay(day);
+    if (useGymRoutine && !validGymDay(routineDay)) return send(res,400,{error:'Choose a valid gym day.'});
+    const plan = useGymRoutine ? selectedGymPlan(check,profile,routineDay) : planFor(check,profile,day,planningContext(uid,day,check));
+    db.prepare('INSERT INTO plans(user_id,day,data,status) VALUES(?,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET data=excluded.data,status=excluded.status').run(uid,day,JSON.stringify(plan),'confirmed');
+    return send(res,200,{ok:true,plan:{...plan,status:'confirmed'}});
+  }
   if(method==='POST' && u.pathname==='/api/plan/alternative') {
+    if(useGymRoutine)return send(res,409,{error:'Choose a day from your gym routine.'});
     const p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data),day=dayFor(p.timezone);
     if(db.prepare('SELECT 1 FROM workouts WHERE user_id=? AND day=?').get(uid,day))return send(res,409,{error:'Resume your saved workout; an active or completed workout cannot be replaced.'});
     const checkRow=db.prepare('SELECT data FROM checkins WHERE user_id=? AND day=?').get(uid,day),row=db.prepare('SELECT data,status FROM plans WHERE user_id=? AND day=?').get(uid,day);
@@ -228,6 +279,7 @@ async function route(req,res) {
     return send(res,200,{ok:true,plan:{...withCatalogOptions(plan,p,check),status:'confirmed'}});
   }
   if(method==='POST' && u.pathname==='/api/plan/rest-day-override') {
+    if(useGymRoutine)return send(res,409,{error:'Choose a day from your gym routine.'});
     const body=await json(req),mode=body.mode==='regular'?'regular':body.mode==='light'?'light':null;
     if(!mode)return send(res,400,{error:'Choose either a regular workout or an easy walk.'});
     const p=JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data),day=dayFor(p.timezone);
@@ -279,16 +331,23 @@ async function route(req,res) {
     if(!check||!plan||plan.status!=='confirmed') return send(res,409,{error:'Confirm today’s plan first'});
     if(b.data.exercises.some(exercise=>exercise.unplanned&&(exercise.slot!=null||!['strength','cardio'].includes(exercise.pattern)||!exercise.name.trim()||exercise.name.length>120)))return send(res,400,{error:'Unplanned activity must stay separate from the confirmed plan'});
     let sawUnplanned=false;for(const exercise of b.data.exercises){if(exercise.unplanned)sawUnplanned=true;else if(sawUnplanned)return send(res,400,{error:'Keep unplanned activity after planned exercises'})}
-    if(planFor(JSON.parse(check.data),p,day).kind==='safety-stop') return send(res,403,{error:'Exercise is paused by your current safety check-in. History remains available.'});
+    if(safetyStop(JSON.parse(check.data),p)) return send(res,403,{error:'Exercise is paused by your current safety check-in. History remains available.'});
     const existing=db.prepare('SELECT * FROM workouts WHERE user_id=? AND day=?').get(uid,day);
     if(existing && existing.updated_at!==b.version) return send(res,409,{error:'A newer workout is saved. Reload before editing; your input is still on screen.'});
+    const confirmedPlan = JSON.parse(plan.data);
+    if(useGymRoutine && !existing && (!validGymDay(confirmedPlan.routineDay) || confirmedPlan.kind !== 'strength')) {
+      return send(res,409,{error:'Choose a training day from your gym routine first.'});
+    }
+    if(useGymRoutine && validGymDay(confirmedPlan.routineDay) && !matchesGymPlan(b.data, confirmedPlan)) {
+      return send(res,400,{error:'Keep the exercises from the selected gym day.'});
+    }
     const version=crypto.randomUUID();
     const data={...b.data};
-    data.planSnapshot=existing?JSON.parse(existing.data).planSnapshot||JSON.parse(plan.data):JSON.parse(plan.data);
+    data.planSnapshot=existing?JSON.parse(existing.data).planSnapshot||confirmedPlan:confirmedPlan;
     if(b.status==='completed'){
       const completedAt=existing&&existing.status==='completed'?JSON.parse(existing.data).completedAt||now():now();
       data.completedAt=completedAt;
-      data.recap=summarizeWorkout(JSON.parse(plan.data),data,completedAt);
+      data.recap=summarizeWorkout(confirmedPlan,data,completedAt);
     }else{delete data.completedAt;delete data.recap}
     if(existing) db.prepare('UPDATE workouts SET data=?,status=?,updated_at=? WHERE id=?').run(JSON.stringify(data),b.status,version,existing.id);
     else db.prepare('INSERT INTO workouts(user_id,day,data,status,updated_at) VALUES(?,?,?,?,?)').run(uid,day,JSON.stringify(data),b.status,version);
@@ -362,5 +421,9 @@ if (backupContainer && process.env.NODE_ENV === 'production') {
 if(pushReminders.configured&&process.env.NODE_ENV==='production'){
   const timer=setInterval(()=>pushReminders.sendDue().catch(()=>{}),60_000);timer.unref();
 }
-const server=http.createServer((req,res)=>route(req,res).catch(e=>send(res,e.status||500,{error:e.status?e.message:'Request failed'}))); if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) server.listen(PORT,()=>console.log(`Fitness tracker listening on http://localhost:${PORT}`));
+export function createFitnessServer({ useGymRoutine = true } = {}) {
+  return http.createServer((req,res)=>route(req,res,useGymRoutine).catch(e=>send(res,e.status||500,{error:e.status?e.message:'Request failed'})));
+}
+const server=createFitnessServer();
+if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) server.listen(PORT,()=>console.log(`Fitness tracker listening on http://localhost:${PORT}`));
 export { planFor, dayFor, passwordHash, passwordOk, easyAuthPrincipal, server };

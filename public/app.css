@@ -44,3 +44,50 @@ button:not(:disabled):active{transform:scale(.985)}
 .training-outlook summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700}.training-outlook ul{padding:0;list-style:none}.training-outlook li{display:flex;flex-wrap:wrap;gap:.4rem 1rem;justify-content:space-between;padding:.7rem 0;border-bottom:1px solid #d6ddd7}.training-outlook li span{overflow-wrap:anywhere;min-width:0}
 
 .recent-foods .actions button{white-space:normal;overflow-wrap:anywhere;min-width:0;text-align:left}
+
+.routine-days {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+  gap: 8px;
+}
+.routine-days button {
+  min-height: 56px;
+  padding: 6px;
+  border-radius: 12px;
+}
+.routine-days button small, .routine-days button span { display: block; }
+.routine-days button[aria-pressed="true"] {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: white;
+}
+.routine-days button[aria-pressed="true"] small { color: inherit; }
+.routine-preview ul { list-style: none; padding: 0; margin: 14px 0 0; }
+.routine-preview li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+.routine-preview li:last-child { border-bottom: 0; padding-bottom: 0; }
+.routine-session p:empty { display: none; }
+.routine-progress { color: var(--brand); font-weight: 700; }
+.routine-session .exercise {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+.routine-check { min-height: 46px; margin: 0; gap: 12px; cursor: pointer; }
+.routine-check input { flex: 0 0 22px; accent-color: var(--brand); }
+.routine-check small { display: block; margin-top: 2px; }
+.routine-check:has(input:checked) strong { text-decoration: line-through; }
+.routine-logs > summary {
+  min-height: 44px;
+  padding: 12px 0;
+  color: var(--brand);
+  cursor: pointer;
+}
+.routine-session .actions { margin-top: 16px; }

@@ -39,14 +39,14 @@ async function load(){try{state=await api('/api/me');$('#auth').hidden=true;$('#
 function render(){if(!state)return; if(!state.profile.onboardingComplete)return onboarding(); if(pendingHistoryDay){const day=pendingHistoryDay;pendingHistoryDay=null;try{sessionStorage.removeItem('steady.historyDay')}catch{}if(/^\d{4}-\d{2}-\d{2}$/.test(day)&&!Number.isNaN(Date.parse(day))&&new Date(day).toISOString().slice(0,10)===day&&day<=state.day){document.querySelectorAll('.view').forEach(view=>view.hidden=view.id!=='view-history');document.querySelectorAll('.navbtn').forEach(button=>button.classList.toggle('active',button.dataset.view==='history'));Promise.resolve(renderHistory()).then(()=>{const form=$('#dayReview');if(form){form.elements.day.value=day;form.elements.day.dispatchEvent(new Event('change'));form.elements.day.focus();form.scrollIntoView({block:'start'})}const past=$('#pastWorkoutForm');if(past&&day<state.day&&day>=past.elements.day.min)past.elements.day.value=day});return}else notice('Choose a valid date up to today.')}const view=[...document.querySelectorAll('.view')].find(x=>!x.hidden)?.id||'view-today'; if(view==='view-history')return renderHistory();if(view==='view-settings')return renderSettings();if(view==='view-share'){renderShareSettings($('#view-share'),api).catch(error=>{$('#view-share').textContent=error.message});return}renderToday()}
 function renderToday(){const s=state, c=s.check||{};let html=`<div class="grid"><div class="metric"><small>Local day</small><strong>${esc(s.day)}</strong></div><div class="metric"><small>Plan</small><strong>${s.plan?.status==='confirmed'?'Ready':'Check in'}</strong></div><div class="metric${s.workout?.status==='completed'?' workout-done':''}"><small>Workout</small><strong>${s.workout?.status==='completed'?'Done':s.workout?'Resume':'Not started'}</strong></div><div class="metric"><small>Gym</small><strong>${esc(s.profile.gym||'Gym')}</strong></div></div>`;
 if(!s.check)html+=`<div class="panel"><h2>Start with today’s check-in</h2><p class="muted">A fresh check-in is required before a plan is confirmed. Optional measurements can be added later.</p><form id="checkin" class="stack"><label>Gym today<select name="gym"><option>yes</option><option>no</option><option>not sure</option></select></label><label>Available time<select name="minutes"><option>20</option><option>40</option><option selected>60</option><option>75</option><option>90</option></select></label><label>Energy<select name="energy"><option>high</option><option selected>medium</option><option>low</option></select></label><label>Soreness<select name="soreness"><option>none</option><option>mild</option><option>high</option></select></label><label>Symptoms<select name="symptoms"><option value="none">none</option><option value="chest-pain">chest pain</option><option value="fainting">fainting</option><option value="severe-breathlessness">severe shortness of breath</option></select></label><label>Sleep<select name="sleep"><option>good</option><option selected>okay</option><option>poor</option></select></label><label>Blood pressure <small>optional; systolic / diastolic</small><span class="setrow"><input aria-label="Systolic blood pressure (mmHg)" name="systolic" type="number" inputmode="numeric" placeholder="systolic"><input aria-label="Diastolic blood pressure (mmHg)" name="diastolic" type="number" inputmode="numeric" placeholder="diastolic"><span></span></span></label><button class="primary">Save check-in</button></form></div>`;
-else if(!s.plan||s.plan.status==='unstarted')html+=`<div class="panel"><h2>Check-in saved</h2><p class="muted">Review the deterministic plan before starting. You can change the check-in to regenerate an unstarted plan.</p><button class="primary" id="confirmPlan">Show today’s plan</button></div>`;
+else if(!s.plan||s.plan.status==='unstarted')html+=`<div class="panel"><h2>Check-in saved</h2><p class="muted">${s.gymRoutine?"Choose a day above and review its exercises before starting.":"Review the plan before starting. You can change the check-in to update an unstarted plan."}</p><button class="primary" id="confirmPlan">Show today’s plan</button></div>`;
 else {const p=s.plan; html+=`<div class="panel"><h2>${esc(p.title)}</h2><p>${esc(p.reason)}</p><p class="notice">${esc(p.safety)}</p><div class="stack">${p.exercises.map((x,i)=>`<div class="exercise"><h3>${i+1}. ${esc(x.name)}</h3><p class="muted">${x.pattern==='cardio'?`${esc(x.reps)} · duration-based cardio`:`${esc(x.sets)} sets · ${esc(x.reps)} · ${esc(x.rest)}`} · ${esc(x.muscles)}</p>${x.targetMinutes?`<p class="notice">History-based suggestion: ${esc(x.targetMinutes)} minutes. ${esc(x.progressionReason)} Enter the duration you actually complete; pace and incline remain adjustable.</p>`:''}${x.settings?`<p class="notice">Suggested treadmill settings: speed ${esc(x.settings.speed)}, incline ${esc(x.settings.incline)}, effort ${esc(x.settings.effort)}. Adjust to comfort; these are starting suggestions, not targets.</p>`:''}<small>${esc(x.cue)} Alternatives: ${esc(x.alternatives)}</small>${s.workout?.exercises?.[i]?`<div class="setrow">${x.pattern==='cardio'?`<input data-ex="${i}" data-field="duration" aria-label="Actual cardio duration in minutes" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Actual minutes"><input data-ex="${i}" data-field="distance" aria-label="Distance" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Distance"><input data-ex="${i}" data-field="incline" aria-label="Incline percent" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Incline %">`:`<input data-ex="${i}" data-field="weight" aria-label="Weight" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Weight"><input data-ex="${i}" data-field="reps" aria-label="Repetitions" type="number" min="0" inputmode="numeric" placeholder="Reps">`}<label class="check"><input data-ex="${i}" data-field="done" type="checkbox"> Done</label><button class="ghost" data-save="${i}">Save</button></div>`:''}</div>`).join('')}</div><div class="actions"><button class="primary" id="startWorkout">${s.workout?'Resume workout':'Start workout'}</button><button class="ghost" id="completeWorkout">Complete</button></div></div>`}
 $('#view-today').innerHTML=html;wireToday()}
 let saving=false,dirty=false;
 function notice(text){const n=$('#notice');n.hidden=false;n.textContent=text;n.setAttribute('role','status');const local=$('#gymSaveStatus');if(local)local.textContent=text}
 async function saveAction(action){if(saving)return;const source=document.activeElement?.closest('form');if(source)source.querySelector('.form-error')?.remove();saving=true;notice('Saving…');try{await action();dirty=false;state=await api('/api/me');render();notice('Saved')}catch(e){notice(e.message+' Your input has been kept.');if(source?.isConnected){const error=document.createElement('p');error.className='form-error';error.setAttribute('role','alert');error.textContent=e.message+' Your entries are still here.';source.append(error)}}finally{saving=false}}
 window.addEventListener('beforeunload',e=>{if(dirty||saving){e.preventDefault();e.returnValue=''}});
-document.addEventListener('input',e=>{if(e.target.closest('#dashboard'))dirty=true});
+document.addEventListener('input',e=>{if(e.target.closest('#dashboard')&&!e.target.matches('[data-routine-done]'))dirty=true});
 document.addEventListener('invalid',e=>{const label=e.target.closest('#dashboard label');if(!label)return;let message=label.querySelector('.field-error');if(!message){message=document.createElement('small');message.className='field-error';label.append(message)}message.textContent=e.target.validationMessage||'Check this value.';e.target.setAttribute('aria-invalid','true')},true);
 document.addEventListener('input',e=>{if(!e.target.matches('#dashboard input,#dashboard select,#dashboard textarea'))return;e.target.removeAttribute('aria-invalid');e.target.closest('label')?.querySelector('.field-error')?.remove()});
 function wireToday(){
@@ -74,10 +74,10 @@ function wireToday(){
 function onboarding(){
  $('#view-today').hidden=false;$('#view-history').hidden=true;$('#view-settings').hidden=true;
  $('#view-today').innerHTML='<div class="panel"><h2>Set up your first day</h2><p>Confirm your routine. Health disclosures are optional; tracking is always available.</p><form id="onboard" class="stack"><label>Time zone<input name="timezone" required></label><label>Load units<select name="units"><option value="lb">Pounds (lb)</option><option value="kg">Kilograms (kg)</option></select></label><label>Equipment<select name="equipment"><option>commercial gym</option><option>home / walking</option></select></label><label>Usual duration<select name="duration"><option>20</option><option>40</option><option selected>60</option><option>75</option><option>90</option></select></label><label>Weekly sessions<select name="schedule"><option>3</option><option>4</option></select></label><label>Experience<select name="experience"><option>beginner</option><option>experienced</option></select></label><label>Injuries or painful movements (optional)<textarea name="injuries"></textarea></label><label>Clinician restrictions (optional)<textarea name="restrictions"></textarea></label><label>Exercise clearance<select name="clearance"><option value="unknown">Not discussed / prefer not to say</option><option value="yes">Cleared for exercise</option><option value="restricted">Exercise restricted</option></select></label><button class="primary">Save and continue</button></form></div>';
- const f=$('#onboard');f.elements.timezone.value=state.profile.timezone==='UTC'?Intl.DateTimeFormat().resolvedOptions().timeZone:state.profile.timezone;f.elements.schedule.value=String(state.profile.schedule||3);const weekdays=addPreferredWeekdays(f,(state.profile.preferredDays||[]).map(Number));
+ const f=$('#onboard');f.elements.timezone.value=state.profile.timezone==='UTC'?Intl.DateTimeFormat().resolvedOptions().timeZone:state.profile.timezone;f.elements.schedule.value=String(state.profile.schedule||3);const weekdays=state.gymRoutine?null:addPreferredWeekdays(f,(state.profile.preferredDays||[]).map(Number));if(state.gymRoutine)f.elements.schedule.closest('label')?.remove();
  f.onsubmit=e=>{e.preventDefault();if(weekdays&&!weekdays.isValid()){weekdays.fieldset.querySelector('input')?.focus();return}saveAction(()=>api('/api/profile',{method:'PUT',body:JSON.stringify({...state.profile,...Object.fromEntries(new FormData(f)),preferredDays:weekdays?.values()||[],onboardingComplete:true})}))};
 }
-function renderHistory(){const rows=state.measures||[];$('#view-history').innerHTML=`<div class="panel"><h2>Workouts</h2>${(state.workoutHistory||[]).length?(state.workoutHistory||[]).map(w=>`<article class="exercise"><h3>${esc(w.day)} · ${esc(w.status)}</h3>${(w.data.exercises||[]).map(ex=>`<p><strong>${esc(ex.name)}</strong>: ${(ex.sets||[]).map(set=>set.duration!=null?`${esc(set.duration)} min · ${esc(set.distance||'—')} ${esc(set.distanceUnit||'')}`:`${esc(set.weight||'—')} ${esc(set.unit||'')} × ${esc(set.reps||'—')}`).join(' · ')||'No sets saved'}</p>`).join('')}</article>`).join(''):'<p class="muted">No saved workouts yet.</p>'}</div><div class="panel"><h2>Measurements</h2>${rows.length?`<table class="table"><tr><th>Type</th><th>Value</th><th>Date</th></tr>${rows.map(r=>`<tr><td>${esc(r.kind)}</td><td>${esc(r.value)} ${esc(r.unit)}</td><td>${esc(r.measured_at.slice(0,10))}</td></tr>`).join('')}</table>`:'<p class="muted">No measurements yet. Add them without losing consistency credit.</p>'}<form id="measure" class="stack"><h3>Add measurement</h3><label>Measurement type<select name="kind"><option value="weight">weight</option><option value="waist">waist</option><option value="blood-pressure">systolic blood pressure</option></select></label><label>Measurement value<input name="value" type="number" step="0.1" required></label><label>Measurement unit<input name="unit" value="lb"></label><button class="primary">Save</button></form></div>`;$('#measure').onsubmit=async e=>{e.preventDefault();await api('/api/measurements',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});state=await api('/api/me');renderHistory()}}
+function renderHistory(){const rows=state.measures||[];$('#view-history').innerHTML=`<div class="panel"><h2>Workouts</h2>${(state.workoutHistory||[]).length?(state.workoutHistory||[]).map(w=>`<article class="exercise"><h3>${esc(w.day)} · ${esc(w.status)}</h3>${(w.data.exercises||[]).map(ex=>`<p><strong>${esc(ex.name)}</strong>: ${(ex.sets||[]).map(set=>set.duration!=null?`${esc(set.duration)} min · ${esc(set.distance||'—')} ${esc(set.distanceUnit||'')}`:`${esc(set.weight||'—')} ${esc(set.unit||'')} × ${esc(set.reps||'—')}`).join(' · ')||(ex.checkedOff?'Checked off':'No sets saved')}</p>`).join('')}</article>`).join(''):'<p class="muted">No saved workouts yet.</p>'}</div><div class="panel"><h2>Measurements</h2>${rows.length?`<table class="table"><tr><th>Type</th><th>Value</th><th>Date</th></tr>${rows.map(r=>`<tr><td>${esc(r.kind)}</td><td>${esc(r.value)} ${esc(r.unit)}</td><td>${esc(r.measured_at.slice(0,10))}</td></tr>`).join('')}</table>`:'<p class="muted">No measurements yet. Add them without losing consistency credit.</p>'}<form id="measure" class="stack"><h3>Add measurement</h3><label>Measurement type<select name="kind"><option value="weight">weight</option><option value="waist">waist</option><option value="blood-pressure">systolic blood pressure</option></select></label><label>Measurement value<input name="value" type="number" step="0.1" required></label><label>Measurement unit<input name="unit" value="lb"></label><button class="primary">Save</button></form></div>`;$('#measure').onsubmit=async e=>{e.preventDefault();await api('/api/measurements',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});state=await api('/api/me');renderHistory()}}
 function renderSettings(){
   $('#view-settings').innerHTML=`<div class="panel"><h2>Settings</h2><form id="settings" class="stack"><label>Time zone<input name="timezone" value="${esc(state.profile.timezone)}"></label><label>Height (cm)<input name="heightCm" type="number" value="${esc(state.profile.heightCm)}"></label><label>Starting/current weight (lb)<input name="weightLb" type="number" value="${esc(state.profile.weightLb)}"></label><label>Preferred duration<select name="duration"><option>20</option><option>40</option><option selected>60</option><option>75</option><option>90</option></select></label><label>Injuries or avoided movements<textarea name="injuries">${esc(state.profile.injuries)}</textarea></label><label>Clinician restrictions<textarea name="restrictions">${esc(state.profile.restrictions)}</textarea></label><button class="primary">Save settings</button></form></div>`;
   $('#settings').onsubmit=async e=>{e.preventDefault();await api('/api/profile',{method:'PUT',body:JSON.stringify({...state.profile,...Object.fromEntries(new FormData(e.target))})});state=await api('/api/me');renderSettings()};
@@ -163,7 +163,7 @@ renderSettings=()=>{renderSettingsBeforeBackups();const host=$('#view-settings')
 const renderTodayBeforeRestOverride=renderToday;
 renderToday=()=>{
   renderTodayBeforeRestOverride();
-  if(!state?.check||state.workout||state.plan?.kind!=='recovery'||state.plan.status==='unstarted')return;
+  if(state.gymRoutine||!state?.check||state.workout||state.plan?.kind!=='recovery'||state.plan.status==='unstarted')return;
   const title=[...document.querySelectorAll('#view-today .panel h2')].find(heading=>heading.textContent===state.plan.title);
   const panel=title?.closest('.panel');if(!panel||panel.querySelector('#restDayOverrideNote'))return;
   const check=state.check,profile=state.profile||{},urgent=Number(check.systolic)>=180||Number(check.diastolic)>=120||['chest-pain','fainting','severe-breathlessness'].includes(check.symptoms),blocked=urgent||profile.clearance==='restricted'||profile.injuries||profile.restrictions||check.pain==='movement-pain'||check.soreness==='high'||check.energy==='low';
@@ -177,7 +177,7 @@ let activeGymSlot=0;
 const renderTodayBeforeGymFocus=renderToday;
 renderToday=()=>{
   renderTodayBeforeGymFocus();
-  if(state?.workout?.status!=='active')return;
+  if(state?.workout?.status!=='active'||state.plan?.routineDay)return;
   const panel=$('#startWorkout')?.closest('.panel');
   const exercises=[...(panel?.querySelectorAll('.exercise')||[])];
   if(!exercises.length)return;
@@ -226,11 +226,11 @@ wireToday=()=>{
     $('#finishPreview')?.remove();
     const recap=summarizeWorkout(state.plan,state.workout);
     const panel=document.createElement('section');panel.id='finishPreview';panel.className='panel';
-    panel.innerHTML=`<h2>Review today’s workout</h2><p class="muted">Check saved work before finishing. Choose an exercise to correct its entries; nothing is finalized until you confirm.</p><p>${recap.counts.completed} completed · ${recap.counts.partial} partial · ${recap.counts.skipped} skipped · ${recap.counts.unplanned||0} unplanned${recap.cardioMinutes?` · ${recap.cardioMinutes} cardio min`:''}${recap.durationMinutes!=null?` · about ${recap.durationMinutes} min elapsed`:''}</p><ul>${recap.entries.map((entry,slot)=>`<li><strong>${esc(entry.name)}</strong>: ${esc(entry.status)} · ${entry.status==='unplanned'?`${entry.logged} actual entries`:`${entry.logged} of ${entry.planned} ${entry.kind==='cardio'?'cardio entries':'sets'}`} <button type="button" class="ghost" data-correct-slot="${slot}">Correct</button></li>`).join('')}</ul><label>How did this session feel? (optional)<select id="sessionFeedback"><option value="">Skip feedback</option><option value="comfortable">Comfortable</option><option value="challenging">Challenging but manageable</option><option value="too-hard">Too hard</option></select></label><p class="muted">Too hard reduces the next eligible session’s volume. Comfortable does not automatically increase weights. Report pain or concerning symptoms in your daily check-in.</p><div class="actions"><button type="button" class="ghost" id="keepLogging">Keep logging</button><button type="button" class="primary" id="confirmFinish">Finish workout</button></div>`;
+    panel.innerHTML=`<h2>Review today’s workout</h2><p class="muted">Check saved work before finishing. Choose an exercise to correct its entries; nothing is finalized until you confirm.</p><p>${recap.counts.completed} completed · ${recap.counts.partial} partial · ${recap.counts.skipped} skipped · ${recap.counts.unplanned||0} unplanned${recap.cardioMinutes?` · ${recap.cardioMinutes} cardio min`:''}${recap.durationMinutes!=null?` · about ${recap.durationMinutes} min elapsed`:''}</p><ul>${recap.entries.map((entry,slot)=>`<li><strong>${esc(entry.name)}</strong>: ${esc(entry.status)} · ${entry.checkedOff?'Checked off · ':''}${entry.status==='unplanned'?`${entry.logged} actual entries`:`${entry.logged} of ${entry.planned} ${entry.kind==='cardio'?'cardio entries':'sets'}`} <button type="button" class="ghost" data-correct-slot="${slot}">Correct</button></li>`).join('')}</ul><label>How did this session feel? (optional)<select id="sessionFeedback"><option value="">Skip feedback</option><option value="comfortable">Comfortable</option><option value="challenging">Challenging but manageable</option><option value="too-hard">Too hard</option></select></label><p class="muted">${state.plan.routineDay?"Feedback is saved with this workout.":"Too hard reduces the next eligible session’s volume. Comfortable does not automatically increase weights."} Report pain or concerning symptoms in your daily check-in.</p><div class="actions"><button type="button" class="ghost" id="keepLogging">Keep logging</button><button type="button" class="primary" id="confirmFinish">Finish workout</button></div>`;
     finish.closest('.panel').after(panel);
     panel.querySelector('#sessionFeedback').value=state.workout.feedback||'';
     panel.querySelector('#keepLogging').onclick=()=>panel.remove();
-    panel.querySelectorAll('[data-correct-slot]').forEach(button=>button.onclick=()=>{const slot=Number(button.dataset.correctSlot);if(recap.entries[slot]?.status==='unplanned'){$('#unplannedActivity')?.scrollIntoView({block:'start'});panel.remove();return}activeGymSlot=slot;renderToday();$('#gymProgress')?.scrollIntoView({block:'start'})});
+    panel.querySelectorAll('[data-correct-slot]').forEach(button=>button.onclick=()=>{const slot=Number(button.dataset.correctSlot);if(recap.entries[slot]?.status==='unplanned'){$('#unplannedActivity')?.scrollIntoView({block:'start'});panel.remove();return}activeGymSlot=slot;renderToday();const logs=state.plan?.routineDay?document.querySelector('[data-exercise-slot="'+slot+'"] .routine-logs'):null;if(logs)logs.open=true;(logs||$('#gymProgress'))?.scrollIntoView({block:'start'})});
     panel.querySelector('#confirmFinish').onclick=()=>{const data=structuredClone(state.workout);data.feedback=panel.querySelector('#sessionFeedback').value;delete data.version;delete data.status;saveAction(()=>api('/api/workout',{method:'POST',body:JSON.stringify({data,version:state.workout.version,status:'completed'})}))};
     panel.scrollIntoView({behavior:'smooth',block:'start'});
   };
@@ -312,6 +312,7 @@ wireToday=()=>{
 const renderTodayBeforeUnplanned=renderToday;
 renderToday=()=>{
   renderTodayBeforeUnplanned();
+  if(state.plan?.routineDay)return;
   if(!state.workout||!['active','completed'].includes(state.workout.status))return;
   const host=$('#view-today'),panel=document.createElement('section');panel.id='unplannedActivity';panel.className='panel';
   const unplanned=state.workout.exercises.map((exercise,index)=>({exercise,index})).filter(item=>item.exercise.unplanned);
@@ -444,15 +445,171 @@ renderHistory=async()=>{
 const settingsBeforeFitdays=renderSettings;
 renderSettings=()=>{settingsBeforeFitdays();const host=$('#view-settings');const panel=document.createElement('section');panel.className='panel';panel.innerHTML='<h2>Public Fitdays visibility</h2><p>Dates mode shares completed workout dates. Counts-only hides individual dates from the public page and API. Previously shared information cannot be recalled.</p><label>Visibility<select disabled><option value="dates">Workout dates and counts</option><option value="counts">Counts only</option></select></label><button type="button" disabled>Save public visibility</button><p role="status"></p>';host.append(panel);const select=panel.querySelector('select'),button=panel.querySelector('button'),status=panel.querySelector('[role="status"]');api('/api/fitdays/visibility').then(result=>{select.value=result.visibility;select.disabled=false;button.disabled=false}).catch(error=>status.textContent=error.message);button.onclick=async()=>{button.disabled=true;try{await api('/api/fitdays/visibility',{method:'PUT',body:JSON.stringify({visibility:select.value})});status.textContent='Saved. Fitdays uses this mode on its next refresh.'}catch(error){status.textContent=error.message}finally{button.disabled=false}}};
 
-const settingsBeforeWeekComparison=renderSettings;renderSettings=()=>{settingsBeforeWeekComparison();const summary=plannedWeekComparison(state.profile,state.workoutHistory||[],state.day),panel=document.createElement('section');panel.className='panel';panel.innerHTML='<h2>Private weekly schedule comparison</h2>';const text=document.createElement('p');text.textContent=summary.hasSchedule?summary.start+' to '+summary.end+': '+summary.planned+' preferred gym weekdays elapsed; '+summary.recorded+' completed workout days recorded ('+summary.onPlanned+' on preferred days). Recovery, safety and changes of schedule are valid; these counts are not failures or catch-up requirements.':'Choose preferred training weekdays in Settings if you want a comparison. No schedule is assumed.';panel.append(text);const note=document.createElement('p');note.className='muted';note.textContent='Your preferred schedule is private and is not published on Fitdays.';panel.append(note);$('#view-settings').append(panel)};
+const settingsBeforeWeekComparison=renderSettings;renderSettings=()=>{settingsBeforeWeekComparison();if(state.gymRoutine){$('#settings [name="schedule"]')?.closest('label')?.remove();$('#settings .weekday-picker')?.remove();return}const summary=plannedWeekComparison(state.profile,state.workoutHistory||[],state.day),panel=document.createElement('section');panel.className='panel';panel.innerHTML='<h2>Private weekly schedule comparison</h2>';const text=document.createElement('p');text.textContent=summary.hasSchedule?summary.start+' to '+summary.end+': '+summary.planned+' preferred gym weekdays elapsed; '+summary.recorded+' completed workout days recorded ('+summary.onPlanned+' on preferred days). Recovery, safety and changes of schedule are valid; these counts are not failures or catch-up requirements.':'Choose preferred training weekdays in Settings if you want a comparison. No schedule is assumed.';panel.append(text);const note=document.createElement('p');note.className='muted';note.textContent='Your preferred schedule is private and is not published on Fitdays.';panel.append(note);$('#view-settings').append(panel)};
 
 // A schedule preference is never a confirmed future workout.
 const renderTodayBeforeOutlook=renderToday;
 renderToday=()=>{
   renderTodayBeforeOutlook();
+  if(state.gymRoutine)return;
   if(!state?.profile?.onboardingComplete)return;
   const panel=document.createElement('section');panel.className='panel training-outlook';
   const feedback=feedbackLabel(state.workout?.feedback);
   panel.innerHTML=`<details><summary>Your next five days</summary><p class="muted">Based on your preferred weekdays in ${esc(state.profile.timezone)}. These are preferences, not prescribed workouts. Each day needs a fresh check-in; safety, recovery and actual training come first.</p><ul>${trainingOutlook(state.day,state.profile).map(item=>`<li><strong>${esc(item.label)}</strong><span>${esc(item.day===state.day?(state.workout?.status==='completed'?'Workout completed':state.plan?.title||'Check in to choose today’s plan'):item.preference)}</span></li>`).join('')}</ul></details>${feedback?`<p>Saved session feedback: <strong>${esc(feedback)}</strong></p>`:''}`;
   $('#view-today').append(panel);
+};
+
+let gymDayDate;
+let selectedGymDay;
+
+function renderGymDayPicker(view) {
+  if (gymDayDate !== state.day) {
+    gymDayDate = state.day;
+    selectedGymDay = state.plan?.routineDay ?? state.gymRoutine.defaultDay;
+  }
+
+  const picker = document.createElement('section');
+  picker.className = 'panel routine-picker';
+  picker.innerHTML = `<h2>Your gym routine</h2>
+    <div class="routine-days" role="group" aria-label="Workout days"></div>
+    <div class="routine-preview" aria-live="polite"></div>`;
+  const buttons = picker.querySelector('.routine-days');
+  const preview = picker.querySelector('.routine-preview');
+  const workoutDays = state.gymRoutine.days;
+  const showPreview = () => {
+    buttons.querySelectorAll('button').forEach(button => {
+      button.setAttribute('aria-pressed', String(Number(button.dataset.routineDay) === selectedGymDay));
+    });
+    const day = workoutDays.find(day => day.day === selectedGymDay);
+    preview.hidden = Boolean(state.plan?.status === 'confirmed' || state.plan?.kind === 'safety-stop');
+    preview.innerHTML = day.exercises.length
+      ? `<ul>${day.exercises.map(lift => `<li><strong>${esc(lift.name)}</strong><small>${lift.sets} sets × ${esc(lift.reps)} reps</small></li>`).join('')}</ul>`
+      : '<p>No exercises scheduled.</p>';
+  };
+  const confirmDay = routineDay => saveAction(async () => {
+    await api('/api/plan/confirm', { method: 'POST', body: JSON.stringify({ routineDay }) });
+    selectedGymDay = routineDay;
+  });
+  for (const day of workoutDays) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ghost';
+    button.dataset.routineDay = day.day;
+    button.innerHTML = `<small>Day ${day.day}</small><span>${esc(day.name)}</span>`;
+    button.onclick = () => {
+      if (state.check && !$('#checkin')) return confirmDay(day.day);
+      selectedGymDay = day.day;
+      showPreview();
+    };
+    buttons.append(button);
+  }
+  showPreview();
+  view.prepend(picker);
+
+  const form = $('#checkin');
+  if (form) form.onsubmit = event => {
+    event.preventDefault();
+    const check = { ...Object.fromEntries(new FormData(form)), routineDay: selectedGymDay };
+    saveAction(() => api('/api/checkin', { method: 'POST', body: JSON.stringify(check) }));
+  };
+  const confirm = $('#confirmPlan');
+  if (confirm) {
+    confirm.textContent = 'Show selected workout';
+    confirm.onclick = () => confirmDay(selectedGymDay);
+  }
+}
+
+async function saveGymCheck(checkbox, index, updateProgress) {
+  const current = state.workout;
+  if (saving) {
+    checkbox.checked = current.exercises[index].checkedOff === true;
+    return;
+  }
+  const workout = structuredClone(current);
+  workout.exercises[index].checkedOff = checkbox.checked;
+  delete workout.status;
+  delete workout.version;
+  saving = true;
+  checkbox.disabled = true;
+  try {
+    const result = await api('/api/workout', {
+      method: 'POST',
+      body: JSON.stringify({ data: workout, version: current.version, status: current.status })
+    });
+    state.workout = { ...workout, status: current.status, version: result.version };
+    updateProgress();
+  } catch (error) {
+    checkbox.checked = current.exercises[index].checkedOff === true;
+    notice(error.message);
+  } finally {
+    checkbox.disabled = false;
+    saving = false;
+  }
+}
+
+function renderGymChecklist(view, openLogs) {
+  const plan = state.plan;
+  if (!plan?.routineDay || plan.status !== 'confirmed') return;
+  const start = view.querySelector('#startWorkout');
+  const finish = view.querySelector('#completeWorkout');
+  const panel = (start || finish || view.querySelector('.exercise'))?.closest('.panel');
+  if (!panel) return;
+  panel.classList.add('routine-session');
+  if (plan.kind !== 'strength') {
+    panel.querySelector('.actions')?.remove();
+    return;
+  }
+
+  panel.querySelectorAll('.exercise').forEach(card => {
+    const guidance = card.querySelector('small');
+    if (guidance?.textContent.trim() === 'Alternatives:') guidance.remove();
+  });
+  if (!state.workout) {
+    finish?.remove();
+    return;
+  }
+  start?.remove();
+  const progress = document.createElement('p');
+  progress.className = 'routine-progress';
+  progress.setAttribute('role', 'status');
+  const updateProgress = () => {
+    const total = plan.exercises.length;
+    const done = state.workout.exercises.filter(exercise => exercise.checkedOff).length;
+    progress.textContent = `${done} of ${total} exercises checked off`;
+  };
+  panel.querySelector('h2').after(progress);
+  updateProgress();
+
+  panel.querySelectorAll('.exercise').forEach((card, index) => {
+    const exercise = state.workout.exercises[index];
+    const lift = plan.exercises[index];
+    if (!exercise || !lift) return;
+    const label = document.createElement('label');
+    label.className = 'check routine-check';
+    label.innerHTML = `<input type="checkbox" data-routine-done><span><strong>${esc(lift.name)}</strong>
+      <small>${lift.sets} sets × ${esc(lift.reps)} reps</small></span>`;
+    const checkbox = label.querySelector('input');
+    checkbox.checked = exercise.checkedOff === true;
+    checkbox.disabled = state.workout.status === 'completed';
+    checkbox.onchange = () => saveGymCheck(checkbox, index, updateProgress);
+    const logs = document.createElement('details');
+    logs.className = 'routine-logs';
+    logs.open = openLogs.has(card.dataset.exerciseSlot);
+    const summary = document.createElement('summary');
+    summary.textContent = exercise.sets.length ? `Log sets · ${exercise.sets.length} saved` : 'Log sets';
+    card.querySelector('[data-field="done"]')?.closest('label')?.remove();
+    logs.append(summary, ...[...card.children].slice(1));
+    card.replaceChildren(label, logs);
+  });
+}
+
+const renderTodayBeforeRoutine = renderToday;
+renderToday = () => {
+  const openLogs = new Set([...document.querySelectorAll('#view-today .routine-logs[open]')]
+    .map(details => details.closest('.exercise')?.dataset.exerciseSlot));
+  renderTodayBeforeRoutine();
+  if (!state.gymRoutine) return;
+  const view = $('#view-today');
+  if (!state.workout) renderGymDayPicker(view);
+  renderGymChecklist(view, openLogs);
 };

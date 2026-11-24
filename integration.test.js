@@ -18,7 +18,8 @@ test('private session, workout conflicts and reconnect recovery',async()=>{
  process.env.DATA_DIR=fs.mkdtempSync(path.join(os.tmpdir(),'steady-test-'));
  const priorDb=new DatabaseSync(path.join(process.env.DATA_DIR,'fitness.sqlite'));
  priorDb.exec("CREATE TABLE uploads(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, day TEXT NOT NULL, filename TEXT NOT NULL, mime TEXT NOT NULL, bytes INTEGER NOT NULL, caption TEXT DEFAULT '', created_at TEXT NOT NULL)");priorDb.close();
- const {server}=await import('./server.js');
+ const {createFitnessServer}=await import('./server.js');
+ const server=createFitnessServer({useGymRoutine:false});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  let base='http://127.0.0.1:'+server.address().port,cookie='';
  async function request(route,body,method='POST',extra={}){return fetch(base+route,{method,headers:{Origin:base,'X-Requested-With':'Steady','Content-Type':'application/json',Cookie:cookie,...extra},body:body===undefined?undefined:JSON.stringify(body)})}

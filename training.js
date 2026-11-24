@@ -2,6 +2,85 @@ import { catalogAlternatives, exerciseCatalogAttribution, exerciseCatalogSourceU
 
 const movement=(name,pattern,muscles,cue,alternatives,substitutions=[])=>({name,pattern,muscles,cue,alternatives,substitutions,sets:3,reps:'8–12',rest:'90 sec'});
 
+const lift = (name, pattern, muscles, sets, reps, rest = '120 sec') => ({
+  name, pattern, muscles, sets, reps, rest
+});
+const pulldown = lift('Lat pulldowns or pull-ups', 'pull', 'back', 3, '8–10');
+const row = lift('Seated rows', 'pull', 'back', 3, '10–12');
+const lateralRaise = lift('Lateral raises', 'strength', 'shoulders', 3, '12–15', '60 sec');
+const lower = [
+  lift('Leg press', 'squat', 'quads and glutes', 3, '10–12'),
+  lift('Romanian deadlifts', 'hinge', 'hamstrings and glutes', 3, '8–10'),
+  lift('Leg curls', 'strength', 'hamstrings', 3, '12–15', '60 sec'),
+  lift('Calf raises', 'ankle', 'calves', 4, '12–15', '60 sec')
+];
+export const gymRoutine = [
+  { day: 1, name: 'Push', exercises: [
+    lift('Bench press', 'push', 'chest and triceps', 4, '6–8'),
+    lift('Incline dumbbell press', 'push', 'upper chest', 3, '8–10'),
+    lift('Shoulder press', 'push', 'shoulders and triceps', 3, '8–10'),
+    lateralRaise,
+    lift('Triceps pushdowns', 'strength', 'triceps', 3, '12–15', '60 sec')
+  ] },
+  { day: 2, name: 'Pull', exercises: [
+    pulldown,
+    row,
+    lift('Face pulls', 'pull', 'rear shoulders and upper back', 3, '12–15', '60 sec'),
+    lift('Biceps curls', 'strength', 'biceps', 3, '10–12', '60 sec'),
+    lift('Hammer curls', 'strength', 'biceps and forearms', 3, '10–12', '60 sec')
+  ] },
+  { day: 3, name: 'Legs', exercises: [
+    lift('Squats', 'squat', 'quads and glutes', 4, '6–8'),
+    ...lower
+  ] },
+  { day: 4, name: 'Rest', exercises: [] },
+  { day: 5, name: 'Upper', exercises: [
+    lift('Incline dumbbell press', 'push', 'upper chest', 3, '10–12'),
+    row,
+    lift('Shoulder press', 'push', 'shoulders and triceps', 3, '10–12'),
+    pulldown,
+    lateralRaise
+  ] },
+  { day: 6, name: 'Lower', exercises: lower },
+  { day: 7, name: 'Rest', exercises: [] }
+];
+
+export function validGymDay(day) {
+  return Number.isInteger(day) && day >= 1 && day <= gymRoutine.length;
+}
+
+export function defaultGymDay(date) {
+  return new Date(`${date}T12:00:00Z`).getUTCDay() || 7;
+}
+
+export function gymWorkoutPlan(routineDay, check) {
+  const { name, exercises } = gymRoutine[routineDay - 1];
+  const title = `Day ${routineDay} · ${name}`;
+  const base = { routineDay, title, cardio: null };
+  if (!exercises.length || check.gym === 'no') {
+    return {
+      ...base, kind: 'routine-rest', exercises: [],
+      reason: exercises.length ? 'This session uses gym equipment.' : 'No exercises scheduled.',
+      safety: ''
+    };
+  }
+  return {
+    ...base, kind: 'strength', exercises, reason: '',
+    safety: 'Use a comfortable load and range of motion. Stop if movement causes pain or symptoms.'
+  };
+}
+
+export function matchesGymPlan(workout, plan) {
+  return workout.exercises.length === plan.exercises.length &&
+    workout.exercises.every((exercise, index) => (
+      !exercise.unplanned &&
+      (exercise.slot == null || exercise.slot === index) &&
+      exercise.name === plan.exercises[index].name &&
+      exercise.pattern === plan.exercises[index].pattern &&
+      (exercise.checkedOff === undefined || typeof exercise.checkedOff === 'boolean')
+    ));
+}
+
 const moves={
   squat:movement('Leg press or sit-to-stand','squat','legs','Use a comfortable range, move with control, and exhale as you stand.','Choose a squat-pattern alternative.',[
     {name:'Sit-to-stand from a stable chair',pattern:'squat',muscles:'legs',equipment:'bodyweight'},

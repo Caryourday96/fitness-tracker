@@ -6,7 +6,8 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'steady-rest-day-'));
-const { planFor, server } = await import('./server.js');
+const { planFor, createFitnessServer } = await import('./server.js');
+const server = createFitnessServer({ useGymRoutine: false });
 
 const profile = { schedule: 3, duration: 60 };
 const check = { energy: 'high', soreness: 'none', symptoms: 'none', minutes: 60 };
