@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { handleOwnerShare, handlePublicPartner, initializePartnerSharing, seedStarterFoods } from './partner-sharing.js';
-import { handlePublicWorkoutDays, importMovatiDates, initializeMovatiVisits, movatiVisitCount, saveFitdaysVisibility } from './workout-days.js';
+import { handlePublicWorkoutDays, importMovatiDates, initializeMovatiVisits, movatiVisitCount, publishApprovedMovatiDates, saveFitdaysVisibility } from './workout-days.js';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { ManagedIdentityCredential } from '@azure/identity';
@@ -57,6 +57,9 @@ db.exec('CREATE TABLE IF NOT EXISTS meal_favourites(id INTEGER PRIMARY KEY, user
 initializePartnerSharing(db);
 db.exec("CREATE TABLE IF NOT EXISTS fitdays_settings(user_id INTEGER PRIMARY KEY, visibility TEXT NOT NULL DEFAULT 'dates' CHECK(visibility IN ('dates','counts')))");
 initializeMovatiVisits(db);
+if (process.env.NODE_ENV === 'production' && process.env.WEBSITE_SITE_NAME === 'fitness-tracker-ca') {
+  publishApprovedMovatiDates(db);
+}
 const now = () => new Date().toISOString();
 const favouriteDetails=(uid,b)=>{const name=String(b.name||'').trim(),portion=String(b.portion||'').trim(),ids=b.foodIds;if(!name||name.length>120||portion.length>240||!['breakfast','lunch','dinner','snack'].includes(b.meal)||!Array.isArray(ids)||ids.length<1||ids.length>10||!ids.every(id=>Number.isSafeInteger(id)&&id>0)||new Set(ids).size!==ids.length)return null;const usable=db.prepare("SELECT 1 FROM foods WHERE id=? AND user_id=? AND available=1 AND preference='preferred'");if(!ids.every(id=>usable.get(id,uid)))return null;return {name,meal:b.meal,foodIds:ids,portion}};
 const dayFor = (tz = 'UTC') => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());

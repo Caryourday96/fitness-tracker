@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
-import { handlePublicWorkoutDays } from './workout-days.js';
+import { handlePublicWorkoutDays, publishApprovedMovatiDates } from './workout-days.js';
 
 test('MOVATI dates deduplicate, respect the cutoff and appear only when the owner enables them', async ({ mock }) => {
   mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-24T15:00:00Z') });
@@ -66,6 +66,15 @@ test('MOVATI dates deduplicate, respect the cutoff and appear only when the owne
     assert.equal((await request('/api/fitdays/visibility', { visibility: 'counts' }, 'PUT')).status, 200);
     assert.equal(Object.hasOwn(publicData(), 'days'), false);
     assert.equal(db.prepare('SELECT COUNT(*) AS count FROM workouts').get().count, 1);
+
+    const tail = Array.from({ length: 27 }, (_, i) => `2026-10-${String(i + 1).padStart(2, '0')}`);
+    assert.equal((await request(route, { dates: tail })).status, 200);
+    publishApprovedMovatiDates(db);
+    assert.equal(publicData().visibility, 'dates');
+    assert.equal(publicData().days.length, 29);
+    assert.equal((await request('/api/fitdays/visibility', { visibility: 'counts' }, 'PUT')).status, 200);
+    publishApprovedMovatiDates(db);
+    assert.equal(publicData().visibility, 'counts');
   } finally {
     db.close();
     await new Promise(resolve => server.close(resolve));

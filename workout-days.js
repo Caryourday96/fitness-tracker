@@ -33,6 +33,24 @@ export function saveFitdaysVisibility(db, userId, visibility) {
   db.prepare('INSERT INTO fitdays_settings (user_id, visibility) VALUES (?, ?) ON CONFLICT (user_id) DO UPDATE SET visibility = excluded.visibility').run(userId, visibility);
 }
 
+export function publishApprovedMovatiDates(db) {
+  // Apply this release's owner-approved setting once. Later settings edits win.
+  if (db.prepare('PRAGMA user_version').get().user_version !== 0) return;
+  const owner = db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get();
+  if (!owner || movatiVisitCount(db, owner.id) !== 29) return;
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    if (db.prepare('PRAGMA user_version').get().user_version === 0) {
+      saveFitdaysVisibility(db, owner.id, 'dates');
+      db.exec('PRAGMA user_version = 1');
+    }
+    db.exec('COMMIT');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
+}
+
 export function importMovatiDates(db, userId, dates, today) {
   if (!Array.isArray(dates) || !dates.length || dates.length > 5000 ||
       dates.some(day => !validDay(day) || day > today)) return null;
