@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { handleOwnerShare, handlePublicPartner, initializePartnerSharing, seedStarterFoods } from './partner-sharing.js';
-import { handlePublicWorkoutDays } from './workout-days.js';
+import { handlePublicWorkoutDays, importMovatiDates, initializeMovatiVisits, movatiVisitCount } from './workout-days.js';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { ManagedIdentityCredential } from '@azure/identity';
@@ -56,6 +56,7 @@ db.exec('CREATE TABLE IF NOT EXISTS exercise_profiles(id INTEGER PRIMARY KEY, us
 db.exec('CREATE TABLE IF NOT EXISTS meal_favourites(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, name TEXT NOT NULL, meal TEXT NOT NULL, food_ids TEXT NOT NULL, portion TEXT NOT NULL DEFAULT \'\')');
 initializePartnerSharing(db);
 db.exec("CREATE TABLE IF NOT EXISTS fitdays_settings(user_id INTEGER PRIMARY KEY, visibility TEXT NOT NULL DEFAULT 'dates' CHECK(visibility IN ('dates','counts')))");
+initializeMovatiVisits(db);
 const now = () => new Date().toISOString();
 const favouriteDetails=(uid,b)=>{const name=String(b.name||'').trim(),portion=String(b.portion||'').trim(),ids=b.foodIds;if(!name||name.length>120||portion.length>240||!['breakfast','lunch','dinner','snack'].includes(b.meal)||!Array.isArray(ids)||ids.length<1||ids.length>10||!ids.every(id=>Number.isSafeInteger(id)&&id>0)||new Set(ids).size!==ids.length)return null;const usable=db.prepare("SELECT 1 FROM foods WHERE id=? AND user_id=? AND available=1 AND preference='preferred'");if(!ids.every(id=>usable.get(id,uid)))return null;return {name,meal:b.meal,foodIds:ids,portion}};
 const dayFor = (tz = 'UTC') => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
@@ -146,7 +147,33 @@ async function route(req,res,useGymRoutine) {
   if(method==='POST' && (u.pathname==='/api/logout'||u.pathname==='/api/logout-all')) { const token=parseCookies(req.headers.cookie).session; const uid=token?db.prepare('SELECT user_id FROM sessions WHERE token_hash=?').get(hash(token))?.user_id:null; if(u.pathname==='/api/logout-all'&&uid){db.prepare('DELETE FROM sessions WHERE user_id=?').run(uid);db.prepare('UPDATE users SET google_revoked=1 WHERE id=?').run(uid)}else if(token)db.prepare('DELETE FROM sessions WHERE token_hash=?').run(hash(token));res.setHeader('Set-Cookie',`session=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/${process.env.NODE_ENV==='production'?'; Secure':''}`);return send(res,200,{ok:true}); }
   if(await handlePublicPartner(req,res,{db,hash,send,root:ROOT,json}))return;
   const uid=bridged?.id||sessionUser(req); if(!uid) { send(res,401,{error:'Sign in required'}); return; }
-  if(u.pathname==='/api/fitdays/visibility') { const owner=db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get();if(owner?.id!==uid)return send(res,403,{error:'Only the public tracker owner can change visibility.'});if(method==='GET')return send(res,200,{visibility:db.prepare('SELECT visibility FROM fitdays_settings WHERE user_id=?').get(uid)?.visibility||'dates'});if(method==='PUT'){const b=await json(req);if(!['dates','counts'].includes(b.visibility))return send(res,400,{error:'Choose dates or counts.'});db.prepare('INSERT INTO fitdays_settings(user_id,visibility) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET visibility=excluded.visibility').run(uid,b.visibility);return send(res,200,{visibility:b.visibility})}return send(res,405,{error:'Method not allowed'});}
+  if (u.pathname === '/api/fitdays/movati' && ['GET', 'POST'].includes(method)) {
+    const owner = db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get();
+    if (owner?.id !== uid) return send(res,403,{error:'Only the Fitdays owner can import MOVATI visits.'});
+    if (method === 'GET') return send(res,200,{total:movatiVisitCount(db,uid)});
+    const body = await json(req,128*1024);
+    const profile = JSON.parse(db.prepare('SELECT data FROM profiles WHERE user_id=?').get(uid).data);
+    const imported = importMovatiDates(db,uid,body?.dates,dayFor(profile.timezone));
+    if (!imported) return send(res,400,{error:'Enter valid visit dates through today in YYYY-MM-DD format.'});
+    return send(res,200,imported);
+  }
+  if(u.pathname==='/api/fitdays/visibility') {
+    const owner=db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get();
+    if(owner?.id!==uid)return send(res,403,{error:'Only the public tracker owner can change visibility.'});
+    if(method==='GET'){
+      if(movatiVisitCount(db,uid))return send(res,200,{visibility:'counts',source:'movati'});
+      const record=db.prepare('SELECT visibility FROM fitdays_settings WHERE user_id=?').get(uid);
+      return send(res,200,{visibility:record?.visibility||'dates'});
+    }
+    if(method==='PUT'){
+      const body=await json(req);
+      if(!['dates','counts'].includes(body?.visibility))return send(res,400,{error:'Choose dates or counts.'});
+      if(movatiVisitCount(db,uid))return send(res,409,{error:'Public MOVATI attendance is counts only.'});
+      db.prepare('INSERT INTO fitdays_settings(user_id,visibility) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET visibility=excluded.visibility').run(uid,body.visibility);
+      return send(res,200,{visibility:body.visibility});
+    }
+    return send(res,405,{error:'Method not allowed'});
+  }
   if(u.pathname==='/api/push/config'||u.pathname==='/api/push/subscription'||u.pathname==='/api/push/test')return pushReminders.handle(req,res,{uid,u,method});
   seedStarterFoods(db,uid);
   const shareOrigin=process.env.NODE_ENV==='production'?(process.env.APP_ORIGIN||'https://fit.adeticket.com'):`${req.headers['x-forwarded-proto']==='https'?'https':'http'}://${req.headers.host}`;

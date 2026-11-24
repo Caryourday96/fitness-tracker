@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {workoutCalendar,consistencyInsights,weeklyCounts,periodCalendar,periodWeeks,monthlyRecaps,recordedBests,yearRecaps} from './public/fitdays-data.js';
+import { validDay } from './progress.js';
 
 const publicHost = 'fitdays.adeticket.com';
+const firstMovatiDay = '2026-09-01';
 
 function publicHeaders(res) {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
@@ -12,6 +14,37 @@ function publicHeaders(res) {
 
 function localDay(timezone) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+export function initializeMovatiVisits(db) {
+  db.exec(`CREATE TABLE IF NOT EXISTS fitdays_movati_visits (
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    day TEXT NOT NULL,
+    PRIMARY KEY (user_id, day)
+  )`);
+}
+
+export function movatiVisitCount(db, userId) {
+  if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='fitdays_movati_visits'").get()) return 0;
+  return db.prepare('SELECT COUNT(*) AS count FROM fitdays_movati_visits WHERE user_id=?').get(userId).count;
+}
+
+export function importMovatiDates(db, userId, dates, today) {
+  if (!Array.isArray(dates) || !dates.length || dates.length > 5000 ||
+      dates.some(day => !validDay(day) || day > today)) return null;
+  const eligible = dates.filter(day => day >= firstMovatiDay);
+  const unique = new Set(eligible);
+  const save = db.prepare('INSERT INTO fitdays_movati_visits (user_id, day) VALUES (?, ?) ON CONFLICT DO NOTHING');
+  let added = 0;
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    for (const day of unique) added += Number(save.run(userId, day).changes);
+    db.exec('COMMIT');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
+  return { added, total: movatiVisitCount(db, userId), excluded: dates.length - eligible.length };
 }
 
 export function handlePublicWorkoutDays(req, res, { db, send, root }) {
@@ -38,6 +71,25 @@ export function handlePublicWorkoutDays(req, res, { db, send, root }) {
     const cutoff = new Date(`${today}T12:00:00Z`);
     cutoff.setUTCDate(cutoff.getUTCDate() - 364);
     const start = cutoff.toISOString().slice(0, 10);
+    if (owner && movatiVisitCount(db, owner.id)) {
+      const days = db.prepare('SELECT day FROM fitdays_movati_visits WHERE user_id=? AND day BETWEEN ? AND ?')
+        .all(owner.id, start > firstMovatiDay ? start : firstMovatiDay, today).map(row => row.day);
+      const data = { today, days };
+      const totals = workoutCalendar(data);
+      send(res, 200, {
+        today,
+        source: 'movati',
+        visibility: 'counts',
+        counts: { week: totals.week, month: totals.month, year: totals.year, calendarYear: totals.calendarYear },
+        insights: consistencyInsights(data),
+        years: yearRecaps(data),
+        recaps: monthlyRecaps(data),
+        weeks: weeklyCounts(data),
+        windowWeeks: Object.fromEntries([7,30,90,365].map(length => [length,periodWeeks(data,length)])),
+        periods: Object.fromEntries([7,30,90,365].map(length => [length,periodCalendar(data,length).days.size]))
+      });
+      return true;
+    }
     const days = owner
       ? db.prepare("SELECT day FROM workouts WHERE user_id=? AND status='completed' AND day BETWEEN ? AND ? ORDER BY day").all(owner.id, start, today).map(row => row.day)
       : [];

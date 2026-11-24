@@ -429,21 +429,101 @@ renderHistory=async()=>{
   const yesterday=new Date(state.day+'T12:00:00Z');yesterday.setUTCDate(yesterday.getUTCDate()-1);
   const oldest=new Date(state.day+'T12:00:00Z');oldest.setUTCDate(oldest.getUTCDate()-364);
   const panel=document.createElement('section');panel.className='panel';
-  panel.innerHTML=`<h2>Record a workout from an earlier day</h2><p class="muted">Use this if you finished a workout but did not mark it complete in the app. It will count on Fitdays. This records the day only; it does not invent sets, weights or cardio.</p><form id="pastWorkoutForm" class="stack"><label>Workout date<input name="day" type="date" min="${esc(oldest.toISOString().slice(0,10))}" max="${esc(yesterday.toISOString().slice(0,10))}" value="${esc(yesterday.toISOString().slice(0,10))}" required></label><button class="primary">Mark past workout completed</button><p class="form-error" role="alert" hidden></p></form>`;
+  panel.innerHTML=`<h2>Record a workout from an earlier day</h2><p class="muted">Use this if you finished a workout but did not mark it complete in the app. It counts on Fitdays when Steady workouts are the selected source. This records the day only; it does not invent sets, weights or cardio.</p><form id="pastWorkoutForm" class="stack"><label>Workout date<input name="day" type="date" min="${esc(oldest.toISOString().slice(0,10))}" max="${esc(yesterday.toISOString().slice(0,10))}" value="${esc(yesterday.toISOString().slice(0,10))}" required></label><button class="primary">Mark past workout completed</button><p class="form-error" role="alert" hidden></p></form>`;
   first.after(panel);
   const form=panel.querySelector('form'),error=panel.querySelector('.form-error');
-  form.onsubmit=async event=>{event.preventDefault();error.hidden=true;const button=form.querySelector('button');button.disabled=true;try{await api('/api/history/workout',{method:'POST',body:JSON.stringify({day:form.elements.day.value})});state=await api('/api/me');await renderHistory();notice('Past workout saved. Fitdays will include it on its next refresh; open fitdays.adeticket.com and tap Refresh to check.')}catch(e){error.textContent=e.message;error.hidden=false}finally{button.disabled=false}};
+  form.onsubmit=async event=>{event.preventDefault();error.hidden=true;const button=form.querySelector('button');button.disabled=true;try{await api('/api/history/workout',{method:'POST',body:JSON.stringify({day:form.elements.day.value})});state=await api('/api/me');await renderHistory();notice('Past workout saved in Steady.')}catch(e){error.textContent=e.message;error.hidden=false}finally{button.disabled=false}};
   const workoutPanel=[...host.querySelectorAll('.panel')].find(item=>item.querySelector('h2')?.textContent==='Workouts');
   workoutPanel?.querySelectorAll('article.exercise').forEach((card,index)=>{
     const workout=state.workoutHistory[index];
     if(workout?.data?.source!=='manual-history')return;
     const note=document.createElement('p');note.className='muted';note.textContent='Completion recorded later. No exercise details were logged.';card.append(note);
-    const remove=document.createElement('button');remove.type='button';remove.className='ghost danger';remove.textContent='Remove this recorded day';remove.onclick=async()=>{remove.disabled=true;try{await api('/api/history/workout',{method:'DELETE',body:JSON.stringify({day:workout.day})});state=await api('/api/me');await renderHistory();notice('Recorded day removed. Fitdays will reflect this on its next refresh.')}catch(e){notice(e.message);remove.disabled=false}};card.append(remove);
+    const remove=document.createElement('button');remove.type='button';remove.className='ghost danger';remove.textContent='Remove this recorded day';remove.onclick=async()=>{remove.disabled=true;try{await api('/api/history/workout',{method:'DELETE',body:JSON.stringify({day:workout.day})});state=await api('/api/me');await renderHistory();notice('Recorded day removed from Steady.')}catch(e){notice(e.message);remove.disabled=false}};card.append(remove);
   });
 };
 
 const settingsBeforeFitdays=renderSettings;
-renderSettings=()=>{settingsBeforeFitdays();const host=$('#view-settings');const panel=document.createElement('section');panel.className='panel';panel.innerHTML='<h2>Public Fitdays visibility</h2><p>Dates mode shares completed workout dates. Counts-only hides individual dates from the public page and API. Previously shared information cannot be recalled.</p><label>Visibility<select disabled><option value="dates">Workout dates and counts</option><option value="counts">Counts only</option></select></label><button type="button" disabled>Save public visibility</button><p role="status"></p>';host.append(panel);const select=panel.querySelector('select'),button=panel.querySelector('button'),status=panel.querySelector('[role="status"]');api('/api/fitdays/visibility').then(result=>{select.value=result.visibility;select.disabled=false;button.disabled=false}).catch(error=>status.textContent=error.message);button.onclick=async()=>{button.disabled=true;try{await api('/api/fitdays/visibility',{method:'PUT',body:JSON.stringify({visibility:select.value})});status.textContent='Saved. Fitdays uses this mode on its next refresh.'}catch(error){status.textContent=error.message}finally{button.disabled=false}}};
+renderSettings=()=>{
+  settingsBeforeFitdays();
+  const panel=document.createElement('section');
+  panel.className='panel';
+  panel.innerHTML=`<h2>Fitdays</h2>
+    <p>Choose what appears publicly or import your MOVATI attendance.</p>
+    <form id="fitdaysVisibility" class="stack">
+      <label>Public visibility<select name="visibility" disabled>
+        <option value="dates">Workout dates and counts</option>
+        <option value="counts">Counts only</option>
+      </select></label>
+      <button type="submit" class="ghost" disabled>Save public visibility</button>
+      <p role="status" id="fitdaysVisibilityStatus"></p>
+    </form>
+    <form id="movatiImport" class="stack">
+      <h3>Import MOVATI check-ins</h3>
+      <p>Enter check-in dates from September 1, 2026 onward. After the first import, Fitdays shows MOVATI attendance totals. Your workout history stays in Steady.</p>
+      <label>MOVATI visit dates (YYYY-MM-DD)
+        <textarea name="dates" rows="5" maxlength="60000" required autocomplete="off" spellcheck="false" placeholder="One date per line"></textarea>
+      </label>
+      <button type="submit" class="primary">Import visit dates</button>
+      <p role="status" id="movatiImportStatus"></p>
+    </form>`;
+  $('#view-settings').append(panel);
+  const visibility=panel.querySelector('#fitdaysVisibility');
+  const select=visibility.elements.visibility;
+  const save=visibility.querySelector('button');
+  const status=panel.querySelector('#fitdaysVisibilityStatus');
+  const importForm=panel.querySelector('#movatiImport');
+  const importStatus=panel.querySelector('#movatiImportStatus');
+  const importButton=importForm.querySelector('button');
+  let movatiActive=false;
+  const showMovatiMode=()=>{
+    movatiActive=true;
+    select.value='counts';
+    select.disabled=true;
+    save.disabled=true;
+    status.textContent='Fitdays shows MOVATI attendance counts. Individual visit dates stay private.';
+  };
+  api('/api/fitdays/visibility').then(result=>{
+    if (movatiActive || result.source==='movati') return showMovatiMode();
+    select.value=result.visibility;
+    select.disabled=false;
+    save.disabled=false;
+  }).catch(error=>status.textContent=error.message);
+  api('/api/fitdays/movati').then(result=>{
+    if (result.total && !importStatus.textContent) importStatus.textContent=result.total+' unique visit days imported.';
+  }).catch(error=>{
+    if (!importStatus.textContent) importStatus.textContent=error.message;
+  });
+  visibility.onsubmit=async event=>{
+    event.preventDefault();
+    if (movatiActive) return;
+    save.disabled=true;
+    try {
+      await api('/api/fitdays/visibility',{method:'PUT',body:JSON.stringify({visibility:select.value})});
+      status.textContent='Public visibility saved.';
+    } catch (error) {
+      status.textContent=error.message;
+    } finally {
+      save.disabled=movatiActive;
+    }
+  };
+  importForm.onsubmit=async event=>{
+    event.preventDefault();
+    importButton.disabled=true;
+    try {
+      const dates=importForm.elements.dates.value.trim().split(/[ ,\s]+/);
+      const result=await api('/api/fitdays/movati',{method:'POST',body:JSON.stringify({dates})});
+      importForm.reset();
+      dirty=false;
+      if (result.total) showMovatiMode();
+      const excluded=result.excluded ? ` Skipped ${result.excluded} entries before September 1, 2026.` : '';
+      importStatus.textContent=`Added ${result.added} new visit days. ${result.total} unique visit days saved.${excluded}`;
+    } catch (error) {
+      importStatus.textContent=error.message;
+    } finally {
+      importButton.disabled=false;
+    }
+  };
+};
 
 const settingsBeforeWeekComparison=renderSettings;renderSettings=()=>{settingsBeforeWeekComparison();if(state.gymRoutine){$('#settings [name="schedule"]')?.closest('label')?.remove();$('#settings .weekday-picker')?.remove();return}const summary=plannedWeekComparison(state.profile,state.workoutHistory||[],state.day),panel=document.createElement('section');panel.className='panel';panel.innerHTML='<h2>Private weekly schedule comparison</h2>';const text=document.createElement('p');text.textContent=summary.hasSchedule?summary.start+' to '+summary.end+': '+summary.planned+' preferred gym weekdays elapsed; '+summary.recorded+' completed workout days recorded ('+summary.onPlanned+' on preferred days). Recovery, safety and changes of schedule are valid; these counts are not failures or catch-up requirements.':'Choose preferred training weekdays in Settings if you want a comparison. No schedule is assumed.';panel.append(text);const note=document.createElement('p');note.className='muted';note.textContent='Your preferred schedule is private and is not published on Fitdays.';panel.append(note);$('#view-settings').append(panel)};
 
