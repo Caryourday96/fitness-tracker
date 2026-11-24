@@ -6,7 +6,7 @@ import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
 import { handlePublicWorkoutDays } from './workout-days.js';
 
-test('MOVATI imports ignore earlier dates, deduplicate and keep visit dates off the public API', async ({ mock }) => {
+test('MOVATI dates deduplicate, respect the cutoff and appear only when the owner enables them', async ({ mock }) => {
   mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-24T15:00:00Z') });
   process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'steady-movati-'));
   const { dayFor, server } = await import('./server.js');
@@ -36,6 +36,7 @@ test('MOVATI imports ignore earlier dates, deduplicate and keep visit dates off 
     db.prepare("INSERT INTO workouts(user_id,day,status,data,updated_at) VALUES(1,?,'completed',?,?)")
       .run(today, JSON.stringify({ exercises: [] }), today);
     assert.deepEqual(publicData().days, [today]);
+    assert.equal((await request('/api/fitdays/visibility', { visibility: 'dates' }, 'PUT')).status, 200);
 
     const old = await request(route, { dates: ['2026-08-31'] });
     assert.equal(old.status, 200);
@@ -56,7 +57,14 @@ test('MOVATI imports ignore earlier dates, deduplicate and keep visit dates off 
     assert.equal(result.counts.year, 2);
     assert.equal(Object.hasOwn(result, 'days'), false);
     assert.equal(Object.hasOwn(result, 'bests'), false);
-    assert.equal((await request('/api/fitdays/visibility', { visibility: 'dates' }, 'PUT')).status, 409);
+    const published = await request('/api/fitdays/visibility', { visibility: 'dates' }, 'PUT');
+    assert.equal(published.status, 200);
+    assert.deepEqual(publicData(), {
+      today, source: 'movati', visibility: 'dates', availableFrom: '2026-09-01',
+      days: ['2026-09-01', '2026-09-02']
+    });
+    assert.equal((await request('/api/fitdays/visibility', { visibility: 'counts' }, 'PUT')).status, 200);
+    assert.equal(Object.hasOwn(publicData(), 'days'), false);
     assert.equal(db.prepare('SELECT COUNT(*) AS count FROM workouts').get().count, 1);
   } finally {
     db.close();

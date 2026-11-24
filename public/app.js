@@ -459,7 +459,7 @@ renderSettings=()=>{
     </form>
     <form id="movatiImport" class="stack">
       <h3>Import MOVATI check-ins</h3>
-      <p>Enter check-in dates from September 1, 2026 onward. After the first import, Fitdays shows MOVATI attendance totals. Your workout history stays in Steady.</p>
+      <p>Enter check-in dates from September 1, 2026 onward. Fitdays uses them for gym attendance. Your workout history stays in Steady.</p>
       <label>MOVATI visit dates (YYYY-MM-DD)
         <textarea name="dates" rows="5" maxlength="60000" required autocomplete="off" spellcheck="false" placeholder="One date per line"></textarea>
       </label>
@@ -474,20 +474,18 @@ renderSettings=()=>{
   const importForm=panel.querySelector('#movatiImport');
   const importStatus=panel.querySelector('#movatiImportStatus');
   const importButton=importForm.querySelector('button');
-  let movatiActive=false;
-  const showMovatiMode=()=>{
-    movatiActive=true;
-    select.value='counts';
-    select.disabled=true;
-    save.disabled=true;
-    status.textContent='Fitdays shows MOVATI attendance counts. Individual visit dates stay private.';
-  };
-  api('/api/fitdays/visibility').then(result=>{
-    if (movatiActive || result.source==='movati') return showMovatiMode();
+  const loadVisibility=async()=>{
+    const result=await api('/api/fitdays/visibility');
+    const movati=result.source==='movati';
+    select.options[0].textContent=movati ? 'MOVATI visit dates and counts' : 'Workout dates and counts';
     select.value=result.visibility;
     select.disabled=false;
     save.disabled=false;
-  }).catch(error=>status.textContent=error.message);
+    if (movati) status.textContent=result.visibility==='dates'
+      ? 'Anyone who opens Fitdays can see the individual visit dates.'
+      : 'Fitdays shares attendance counts only.';
+  };
+  loadVisibility().catch(error=>status.textContent=error.message);
   api('/api/fitdays/movati').then(result=>{
     if (result.total && !importStatus.textContent) importStatus.textContent=result.total+' unique visit days imported.';
   }).catch(error=>{
@@ -495,15 +493,16 @@ renderSettings=()=>{
   });
   visibility.onsubmit=async event=>{
     event.preventDefault();
-    if (movatiActive) return;
     save.disabled=true;
     try {
       await api('/api/fitdays/visibility',{method:'PUT',body:JSON.stringify({visibility:select.value})});
-      status.textContent='Public visibility saved.';
+      status.textContent=select.value==='dates'
+        ? 'Fitdays now shares individual dates publicly.'
+        : 'Fitdays now shares counts only.';
     } catch (error) {
       status.textContent=error.message;
     } finally {
-      save.disabled=movatiActive;
+      save.disabled=false;
     }
   };
   importForm.onsubmit=async event=>{
@@ -514,7 +513,7 @@ renderSettings=()=>{
       const result=await api('/api/fitdays/movati',{method:'POST',body:JSON.stringify({dates})});
       importForm.reset();
       dirty=false;
-      if (result.total) showMovatiMode();
+      if (result.total) loadVisibility().catch(error=>status.textContent=error.message);
       const excluded=result.excluded ? ` Skipped ${result.excluded} entries before September 1, 2026.` : '';
       importStatus.textContent=`Added ${result.added} new visit days. ${result.total} unique visit days saved.${excluded}`;
     } catch (error) {

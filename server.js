@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { handleOwnerShare, handlePublicPartner, initializePartnerSharing, seedStarterFoods } from './partner-sharing.js';
-import { handlePublicWorkoutDays, importMovatiDates, initializeMovatiVisits, movatiVisitCount } from './workout-days.js';
+import { handlePublicWorkoutDays, importMovatiDates, initializeMovatiVisits, movatiVisitCount, saveFitdaysVisibility } from './workout-days.js';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { ManagedIdentityCredential } from '@azure/identity';
@@ -161,15 +161,14 @@ async function route(req,res,useGymRoutine) {
     const owner=db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get();
     if(owner?.id!==uid)return send(res,403,{error:'Only the public tracker owner can change visibility.'});
     if(method==='GET'){
-      if(movatiVisitCount(db,uid))return send(res,200,{visibility:'counts',source:'movati'});
       const record=db.prepare('SELECT visibility FROM fitdays_settings WHERE user_id=?').get(uid);
+      if(movatiVisitCount(db,uid))return send(res,200,{visibility:record?.visibility||'counts',source:'movati'});
       return send(res,200,{visibility:record?.visibility||'dates'});
     }
     if(method==='PUT'){
       const body=await json(req);
       if(!['dates','counts'].includes(body?.visibility))return send(res,400,{error:'Choose dates or counts.'});
-      if(movatiVisitCount(db,uid))return send(res,409,{error:'Public MOVATI attendance is counts only.'});
-      db.prepare('INSERT INTO fitdays_settings(user_id,visibility) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET visibility=excluded.visibility').run(uid,body.visibility);
+      saveFitdaysVisibility(db,uid,body.visibility);
       return send(res,200,{visibility:body.visibility});
     }
     return send(res,405,{error:'Method not allowed'});

@@ -29,6 +29,10 @@ export function movatiVisitCount(db, userId) {
   return db.prepare('SELECT COUNT(*) AS count FROM fitdays_movati_visits WHERE user_id=?').get(userId).count;
 }
 
+export function saveFitdaysVisibility(db, userId, visibility) {
+  db.prepare('INSERT INTO fitdays_settings (user_id, visibility) VALUES (?, ?) ON CONFLICT (user_id) DO UPDATE SET visibility = excluded.visibility').run(userId, visibility);
+}
+
 export function importMovatiDates(db, userId, dates, today) {
   if (!Array.isArray(dates) || !dates.length || dates.length > 5000 ||
       dates.some(day => !validDay(day) || day > today)) return null;
@@ -38,7 +42,9 @@ export function importMovatiDates(db, userId, dates, today) {
   let added = 0;
   db.exec('BEGIN IMMEDIATE');
   try {
+    const firstImport = movatiVisitCount(db, userId) === 0;
     for (const day of unique) added += Number(save.run(userId, day).changes);
+    if (firstImport && added) saveFitdaysVisibility(db, userId, 'counts');
     db.exec('COMMIT');
   } catch (error) {
     db.exec('ROLLBACK');
@@ -71,9 +77,15 @@ export function handlePublicWorkoutDays(req, res, { db, send, root }) {
     const cutoff = new Date(`${today}T12:00:00Z`);
     cutoff.setUTCDate(cutoff.getUTCDate() - 364);
     const start = cutoff.toISOString().slice(0, 10);
+    const visibility=owner&&db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='fitdays_settings'").get()?db.prepare('SELECT visibility FROM fitdays_settings WHERE user_id=?').get(owner.id)?.visibility:null;
     if (owner && movatiVisitCount(db, owner.id)) {
-      const days = db.prepare('SELECT day FROM fitdays_movati_visits WHERE user_id=? AND day BETWEEN ? AND ?')
-        .all(owner.id, start > firstMovatiDay ? start : firstMovatiDay, today).map(row => row.day);
+      const availableFrom = start > firstMovatiDay ? start : firstMovatiDay;
+      const days = db.prepare('SELECT day FROM fitdays_movati_visits WHERE user_id=? AND day BETWEEN ? AND ? ORDER BY day')
+        .all(owner.id, availableFrom, today).map(row => row.day);
+      if (visibility === 'dates') {
+        send(res, 200, { today, source: 'movati', visibility, availableFrom, days });
+        return true;
+      }
       const data = { today, days };
       const totals = workoutCalendar(data);
       send(res, 200, {
@@ -93,7 +105,6 @@ export function handlePublicWorkoutDays(req, res, { db, send, root }) {
     const days = owner
       ? db.prepare("SELECT day FROM workouts WHERE user_id=? AND status='completed' AND day BETWEEN ? AND ? ORDER BY day").all(owner.id, start, today).map(row => row.day)
       : [];
-    const visibility=owner&&db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='fitdays_settings'").get()?db.prepare('SELECT visibility FROM fitdays_settings WHERE user_id=?').get(owner.id)?.visibility||'dates':'dates';
     if(visibility==='counts'){const c=workoutCalendar({today,days});send(res,200,{today,visibility,counts:{week:c.week,month:c.month,year:c.year,calendarYear:c.calendarYear},insights:consistencyInsights({today,days}),weeks:weeklyCounts({today,days}),years:yearRecaps({today,days}),bests:recordedBests({today,days}),recaps:monthlyRecaps({today,days}),windowWeeks:Object.fromEntries([7,30,90,365].map(length=>[length,periodWeeks({today,days},length)])),periods:Object.fromEntries([7,30,90,365].map(length=>[length,periodCalendar({today,days},length).days.size]))})}else send(res, 200, { today, days, visibility:'dates' });
     return true;
   }
